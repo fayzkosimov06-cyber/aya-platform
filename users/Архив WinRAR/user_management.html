@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Управление пользователями{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <a href="{% url 'admin_dashboard' %}">&larr; Назад в Панель администратора</a>
+    <h2 class="my-4">Управление Пользователями</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Пользователь</th>
+                            <th>Текущая роль</th>
+                            <th>Изменить роль</th>
+                            <th>Действия со статусом</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users_list %}
+                        <tr>
+                            <td>
+                                {% if user.photo and user.photo.url %}
+                                    <img src="{{ user.photo.url }}" class="rounded-circle" width="40" height="40" alt="Фото" style="object-fit: cover;">
+                                {% else %}
+                                    {% if user.gender == 'F' %}
+                                        <img src="{% static 'img/female_avatar.png' %}" class="rounded-circle" width="40" height="40" alt="Аватар">
+                                    {% else %}
+                                        <img src="{% static 'img/male_avatar.png' %}" class="rounded-circle" width="40" height="40" alt="Аватар">
+                                    {% endif %}
+                                {% endif %}
+                                
+                                <strong class="ms-2">{{ user.get_full_name|default:user.username }}</strong>
+                                {% if user.is_active_volunteer_title %}
+                                    <i class="fas fa-star text-warning" title="Активный волонтер"></i>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ user.get_role_display_custom }}</span>
+                            </td>
+                            <td>
+                                {% if not user.is_superuser %}
+                                <form action="{% url 'update_user_role' user.pk %}" method="post" class="d-flex">
+                                    {% csrf_token %}
+                                    <select name="role" class="form-select form-select-sm me-2">
+                                        {% for role_key, role_name in role_choices %}
+                                        <option value="{{ role_key }}" {% if user.role == role_key %}selected{% endif %}>
+                                            {{ role_name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Сохранить</button>
+                                </form>
+                                {% else %}
+                                <span class="text-muted small">Нельзя изменить</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not user.is_superuser %}
+                                <form action="{% url 'toggle_active_volunteer' user.pk %}" method="post">
+                                    {% csrf_token %}
+                                    {% if user.is_active_volunteer_title %}
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">⭐ Снять статус</button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-success">⭐ Сделать Активным</button>
+                                    {% endif %}
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

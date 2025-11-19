@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Панель модератора{% endblock %}
+
+{% block content %}
+<div class.container my-5>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="fas fa-shield-alt text-primary"></i> Панель Управления</h2>
+        <span class="badge bg-secondary fs-6">{{ user.get_role_display_custom }}</span>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-warning">
+            <h4 class="mb-0">Новые заявки на регистрацию ({{ pending_users.count }})</h4>
+        </div>
+        <div class="card-body">
+            {% if pending_users %}
+            <ul class="list-group">
+                {% for p_user in pending_users %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{% url 'public_profile' p_user.pk %}" class="fw-bold">{{ p_user.get_full_name }}</a>
+                        <small class="text-muted d-block">{{ p_user.faculty }}, {{ p_user.course }} курс</small>
+                    </div>
+                    <form action="{% url 'approve_user' p_user.pk %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-success">✅ Одобрить</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-success fw-bold">Новых заявок нет.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0">Запросы на изменение профиля ({{ pending_changes.count }})</h4>
+        </div>
+        <div class="card-body">
+            {% if pending_changes %}
+                <p>Волонтеры, которые изменили данные в своем профиле, ожидают вашей проверки.</p>
+                <a href="{% url 'pending_changes' %}" class="btn btn-primary">Просмотреть все запросы на изменения</a>
+            {% else %}
+                <p class="text-success fw-bold">Нет ожидающих изменений.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Панель модератора{% endblock %}
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="fas fa-shield-alt text-primary"></i> Панель модератора</h2>
+        <span class="badge bg-secondary fs-6">{{ user.get_role_display_custom }}</span>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-warning">
+            <h4 class="mb-0">Новые заявки на регистрацию ({{ pending_users.count }})</h4>
+        </div>
+        <div class="card-body">
+            {% if pending_users %}
+            <ul class="list-group">
+                {% for p_user in pending_users %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{% url 'public_profile' p_user.pk %}" class="fw-bold">
+                            {{ p_user.get_full_name|default:p_user.username }}
+                        </a>
+                        <small class="text-muted d-block">{{ p_user.faculty|default:p_user.email }}</small>
+                    </div>
+                    <div>
+                        <a href="{% url 'public_profile' p_user.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> Посмотреть профиль
+                        </a>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-success fw-bold">Отлично! Новых заявок на регистрацию нет.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    </div>
+{% endblock %}

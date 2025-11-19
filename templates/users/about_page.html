@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}О нас - AYA TGMU{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center">
+    <div class="container">
+        <h1>О нас</h1>
+        <p class="lead">Узнайте больше о миссии и ценностях AYA TGMU</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            {% if about_content %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ about_content.title }}</h3>
+                        <p class="card-text">{{ about_content.content|linebreaksbr }}</p>
+                    </div>
+                </div>
+
+                {% if about_content.video_url %}
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title mb-3">Наше видео</h4>
+                            <div class="ratio ratio-16x9">
+                                <iframe src="{{ about_content.video_url|replace:'watch?v=','embed/' }}" 
+                                        frameborder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen></iframe>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    Информация о странице "О нас" еще не заполнена.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

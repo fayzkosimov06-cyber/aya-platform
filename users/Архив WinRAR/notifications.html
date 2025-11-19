@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Все уведомления{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4">Все Уведомления</h2>
+    <div class="card">
+        <div class="list-group list-group-flush">
+            {% for notification in notifications %}
+                <a href="{% url 'mark_notification_as_read' notification.pk %}" 
+                   class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-info{% endif %}">
+                    <div class="d-flex w-100 justify-content-between">
+                        <p class="mb-1">{{ notification.message }}</p>
+                        <small class="text-muted">{{ notification.created_at|timesince }} назад</small>
+                    </div>
+                </a>
+            {% empty %}
+                <div class="list-group-item">
+                    <p class="text-muted text-center my-3">У вас пока нет уведомлений.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

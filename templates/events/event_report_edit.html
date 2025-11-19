@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Редактирование отчета{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Отчет: {{ event.title }}</h2>
+        <a href="{% url 'event_detail' event.pk %}" class="btn btn-outline-secondary">Просмотр</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">Основной контент</div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Текст отчета</label>
+                            {{ report_form.report_text }}
+                        </div>
+                        
+                        <div class="mb-3 p-3 bg-light border rounded">
+                            <label class="form-label fw-bold"><i class="fas fa-images"></i> Загрузить НОВЫЕ фото</label>
+                            {{ report_form.photos }}
+                            <small class="text-muted">Зажмите Ctrl, чтобы выбрать несколько файлов сразу.</small>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            {{ report_form.is_report_published }}
+                            <label class="form-check-label fw-bold text-success">Опубликовать отчет (будет виден всем)</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Сохранить изменения</button>
+                    </form>
+                </div>
+            </div>
+
+            {% if event.photos.exists %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <i class="fas fa-edit"></i> Управление загруженными фотографиями
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for photo in event.photos.all %}
+                        <div class="col-md-4 col-6">
+                            <div class="position-relative group-hover-container">
+                                <img src="{{ photo.image.url }}" class="img-fluid rounded border" style="height: 100px; width: 100%; object-fit: cover;">
+                                
+                                <form action="{% url 'event_photo_delete' photo.pk %}" method="post" class="position-absolute top-0 end-0 m-1" onsubmit="return confirm('Удалить это фото?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger opacity-75 hover-opacity-100" title="Удалить фото">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-5">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white"><i class="fab fa-youtube"></i> Добавить видео</div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            {{ video_form.video_url }}
+                            <button class="btn btn-outline-secondary" type="submit">Добавить</button>
+                        </div>
+                    </form>
+                    <hr>
+                    <h6>Добавленные видео:</h6>
+                    <ul>
+                        {% for vid in event.videos.all %}
+                            <li><a href="{{ vid.video_url }}" target="_blank">Ссылка {{ forloop.counter }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning text-dark"><i class="fas fa-star"></i> Отметить героя</div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                            {{ hero_form.user }}
+                        </div>
+                        <div class="input-group mb-2">
+                            {{ hero_form.role_name }}
+                            <button class="btn btn-dark" type="submit">Отметить</button>
+                        </div>
+                    </form>
+                    <hr>
+                    <h6>Отмеченные люди:</h6>
+                    <ul>
+                        {% for hero in event.heroes.all %}
+                            <li>{{ hero.user.get_full_name }} — <strong>{{ hero.role_name }}</strong></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

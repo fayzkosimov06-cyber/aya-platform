@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Мероприятия{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Мероприятия</h2>
+        {% if user.is_authenticated %}
+            <a href="{% url 'event_create' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Создать мероприятие
+            </a>
+        {% endif %}
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="eventsTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">Предстоящие</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button" role="tab">Прошедшие (Архив)</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="eventsTabContent">
+        
+        <div class="tab-pane fade show active" id="upcoming" role="tabpanel" tabindex="0">
+            <div class="row g-4">
+                {% for event in upcoming_events %}
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        {% if event.cover_image %}
+                            <img src="{{ event.cover_image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-calendar-alt fa-3x"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ event.title }}</h5>
+                            <h6 class="text-primary mb-2">{{ event.start_time|date:"d F, H:i" }}</h6>
+                            <p class="card-text">{{ event.description|truncatewords:20 }}</p>
+                        </div>
+                        <div class="card-footer bg-white border-top-0">
+                            <a href="{% url 'event_detail' event.pk %}" class="btn btn-outline-primary w-100">Подробнее</a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                    <div class="col-12 py-5 text-center text-muted">Нет предстоящих мероприятий.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="past" role="tabpanel" tabindex="0">
+            <div class="row g-4">
+                {% for event in past_events %}
+                <div class="col-md-4">
+                    {% if event.is_report_published or user.is_superuser or user == event.organizer or user.role in 'moderator,president,head_admin,worker' %}
+                        
+                        <div class="card h-100 shadow-sm border-0">
+                            <div class="position-relative">
+                                {% if event.cover_image %}
+                                    <img src="{{ event.cover_image.url }}" class="card-img-top" alt="Обложка" style="height: 200px; object-fit: cover; filter: grayscale(80%);">
+                                {% else %}
+                                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <i class="fas fa-history fa-3x"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    {% if not event.is_report_published %}
+                                        <span class="badge bg-warning text-dark">ЧЕРНОВИК ОТЧЕТА</span>
+                                    {% else %}
+                                        <span class="badge bg-dark opacity-75">Завершено</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="card-body">
+                                <h5 class="card-title">{{ event.title }}</h5>
+                                <p class="card-text small text-muted">{{ event.end_time|date:"d F Y" }}</p>
+                                
+                                {% if event.is_report_published %}
+                                    <a href="{% url 'event_detail' event.pk %}" class="btn btn-sm btn-outline-secondary stretched-link">Смотреть отчет</a>
+                                {% else %}
+                                    <a href="{% url 'event_report_edit' event.pk %}" class="btn btn-sm btn-primary stretched-link">
+                                        <i class="fas fa-pen"></i> Редактировать отчет
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    {% endif %} 
+                    </div>
+                {% empty %}
+                    <div class="col-12 py-5 text-center text-muted">Архив пуст.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

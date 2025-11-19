@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Управление Школами{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <a href="{% url 'admin_dashboard' %}">&larr; Назад в Панель администратора</a>
+    <h2 class="my-4">Управление Школами</h2>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header"><h5 class="mb-0">Создать новую школу</h5></div>
+        <div class="card-body">
+            <form action="{% url 'school_create' %}" method="post">
+                {% csrf_token %}
+                <div class="input-group">
+                    <input type="text" name="name" class="form-control" placeholder="Название (например, Школа Первой Помощи)" required>
+                    <button class="btn btn-success" type="submit">Создать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header"><h5 class="mb-0">Существующие школы</h5></div>
+        <div class="card-body">
+            {% if schools %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Руководители</th>
+                            <th>Назначить/Снять руководителя</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for school in schools %}
+                        <tr>
+                            <td><strong>{{ school.name }}</strong></td>
+                            <td>
+                                {% for leader in school.leaders.all %}
+                                    <span class="badge bg-secondary">{{ leader.get_full_name }}</span>
+                                {% empty %}
+                                    <span class="text-muted">Нет</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <form action="{% url 'assign_school_leader' school.pk %}" method="post" class="d-flex">
+                                    {% csrf_token %}
+                                    <select name="leader_id" class="form-select form-select-sm me-2">
+                                        <option value="">--- Выберите волонтера ---</option>
+                                        {% for volunteer in volunteers %}
+                                            <option value="{{ volunteer.pk }}">
+                                                {{ volunteer.get_full_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Применить</button>
+                                </form>
+                            </td>
+                            <td>
+                                <form action="{% url 'school_delete' school.pk %}" method="post" onsubmit="return confirm('Вы уверены?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">Вы еще не создали ни одной школы.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Администрация Отдела{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold" style="color: #0E3644;">Администрация</h1>
+        <p class="lead text-muted">Отдел по работе с молодежью ТГМУ</p>
+        <div style="width: 80px; height: 4px; background-color: #F29F05; margin: 20px auto;"></div>
+    </div>
+
+    {% if head_admin %}
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-6 col-lg-5">
+            <div class="card h-100 shadow border-0" style="border-top: 5px solid #0E3644 !important;">
+                <div class="card-body text-center p-5">
+                    <div class="mb-4">
+                        {% if head_admin.photo %}
+                            <img src="{{ head_admin.photo.url }}" class="rounded-circle" width="200" height="200" style="object-fit: cover; border: 4px solid #0E3644;">
+                        {% else %}
+                            <img src="{% static 'img/male_avatar.png' %}" class="rounded-circle" width="200" height="200" style="border: 4px solid #0E3644;">
+                        {% endif %}
+                    </div>
+                    <h2 class="fw-bold mb-1 text-dark">{{ head_admin.get_full_name }}</h2>
+                    <p class="text-uppercase fw-bold mb-2" style="color: #F29F05; letter-spacing: 1px;">Руководитель отдела</p>
+                    
+                    {% if head_admin.job_title %}
+                        <p class="text-muted fst-italic mb-4">{{ head_admin.job_title }}</p>
+                    {% endif %}
+
+                    <div class="text-start bg-light p-3 rounded">
+                        {% if head_admin.office_location %}
+                            <p class="mb-2"><i class="fas fa-map-marker-alt text-danger me-2"></i> {{ head_admin.office_location }}</p>
+                        {% endif %}
+                        
+                        {% if user.is_authenticated and user.is_approved %}
+                             {% if head_admin.phone %}
+                                <p class="mb-0"><i class="fas fa-phone text-success me-2"></i> {{ head_admin.phone }}</p>
+                             {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+        <div class="alert alert-secondary text-center">Руководитель отдела временно не назначен.</div>
+    {% endif %}
+
+    {% if workers %}
+    <h3 class="text-center mb-4" style="color: #0E3644;">Сотрудники отдела</h3>
+    <div class="row justify-content-center g-4">
+        {% for worker in workers %}
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 shadow-sm border-0 hover-card">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        {% if worker.photo %}
+                            <img src="{{ worker.photo.url }}" class="rounded-circle" width="120" height="120" style="object-fit: cover;">
+                        {% else %}
+                            <img src="{% static 'img/male_avatar.png' %}" class="rounded-circle" width="120" height="120">
+                        {% endif %}
+                    </div>
+                    <h5 class="fw-bold mb-1">{{ worker.get_full_name }}</h5>
+                    
+                    {% if worker.job_title %}
+                        <p class="text-muted small mb-3">{{ worker.job_title }}</p>
+                    {% else %}
+                        <p class="text-muted small mb-3">Сотрудник</p>
+                    {% endif %}
+
+                    <div class="text-start small border-top pt-3">
+                         {% if worker.office_location %}
+                            <p class="mb-1"><i class="fas fa-map-marker-alt text-muted me-2"></i> {{ worker.office_location }}</p>
+                        {% endif %}
+
+                        {% if user.is_authenticated and user.is_approved and worker.phone %}
+                            <p class="mb-0"><i class="fas fa-phone text-muted me-2"></i> {{ worker.phone }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .hover-card { transition: transform 0.3s ease; }
+    .hover-card:hover { transform: translateY(-5px); }
+</style>
+{% endblock %}

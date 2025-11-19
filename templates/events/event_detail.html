@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="position-relative bg-dark text-white" style="min-height: 300px; display: flex; align-items: center; overflow: hidden;">
+    {% if event.cover_image %}
+        <img src="{{ event.cover_image.url }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4;">
+    {% endif %}
+    <div class="container position-relative z-1 py-5">
+        <h1 class="display-4 fw-bold">{{ event.title }}</h1>
+        <p class="fs-4"><i class="fas fa-map-marker-alt me-2"></i>{{ event.location }}</p>
+        <p class="fs-5"><i class="far fa-clock me-2"></i>{{ event.start_time|date:"d F Y, H:i" }}</p>
+        
+        {% if can_manage %}
+            <div class="mt-4 p-3 bg-dark bg-opacity-50 rounded border border-secondary">
+                <h5 class="text-warning"><i class="fas fa-cog"></i> Управление мероприятием</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'event_edit' event.pk %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Изм. время/обложку
+                    </a>
+
+                    {% if not event.is_completed %}
+                        <form action="{% url 'event_finish' event.pk %}" method="post" onsubmit="return confirm('Вы уверены? Событие перейдет в архив, и вы сможете добавить отчет.');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-flag-checkered"></i> Завершить и заполнить отчет
+                            </button>
+                        </form>
+                        <form action="{% url 'event_delete' event.pk %}" method="post" class="ms-auto" onsubmit="return confirm('ВНИМАНИЕ! Вы уверены, что хотите удалить это мероприятие НАВСЕГДА? Это действие нельзя отменить.');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt"></i> Удалить
+                        </button>
+                    </form>
+                    {% else %}
+                        <a href="{% url 'event_report_edit' event.pk %}" class="btn btn-info">
+                            <i class="fas fa-camera"></i> Ред. отчет / Фото
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-5">
+                <div class="card-body">
+                    {% if event.is_completed and event.is_report_published %}
+                        <h3 class="mb-4 text-primary">Отчет о мероприятии</h3>
+                        <div class="lead mb-4">
+                            {{ event.report_text|linebreaks }}
+                        </div>
+
+                        {% if event.photos.exists %}
+                            <h4 class="mb-3">Фотогалерея</h4>
+                            <div class="row row-cols-1 row-cols-md-2 g-3 mb-4">
+                                {% for photo in event.photos.all %}
+                                    <div class="col">
+                                        <a href="{{ photo.image.url }}" target="_blank">
+                                            <img src="{{ photo.image.url }}" class="img-fluid rounded shadow-sm" alt="Фото" style="width: 100%; height: 250px; object-fit: cover;">
+                                        </a>
+                                        {% if photo.caption %}<p class="text-muted small mt-1">{{ photo.caption }}</p>{% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if event.videos.exists %}
+                            <h4 class="mb-3">Видео</h4>
+                            {% for video in event.videos.all %}
+                                <div class="mb-3">
+                                    <a href="{{ video.video_url }}" target="_blank" class="btn btn-outline-danger">
+                                        <i class="fab fa-youtube"></i> Смотреть видео ({{ forloop.counter }})
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                    {% else %}
+                        <h4>О мероприятии</h4>
+                        <p>{{ event.description|linebreaks }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            {% if event.heroes.exists %}
+            <div class="card shadow-sm mb-4 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-star"></i> Герои мероприятия</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for hero in event.heroes.all %}
+                    <li class="list-group-item d-flex align-items-center">
+                        {% if hero.user.photo %}
+                            <img src="{{ hero.user.photo.url }}" class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
+                        {% else %}
+                             <img src="{% static 'img/male_avatar.png' %}" class="rounded-circle me-2" width="40" height="40">
+                        {% endif %}
+                        <div>
+                            <a href="{% url 'public_profile' hero.user.pk %}" class="fw-bold text-dark text-decoration-none">
+                                {{ hero.user.get_full_name }}
+                            </a>
+                            <small class="text-muted d-block">{{ hero.role_name }}</small>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Участники ({{ event.participants.count }})</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if not event.is_completed %}
+                        <div class="p-3 border-bottom">
+                            {% if user.is_authenticated %}
+                                {% if is_participant %}
+                                    <a href="{% url 'event_join' event.pk %}" class="btn btn-outline-danger w-100">Отменить запись</a>
+                                {% else %}
+                                    <a href="{% url 'event_join' event.pk %}" class="btn btn-success w-100">Записаться</a>
+                                {% endif %}
+                            {% else %}
+                                <a href="{% url 'login' %}" class="btn btn-primary w-100">Войдите, чтобы записаться</a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    <div class="accordion accordion-flush" id="participantsAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingOne">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne">
+                                    Показать всех
+                                </button>
+                            </h2>
+                            <div id="flush-collapseOne" class="accordion-collapse collapse" data-bs-parent="#participantsAccordion">
+                                <div class="accordion-body p-0">
+                                    <ul class="list-group list-group-flush">
+                                        {% for participant in event.participants.all %}
+                                            <li class="list-group-item">
+                                                <a href="{% url 'public_profile' participant.pk %}" class="text-decoration-none text-dark">
+                                                    {{ participant.get_full_name }}
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

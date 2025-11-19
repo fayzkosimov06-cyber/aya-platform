@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Создать мероприятие{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">Создание мероприятия</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Название</label>
+                            {{ form.title }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Обложка (для списка)</label>
+                            {{ form.cover_image }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Начало</label>
+                                {{ form.start_time }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Окончание</label>
+                                {{ form.end_time }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Место проведения</label>
+                            {{ form.location }}
+                        </div>
+
+                         <div class="mb-3">
+                            <label class="form-label">Максимум участников (оставьте пустым, если неважно)</label>
+                            {{ form.max_participants }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Описание</label>
+                            {{ form.description }}
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 py-2">Создать</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
