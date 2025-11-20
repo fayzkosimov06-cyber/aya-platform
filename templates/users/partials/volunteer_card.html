@@ -1,26 +1,31 @@
 {% load static %}
-<a href="{% url 'public_profile' volunteer.pk %}" class="text-decoration-none">
-    <div class="board-of-honor-card">
-        <div class="small-glowing-border 
+<a href="{% url 'public_profile' volunteer.pk %}" class="text-decoration-none text-dark d-block h-100">
+    <div class="board-of-honor-card text-center p-3 h-100 border rounded shadow-sm bg-white">
+        
+        <div class="glowing-border-container mx-auto mb-3
             {% if volunteer.role == 'president' %}president
             {% elif volunteer.role == 'leader' and volunteer.is_active_volunteer_title %}leader-active
             {% elif volunteer.role == 'leader' %}leader
             {% elif volunteer.school_leader_of.exists %}school
-            {% elif volunteer.is_active_volunteer_title %}active{% endif %}">
-
+            {% elif volunteer.is_active_volunteer_title %}active{% endif %}"
+            style="width: 120px; height: 120px; padding: 3px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            
             {% if volunteer.photo and volunteer.photo.url %}
-                <img src="{{ volunteer.photo.url }}" alt="Фото {{ volunteer.get_full_name }}">
+                <img src="{{ volunteer.photo.url }}" alt="Фото" 
+                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
             {% else %}
                 {% if volunteer.gender == 'F' %}
-                    <img src="{% static 'img/female_avatar.png' %}" alt="Аватар">
+                    <img src="{% static 'img/female_avatar.png' %}" alt="Аватар" 
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                 {% else %}
-                    <img src="{% static 'img/male_avatar.png' %}" alt="Аватар">
+                    <img src="{% static 'img/male_avatar.png' %}" alt="Аватар" 
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                 {% endif %}
             {% endif %}
         </div>
         
-        <h6 class="card-title fw-bold mt-3">{{ volunteer.first_name }} {{ volunteer.last_name }}</h6>
-
+        <h6 class="card-title fw-bold mt-2">{{ volunteer.first_name }} {{ volunteer.last_name }}</h6>
+        
         <p class="card-text small mb-0 
             {% if volunteer.role == 'president' %}status-text status-president
             {% elif volunteer.role == 'leader' %}status-text status-leader
