@@ -1,165 +1,174 @@
 /* static/css/style.css */
+
 :root {
-    --primary-color: #2a6f97;
-    --primary-color-dark: #225a7b;
-    --primary-color-rgb: 42, 111, 151;
-    --secondary-color: #6c757d;
-    --success-color: #28a745;
-    --danger-color: #dc3545;
-    --light-color: #f8f9fa;
-    --dark-color: #212529;
-    --body-bg: #f0f2f5;
-    --card-bg: #ffffff;
-    --president-color: #FFD700;
-    --leader-color: #9400D3;
-    --school-color: #00CED1; /* Бирюзовый для школ */
-    --active-color: #00FF7F;
+    /* --- НОВАЯ ЦВЕТОВАЯ ГАММА (СИНЯЯ) --- */
+    --primary-color: #0E3644;       /* Глубокий темно-синий (фон, шапка) */
+    --primary-light: #2a6f97;       /* Светлее (для кнопок) */
+    --accent-color: #00C4CC;        /* Бирюзовый/Циан (акценты вместо оранжевого) */
+    --text-dark: #212529;
+    --text-light: #f8f9fa;
+    --body-bg: #F0F4F8;             /* Очень светло-голубой фон страницы */
+    
+    /* Цвета статусов для рамок */
+    --president-color: #FFD700;     /* Золото */
+    --leader-color: #9400D3;        /* Фиолетовый */
+    --school-color: #00CED1;        /* Бирюзовый */
+    --active-color: #28a745;        /* Зеленый */
 }
 
 body {
     background-color: var(--body-bg);
     padding-top: 70px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--text-dark);
+    line-height: 1.6;
 }
 
-/* --- ОБЩИЕ СТИЛИ --- */
-.navbar { background-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-.navbar-brand img { height: 40px; }
-.auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url("../img/bg_university.jpg") no-repeat center center fixed; background-size: cover; }
-.auth-card { background-color: rgba(255, 255, 255, 0.95); border-radius: 1rem; padding: 2.5rem; box-shadow: 0 15px 40px rgba(0,0,0,0.25); max-width: 500px; width: 100%; }
-
-/* --- ГЛАВНАЯ СТРАНИЦА --- */
-.hero-section {
-    padding: 6rem 0;
-    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("../img/bg_university.jpg") no-repeat center center;
-    background-size: cover; color: white; margin-top: -70px;
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    color: var(--primary-color);
 }
-.hero-section .join-button {
-    background-color: var(--success-color);
+
+/* --- NAVBAR --- */
+.navbar {
+    background-color: var(--primary-color);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.navbar-brand img { height: 40px; margin-right: 10px; }
+.nav-link { color: rgba(255,255,255,0.85) !important; transition: 0.3s; }
+.nav-link:hover, .nav-link.active { color: #fff !important; transform: translateY(-1px); }
+.dropdown-menu { border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+
+/* --- КНОПКИ (СИНИЕ И БИРЮЗОВЫЕ) --- */
+.btn-primary {
+    background-color: var(--primary-light);
+    border-color: var(--primary-light);
+}
+.btn-primary:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+.btn-cta {
+    background-color: var(--accent-color);
+    color: #fff;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 12px 30px;
     border: none;
-    font-size: 1.2rem;
-    padding: 1rem 2.5rem;
+    transition: 0.3s;
 }
-.hero-section .join-button:hover { background-color: #218838; }
-
-.president-section {
-    padding: 5rem 0;
-    background-color: var(--body-bg);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-.president-card { max-width: 300px; }
-
-.board-of-honor-section {
-    padding: 4rem 0;
-    background-color: var(--card-bg);
+.btn-cta:hover {
+    background-color: #00979d;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 196, 204, 0.4);
 }
 
-.board-of-honor-card {
-    background-color: var(--card-bg);
-    border-radius: 1rem;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    padding: 1.5rem 1rem;
-    text-align: center;
-    transition: all 0.3s ease;
-    height: 100%;
-}
-.board-of-honor-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-}
+/* --- ИСПРАВЛЕННЫЕ РАМКИ (БЕЗ РАЗРЫВОВ) --- */
+@property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@keyframes spin { to { --angle: 360deg; } }
 
-.small-glowing-border {
-    --angle: 0deg;
-    width: 110px; height: 110px; padding: 4px; border-radius: 50%;
-    margin: 0 auto 1rem auto;
-    display: flex; align-items: center; justify-content: center;
-    background-color: #333;
-    animation: spin 4s linear infinite;
-}
-.small-glowing-border img {
-    width: 102px; height: 102px;
-    border-radius: 50%; object-fit: cover; border: 2px solid #fff;
-}
-
-/* --- ПРОФИЛЬ --- */
-.profile-header { height: 250px; background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("../img/bg_university.jpg") no-repeat center center; background-size: cover; margin-top: -70px; }
 .glowing-border-container {
-    width: 170px; height: 170px; padding: 5px; border-radius: 50%;
-    margin-left: auto; margin-right: auto; margin-top: -85px;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3); background-color: #333;
-}
-.profile-photo { width: 160px; height: 160px; object-fit: cover; border: 3px solid #fff; border-radius: 50%; }
-
-/* ОБЩИЕ СТИЛИ ДЛЯ РАМОК */
-.glowing-border-container.president, .small-glowing-border.president { background-image: conic-gradient(from var(--angle), var(--president-color), #fff, var(--president-color)); }
-.glowing-border-container.leader, .small-glowing-border.leader { background-image: conic-gradient(from var(--angle), var(--leader-color), #fff, var(--leader-color)); }
-.glowing-border-container.school, .small-glowing-border.school { background-image: conic-gradient(from var(--angle), var(--school-color), #fff, var(--school-color)); }
-.glowing-border-container.active, .small-glowing-border.active { background-image: conic-gradient(from var(--angle), var(--active-color), #fff, var(--active-color)); }
-.glowing-border-container.leader-active, .small-glowing-border.leader-active { background-image: conic-gradient(from var(--angle), var(--leader-color), var(--active-color), var(--leader-color)); }
-
-/* ПОДСВЕТКА ТЕКСТА */
-.status-text { font-weight: bold; background-clip: text; -webkit-background-clip: text; color: transparent; text-shadow: 0 0 8px rgba(0,0,0,0.2); display: inline-block; }
-.status-president { background-image: linear-gradient(45deg, var(--president-color), #F0E68C); }
-.status-leader { background-image: linear-gradient(45deg, var(--leader-color), #DA70D6); }
-.status-school { background-image: linear-gradient(45deg, var(--school-color), #ffae42); }
-
-/* --- СТИЛИ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ --- */
-
-.president-section {
-    padding: 3rem 0;
-    background-color: var(--card-bg);
-    text-align: center;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.board-of-honor-section {
-    padding: 3rem 0;
-    background-color: var(--body-bg);
-}
-
-.board-of-honor-card {
-    background-color: var(--card-bg);
-    border-radius: 1rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    padding: 1.5rem 1rem;
-    text-align: center;
-    transition: all 0.3s ease;
-    height: 100%;
-}
-.board-of-honor-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-}
-
-/* --- УМЕНЬШЕННАЯ РАМКА ДЛЯ "ДОСКИ ПОЧЕТА" --- */
-.small-glowing-border {
-    --angle: 0deg;
-    width: 110px; 
-    height: 110px;
+    --border-color: #ccc; /* Цвет по умолчанию */
+    position: relative;
+    z-index: 1;
+    /* Используем conic-gradient с прозрачностью для создания "хвоста" кометы, 
+       это убирает жесткий стык белого цвета */
+    background-image: conic-gradient(from var(--angle), transparent 20%, var(--border-color) 100%);
+    animation: spin 3s linear infinite;
     padding: 4px; /* Толщина рамки */
     border-radius: 50%;
-    margin: 0 auto 1rem auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #333; /* Фон, если нет статуса */
-    animation: spin 4s linear infinite;
-}
-.small-glowing-border img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #fff;
 }
 
-/* Применение тех же градиентов, что и у большой рамки */
-.small-glowing-border.president { background-image: conic-gradient(from var(--angle), var(--president-color), #fff, var(--president-color)); }
-.small-glowing-border.leader { background-image: conic-gradient(from var(--angle), var(--leader-color), #fff, var(--leader-color)); }
-.small-glowing-border.school { background-image: conic-gradient(from var(--angle), var(--school-color), #fff, var(--school-color)); }
-.small-glowing-border.active { background-image: conic-gradient(from var(--angle), var(--active-color), #fff, var(--active-color)); }
-.small-glowing-border.leader-active { background-image: conic-gradient(from var(--angle), var(--leader-color), var(--active-color), var(--leader-color)); }
+/* Назначение цветов переменной --border-color */
+.glowing-border-container.president { --border-color: var(--president-color); }
+.glowing-border-container.leader { --border-color: var(--leader-color); }
+.glowing-border-container.school { --border-color: var(--school-color); }
+.glowing-border-container.active { --border-color: var(--active-color); }
+/* Для смешанного статуса (Лидер + Активный) делаем полный градиент */
+.glowing-border-container.leader-active { 
+    background-image: conic-gradient(from var(--angle), var(--leader-color), var(--active-color), var(--leader-color)); 
+}
+
+.profile-photo {
+    background: #fff; /* Подложка под фото */
+    border-radius: 50%;
+    border: 3px solid #fff; /* Белое кольцо внутри цветной рамки */
+    z-index: 2;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ЦВЕТНОЙ ТЕКСТ */
+.status-text { font-weight: bold; }
+.status-president { color: var(--president-color); }
+.status-leader { color: var(--leader-color); }
+.status-school { color: var(--school-color); }
+.status-active { color: var(--active-color); }
+
+/* --- КАРТОЧКИ --- */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    transition: 0.3s;
+}
+.card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+
+/* --- ДИЗАЙН МЕРОПРИЯТИЙ (ВАРИАНТ А) --- */
+.event-card-img-wrapper {
+    height: 200px;
+    overflow: hidden;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    position: relative;
+}
+.event-card-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.5s;
+}
+.card:hover .event-card-img-wrapper img { transform: scale(1.05); }
+
+.event-meta {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    background-color: #f8f9fa;
+    padding: 8px 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.event-meta i { color: var(--accent-color); }
+
+/* --- HERO SECTION (ГЛАВНАЯ) --- */
+.hero-section {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 100px 0;
+    margin-top: -20px;
+    position: relative;
+    overflow: hidden;
+}
+.hero-bg-image {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: url('../img/bg_university.jpg') no-repeat center center;
+    background-size: cover;
+    opacity: 0.2; /* Сильное затемнение */
+}
+.hero-content { position: relative; z-index: 2; }
+
+/* --- О НАС (ИКОНКИ) --- */
+.feature-icon {
+    width: 60px; height: 60px;
+    background-color: rgba(0, 196, 204, 0.1);
+    color: var(--accent-color);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}

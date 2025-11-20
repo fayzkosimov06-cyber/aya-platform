@@ -12,7 +12,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
-from .forms import UserRegisterForm, UserUpdateForm, AdminUpdateForm
+from .forms import UserRegisterForm, UserUpdateForm, AdminUpdateForm, AboutPageForm
 from .models import User, Direction, School, ActivityPeriod, Notification, AboutPage, AuditLog
 from events.models import Event
 
@@ -70,18 +70,19 @@ def get_user_power_level(user):
 
 
 # --- Главные view ---
-def home_view(request):
-    president = User.objects.filter(role='president', is_approved=True).first()
-    key_figures_qs = User.objects.filter(
-        Q(role='leader') | Q(school_leader_of__isnull=False),
-        is_approved=True
-    ).distinct()
-    if president:
-        key_figures_qs = key_figures_qs.exclude(pk=president.pk)
+# users/views.py
 
+def home_view(request):
+    # 1. Получаем Президента (для блока на главной)
+    president = User.objects.filter(role='president', is_approved=True).first()
+    
+    # 2. Получаем 3 ближайших мероприятия
+    # (Одобренные И Не завершенные, сортируем по дате начала)
+    upcoming_events = Event.objects.filter(is_approved=True, is_completed=False).order_by('start_time')[:3]
+    
     context = {
         'president': president,
-        'board_of_honor': key_figures_qs,
+        'upcoming_events': upcoming_events, # <-- Вот это переменная, которую ждет шаблон
     }
     return render(request, 'users/home.html', context)
 
@@ -577,19 +578,21 @@ def assign_school_leader_view(request, pk):
 
 @login_required
 def about_page_edit_view(request):
-    if not is_admin_or_higher(request.user):
-        messages.error(request, "У вас нет доступа к этой странице.")
-        return redirect('home')
+    if not is_admin_or_higher(request.user): return redirect('home')
+    
     about_page, created = AboutPage.objects.get_or_create(pk=1)
+    
     if request.method == 'POST':
-        about_page.title = request.POST.get('title', '')
-        about_page.content = request.POST.get('content', '')
-        about_page.video_url = request.POST.get('video_url', '')
-        about_page.save()
-        AuditLog.objects.create(actor=request.user, action="Отредактировал страницу 'О нас'")
-        messages.success(request, 'Страница "О нас" успешно обновлена.')
-        return redirect('about_page_edit')
-    return render(request, 'users/about_page_edit.html', {'about_page': about_page})
+        form = AboutPageForm(request.POST, instance=about_page)
+        if form.is_valid():
+            form.save()
+            log_action(request.user, "Отредактировал страницу 'О нас'")
+            messages.success(request, 'Страница обновлена полностью.')
+            return redirect('about_page_edit')
+    else:
+        form = AboutPageForm(instance=about_page)
+        
+    return render(request, 'users/about_page_edit.html', {'form': form})
 
 # --- УВЕДОМЛЕНИЯ ---
 @login_required
@@ -666,3 +669,7 @@ def audit_log_view(request):
         'audit_logs': audit_logs
     }
     return render(request, 'users/audit_log.html', context)
+
+# users/forms.py (Добавьте это в конец)
+
+from .models import AboutPage # Убедитесь, что AboutPage импортирован

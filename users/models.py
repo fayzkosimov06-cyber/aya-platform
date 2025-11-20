@@ -96,9 +96,31 @@ class Notification(models.Model):
     def __str__(self): return f"Уведомление для {self.recipient.username}"
 
 class AboutPage(models.Model):
-    title = models.CharField(max_length=255, default="О нас")
-    content = models.TextField(blank=True)
-    video_url = models.URLField(blank=True)
+    # --- ГЛАВНЫЙ БЛОК ---
+    title = models.CharField(max_length=255, default="О нас", verbose_name="Заголовок страницы")
+    description = models.TextField(blank=True, verbose_name="Главное описание (вверху)")
+    video_url = models.URLField(blank=True, verbose_name="Ссылка на видео (YouTube)")
+    
+    # --- БЛОК МИССИИ ---
+    mission_title = models.CharField(max_length=100, default="Наша Миссия", verbose_name="Заголовок миссии")
+    mission_text = models.TextField(blank=True, verbose_name="Текст миссии")
+    
+    # --- БЛОК СТАТИСТИКИ (ЦИФРЫ) ---
+    stat_1_num = models.CharField(max_length=20, default="500+", verbose_name="Цифра 1 (напр. 500+)")
+    stat_1_text = models.CharField(max_length=100, default="Волонтеров", verbose_name="Подпись 1")
+    
+    stat_2_num = models.CharField(max_length=20, default="50+", verbose_name="Цифра 2")
+    stat_2_text = models.CharField(max_length=100, default="Мероприятий", verbose_name="Подпись 2")
+    
+    stat_3_num = models.CharField(max_length=20, default="5", verbose_name="Цифра 3")
+    stat_3_text = models.CharField(max_length=100, default="Лет работы", verbose_name="Подпись 3")
+
+    # --- БЛОК КОНТАКТОВ (ДЛЯ ФУТЕРА И СТРАНИЦЫ) ---
+    email = models.EmailField(blank=True, verbose_name="Email организации")
+    instagram = models.CharField(max_length=100, blank=True, verbose_name="Instagram (ссылка или ник)")
+    telegram = models.CharField(max_length=100, blank=True, verbose_name="Telegram канал")
+    address = models.CharField(max_length=255, blank=True, verbose_name="Адрес (офис)")
+
     def __str__(self): return self.title
 
     # --- НОВАЯ МОДЕЛЬ ДЛЯ ЖУРНАЛА ДЕЙСТВИЙ ---
@@ -130,12 +152,6 @@ class AuditLog(models.Model):
         return f"{self.actor} - {self.action[:50]}..."
     
     # --- Добавить в конец users/models.py ---
-
-class AuditLog(models.Model):
-    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='actor_logs', verbose_name="Действующее лицо")
-    action = models.TextField(verbose_name="Действие")
-    target_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='target_logs', verbose_name="Цель")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Время")
 
     class Meta:
         ordering = ['-created_at']

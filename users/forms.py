@@ -1,7 +1,7 @@
 # users/forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User
+from .models import User, AboutPage
 
 class UserRegisterForm(UserCreationForm):
     # Добавляем нужные нам поля, которые не входят в стандартную UserCreationForm,
@@ -114,4 +114,33 @@ class AdminUpdateForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+992 XX XXX XX XX'}),
             'telegram': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '@username'}),
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+    # users/forms.py (Добавьте это в конец файла)
+
+class AboutPageForm(forms.ModelForm):
+    class Meta:
+        model = AboutPage
+        fields = '__all__'
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'video_url': forms.URLInput(attrs={'class': 'form-control'}),
+            
+            'mission_title': forms.TextInput(attrs={'class': 'form-control'}),
+            'mission_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            
+            # Статистика
+            'stat_1_num': forms.TextInput(attrs={'class': 'form-control'}),
+            'stat_1_text': forms.TextInput(attrs={'class': 'form-control'}),
+            'stat_2_num': forms.TextInput(attrs={'class': 'form-control'}),
+            'stat_2_text': forms.TextInput(attrs={'class': 'form-control'}),
+            'stat_3_num': forms.TextInput(attrs={'class': 'form-control'}),
+            'stat_3_text': forms.TextInput(attrs={'class': 'form-control'}),
+            
+            # Контакты
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'instagram': forms.TextInput(attrs={'class': 'form-control'}),
+            'telegram': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.TextInput(attrs={'class': 'form-control'}),
         }

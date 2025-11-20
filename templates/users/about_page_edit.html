@@ -1,31 +1,139 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Редактирование "О нас"{% endblock %}
 
 {% block content %}
 <div class="container my-5">
-    <a href="{% url 'admin_dashboard' %}">&larr; Назад в Панель администратора</a>
-    <h2 class="my-4">Редактирование страницы "О нас"</h2>
-
-    <div class="card shadow-sm">
-        <div class="card-body p-4">
-            <form method="post">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label for="title" class="form-label fw-bold">Заголовок</label>
-                    <input type="text" class="form-control" id="title" name="title" value="{{ about_page.title }}">
-                </div>
-                <div class="mb-3">
-                    <label for="content" class="form-label fw-bold">Основной текст</label>
-                    <textarea class="form-control" id="content" name="content" rows="10">{{ about_page.content }}</textarea>
-                </div>
-                <div class="mb-3">
-                    <label for="video_url" class="form-label fw-bold">Ссылка на видео (YouTube)</label>
-                    <input type="url" class="form-control" id="video_url" name="video_url" value="{{ about_page.video_url|default:'' }}" placeholder="https://www.youtube.com/watch?v=...">
-                </div>
-                <button type="submit" class="btn btn-success">Сохранить изменения</button>
-            </form>
-        </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Редактирование страницы "О нас"</h2>
+        <a href="{% url 'about_page' %}" class="btn btn-outline-secondary" target="_blank">
+            <i class="fas fa-eye"></i> Просмотреть страницу
+        </a>
     </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-heading"></i> Главный блок (Шапка)</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Заголовок страницы</label>
+                    {{ form.title }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Главное описание</label>
+                    {{ form.description }}
+                    <div class="form-text">Текст под заголовком на темном фоне.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Ссылка на видео (YouTube)</label>
+                    {{ form.video_url }}
+                    <div class="form-text">Вставьте полную ссылку, например: <code>https://www.youtube.com/watch?v=dQw4w9WgXcQ</code></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-bullseye"></i> Блок Миссии</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Заголовок миссии</label>
+                    {{ form.mission_title }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Текст миссии</label>
+                    {{ form.mission_text }}
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Статистика</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded bg-light">
+                            <h6 class="text-center">Показатель 1</h6>
+                            <div class="mb-2">
+                                <label class="form-label small">Цифра</label>
+                                {{ form.stat_1_num }}
+                            </div>
+                            <div>
+                                <label class="form-label small">Подпись</label>
+                                {{ form.stat_1_text }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded bg-light">
+                            <h6 class="text-center">Показатель 2</h6>
+                            <div class="mb-2">
+                                <label class="form-label small">Цифра</label>
+                                {{ form.stat_2_num }}
+                            </div>
+                            <div>
+                                <label class="form-label small">Подпись</label>
+                                {{ form.stat_2_text }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded bg-light">
+                            <h6 class="text-center">Показатель 3</h6>
+                            <div class="mb-2">
+                                <label class="form-label small">Цифра</label>
+                                {{ form.stat_3_num }}
+                            </div>
+                            <div>
+                                <label class="form-label small">Подпись</label>
+                                {{ form.stat_3_text }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-address-book"></i> Контакты и Соцсети</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Instagram (ссылка)</label>
+                        {{ form.instagram }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Telegram (ссылка)</label>
+                        {{ form.telegram }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Email</label>
+                        {{ form.email }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Адрес офиса</label>
+                        {{ form.address }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary me-md-2">Отмена</a>
+            <button type="submit" class="btn btn-success btn-lg px-5">
+                <i class="fas fa-save"></i> Сохранить все изменения
+            </button>
+        </div>
+    </form>
 </div>
 {% endblock %}

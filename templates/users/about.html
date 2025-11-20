@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ about_content.title }}{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-5" style="background: linear-gradient(45deg, #0E3644, #004e66);">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-3">{{ about_content.title }}</h1>
+        <p class="lead mx-auto" style="max-width: 700px;">{{ about_content.description|linebreaksbr }}</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            {% if about_content.video_url %}
+                <div class="ratio ratio-16x9 rounded shadow overflow-hidden">
+                    <iframe src="{{ about_content.video_url }}" allowfullscreen></iframe>
+                </div>
+            {% else %}
+                <div class="bg-light rounded shadow d-flex align-items-center justify-content-center" style="height: 300px;">
+                    <i class="fas fa-university fa-4x text-muted"></i>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-lg-6 ps-lg-5">
+            <h2 class="fw-bold text-primary mb-3">{{ about_content.mission_title }}</h2>
+            <p class="fs-5 text-muted">{{ about_content.mission_text|linebreaks }}</p>
+            
+            <div class="row mt-4">
+                <div class="col-6 mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon me-3"><i class="fas fa-users"></i></div>
+                        <h6 class="mb-0 fw-bold">Сильное<br>сообщество</h6>
+                    </div>
+                </div>
+                <div class="col-6 mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon me-3"><i class="fas fa-heart"></i></div>
+                        <h6 class="mb-0 fw-bold">Реальная<br>помощь</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row text-center g-4 py-5 bg-light rounded-4 mb-5">
+        <div class="col-md-4">
+            <h2 class="display-4 fw-bold text-primary">{{ about_content.stat_1_num }}</h2>
+            <p class="text-uppercase text-muted fw-bold">{{ about_content.stat_1_text }}</p>
+        </div>
+        <div class="col-md-4 border-start border-end">
+            <h2 class="display-4 fw-bold text-primary">{{ about_content.stat_2_num }}</h2>
+            <p class="text-uppercase text-muted fw-bold">{{ about_content.stat_2_text }}</p>
+        </div>
+        <div class="col-md-4">
+            <h2 class="display-4 fw-bold text-primary">{{ about_content.stat_3_num }}</h2>
+            <p class="text-uppercase text-muted fw-bold">{{ about_content.stat_3_text }}</p>
+        </div>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <h3 class="mb-4">Свяжитесь с нами</h3>
+            <div class="d-flex justify-content-center gap-4 flex-wrap">
+                {% if about_content.instagram %}
+                    <a href="{{ about_content.instagram }}" class="btn btn-outline-danger btn-lg rounded-pill">
+                        <i class="fab fa-instagram me-2"></i> Instagram
+                    </a>
+                {% endif %}
+                {% if about_content.telegram %}
+                    <a href="{{ about_content.telegram }}" class="btn btn-outline-info btn-lg rounded-pill">
+                        <i class="fab fa-telegram me-2"></i> Telegram
+                    </a>
+                {% endif %}
+                {% if about_content.email %}
+                    <a href="mailto:{{ about_content.email }}" class="btn btn-outline-dark btn-lg rounded-pill">
+                        <i class="fas fa-envelope me-2"></i> Email
+                    </a>
+                {% endif %}
+            </div>
+            {% if about_content.address %}
+                <p class="mt-4 text-muted"><i class="fas fa-map-marker-alt me-2"></i> {{ about_content.address }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
