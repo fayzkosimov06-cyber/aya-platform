@@ -1,6 +1,7 @@
 {% load static %}
 <a href="{% url 'public_profile' volunteer.pk %}" class="text-decoration-none text-dark d-block h-100">
-    <div class="board-of-honor-card text-center p-3 h-100 border rounded shadow-sm bg-white">
+    <div class="board-of-honor-card text-center p-3 h-100 border rounded shadow-sm bg-white" 
+         style="position: relative; z-index: 1; overflow: hidden;">
         
         <div class="glowing-border-container mx-auto mb-3
             {% if volunteer.role == 'president' %}president
@@ -8,7 +9,7 @@
             {% elif volunteer.role == 'leader' %}leader
             {% elif volunteer.school_leader_of.exists %}school
             {% elif volunteer.is_active_volunteer_title %}active{% endif %}"
-            style="width: 120px; height: 120px; padding: 3px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            style="width: 120px; height: 120px; padding: 3px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2;">
             
             {% if volunteer.photo and volunteer.photo.url %}
                 <img src="{{ volunteer.photo.url }}" alt="Фото" 
@@ -24,13 +25,13 @@
             {% endif %}
         </div>
         
-        <h6 class="card-title fw-bold mt-2">{{ volunteer.first_name }} {{ volunteer.last_name }}</h6>
+        <h6 class="card-title fw-bold mt-2 position-relative" style="z-index: 3;">{{ volunteer.first_name }} {{ volunteer.last_name }}</h6>
         
-        <p class="card-text small mb-0 
-            {% if volunteer.role == 'president' %}status-text status-president
-            {% elif volunteer.role == 'leader' %}status-text status-leader
-            {% elif volunteer.school_leader_of.exists %}status-text status-school
-            {% else %}text-muted{% endif %}">
+        <p class="card-text small mb-0 position-relative" style="z-index: 3;
+            {% if volunteer.role == 'president' %}color: #FFD700; font-weight: bold;
+            {% elif volunteer.role == 'leader' %}color: #9400D3; font-weight: bold;
+            {% elif volunteer.school_leader_of.exists %}color: #FF8C00; font-weight: bold;
+            {% else %}color: #6c757d;{% endif %}">
             
             {% if volunteer.role == 'leader' and volunteer.led_direction %}
                 Руководитель "{{ volunteer.led_direction.name }}"
