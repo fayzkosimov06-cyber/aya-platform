@@ -18,7 +18,7 @@ def can_manage_event(user, event):
     return False
 
 def can_create_instantly(user):
-    return user.role in ['leader', 'president', 'worker', 'head_admin'] or user.is_superuser
+    return user.role in ['leader', 'president', 'worker', 'head_admin', 'moderator'] or user.is_superuser
 
 # events/views.py
 
