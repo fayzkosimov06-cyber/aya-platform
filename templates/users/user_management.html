@@ -5,18 +5,38 @@
 
 {% block content %}
 <div class="container my-5">
-    <a href="{% url 'admin_dashboard' %}">&larr; Назад в Панель администратора</a>
+    <a href="{% url 'admin_dashboard' %}" class="text-decoration-none">&larr; Назад в Панель администратора</a>
     <h2 class="my-4">Управление Пользователями</h2>
 
-    <div class="card">
+    <div class="card shadow-sm mb-4 bg-light">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <input type="text" name="search" class="form-control" placeholder="Поиск по ФИО или логину..." value="{{ search_query }}">
+                </div>
+                <div class="col-md-4">
+                    <select name="role_filter" class="form-select">
+                        <option value="">-- Все роли --</option>
+                        {% for code, name in role_choices %}
+                            <option value="{{ code }}" {% if role_filter == code %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Найти</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
-                    <thead>
+                    <thead class="table-light">
                         <tr>
                             <th>Пользователь</th>
-                            <th>Текущая роль</th>
-                            <th>Изменить роль</th>
+                            <th>Роль</th>
                             <th>Действия со статусом</th>
                         </tr>
                     </thead>
@@ -24,53 +44,58 @@
                         {% for user in users_list %}
                         <tr>
                             <td>
-                                {% if user.photo and user.photo.url %}
-                                    <img src="{{ user.photo.url }}" class="rounded-circle" width="40" height="40" alt="Фото" style="object-fit: cover;">
-                                {% else %}
-                                    {% if user.gender == 'F' %}
-                                        <img src="{% static 'img/female_avatar.png' %}" class="rounded-circle" width="40" height="40" alt="Аватар">
+                                <div class="d-flex align-items-center">
+                                    {% if user.photo %}
+                                        <img src="{{ user.photo.url }}" class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
                                     {% else %}
-                                        <img src="{% static 'img/male_avatar.png' %}" class="rounded-circle" width="40" height="40" alt="Аватар">
+                                        <img src="{% static 'img/male_avatar.png' %}" class="rounded-circle me-2" width="40" height="40">
                                     {% endif %}
-                                {% endif %}
-                                
-                                <strong class="ms-2">{{ user.get_full_name|default:user.username }}</strong>
-                                {% if user.is_active_volunteer_title %}
-                                    <i class="fas fa-star text-warning" title="Активный волонтер"></i>
-                                {% endif %}
+                                    
+                                    <div>
+                                        <a href="{% url 'public_profile' user.pk %}" class="fw-bold text-dark text-decoration-none">
+                                            {{ user.get_full_name }}
+                                        </a>
+                                        <div class="small text-muted">{{ user.username }}</div>
+                                    </div>
+                                </div>
                             </td>
-                            <td>
-                                <span class="badge bg-primary">{{ user.get_role_display_custom }}</span>
-                            </td>
+
                             <td>
                                 {% if not user.is_superuser %}
-                                <form action="{% url 'update_user_role' user.pk %}" method="post" class="d-flex">
+                                <form action="{% url 'update_user_role' user.pk %}" method="post" class="d-flex gap-2">
                                     {% csrf_token %}
-                                    <select name="role" class="form-select form-select-sm me-2">
-                                        {% for role_key, role_name in role_choices %}
-                                        <option value="{{ role_key }}" {% if user.role == role_key %}selected{% endif %}>
-                                            {{ role_name }}
-                                        </option>
+                                    <select name="role" class="form-select form-select-sm" style="max-width: 150px;">
+                                        {% for code, name in role_choices %}
+                                            <option value="{{ code }}" {% if user.role == code %}selected{% endif %}>
+                                                {{ name }}
+                                            </option>
                                         {% endfor %}
                                     </select>
-                                    <button type="submit" class="btn btn-sm btn-outline-primary">Сохранить</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Сохранить роль">
+                                        <i class="fas fa-save"></i>
+                                    </button>
                                 </form>
                                 {% else %}
-                                <span class="text-muted small">Нельзя изменить</span>
+                                    <span class="badge bg-danger">SuperAdmin</span>
                                 {% endif %}
                             </td>
+
                             <td>
                                 {% if not user.is_superuser %}
                                 <form action="{% url 'toggle_active_volunteer' user.pk %}" method="post">
                                     {% csrf_token %}
                                     {% if user.is_active_volunteer_title %}
-                                        <button type="submit" class="btn btn-sm btn-outline-warning">⭐ Снять статус</button>
+                                        <button type="submit" class="btn btn-sm btn-warning text-dark"><i class="fas fa-star"></i> Активный</button>
                                     {% else %}
-                                        <button type="submit" class="btn btn-sm btn-success">⭐ Сделать Активным</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="far fa-star"></i> Обычный</button>
                                     {% endif %}
                                 </form>
                                 {% endif %}
                             </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">Пользователи не найдены</td>
                         </tr>
                         {% endfor %}
                     </tbody>

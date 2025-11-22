@@ -7,14 +7,14 @@ import qrcode
 
 class Direction(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Название направления")
-    leader = models.OneToOneField(
-        'User', 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
-        related_name='led_direction',
-        verbose_name="Руководитель"
+    # ИЗМЕНЕНИЕ: Теперь ManyToManyField, чтобы было много руководителей
+    leaders = models.ManyToManyField(
+        'User',
+        blank=True,
+        related_name='directions_led', # Уникальное имя связи
+        verbose_name="Руководители"
     )
+    
     def __str__(self): return self.name
 
 class School(models.Model):

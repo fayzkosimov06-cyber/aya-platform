@@ -403,12 +403,37 @@ def admin_dashboard_view(request):
     context = {'total_users': User.objects.count()}
     return render(request, 'users/admin_dashboard.html', context)
 
+# --- 1. ОБНОВЛЕННАЯ ФУНКЦИЯ УПРАВЛЕНИЯ ПОЛЬЗОВАТЕЛЯМИ (С ПОИСКОМ) ---
 @login_required
 def user_management_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
-    users_list = User.objects.all().order_by('last_name')
+    
+    # Базовый список (исключая супер-админа)
+    users_list = User.objects.exclude(is_superuser=True).order_by('last_name')
+    
+    # --- ПОИСК ---
+    search_query = request.GET.get('search', '')
+    role_filter = request.GET.get('role_filter', '')
+    
+    if search_query:
+        users_list = users_list.filter(
+            Q(first_name__icontains=search_query) | 
+            Q(last_name__icontains=search_query) | 
+            Q(patronymic__icontains=search_query) |
+            Q(username__icontains=search_query)
+        )
+    
+    if role_filter:
+        users_list = users_list.filter(role=role_filter)
+    
     role_choices = User.ROLE_CHOICES
-    context = {'users_list': users_list, 'role_choices': role_choices}
+    
+    context = {
+        'users_list': users_list, 
+        'role_choices': role_choices,
+        'search_query': search_query,
+        'role_filter': role_filter
+    }
     return render(request, 'users/user_management.html', context)
 
 @login_required
@@ -478,7 +503,7 @@ def toggle_active_volunteer_view(request, pk):
 @login_required
 def direction_management_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
-    directions = Direction.objects.all().prefetch_related('leader')
+    directions = Direction.objects.all().prefetch_related('leaders')
     volunteers = User.objects.filter(is_approved=True)
     return render(request, 'users/direction_management.html', {'directions': directions, 'volunteers': volunteers})
 
@@ -504,37 +529,45 @@ def direction_delete_view(request, pk):
         messages.warning(request, f'Направление "{direction.name}" удалено.')
     return redirect('direction_management')
 
+# --- 2. ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ НАПРАВЛЕНИЙ (МНОГО ЛИДЕРОВ) ---
 @login_required
 def assign_direction_leader_view(request, pk):
     if not is_admin_or_higher(request.user): return redirect('home')
+    
     if request.method == 'POST':
         direction = get_object_or_404(Direction, pk=pk)
         leader_id = request.POST.get('leader')
-        if direction.leader:
-            old_leader = direction.leader
-            if not Direction.objects.filter(leader=old_leader).exclude(pk=pk).exists():
-                old_leader.role = 'volunteer'; old_leader.save()
-        if leader_id:
-            new_leader = get_object_or_404(User, pk=leader_id)
-            direction.leader = new_leader; direction.save()
-            new_leader.role = 'leader'; new_leader.save()
-            AuditLog.objects.create(actor=request.user, action=f"Назначил {new_leader.get_full_name()} руководителем направления '{direction.name}'", target_user=new_leader)
-            messages.success(request, f'{new_leader.get_full_name()} назначен руководителем направления "{direction.name}".')
+        
+        # Находим пользователя
+        user_to_assign = get_object_or_404(User, pk=leader_id)
+        
+        # Если он уже лидер этого направления — снимаем
+        if user_to_assign in direction.leaders.all():
+            direction.leaders.remove(user_to_assign)
+            # Если у него нет других направлений, можно понизить роль (опционально)
+            # но пока оставим роль 'leader', вдруг он руководит школой
+            log_action(request.user, f"Снял {user_to_assign.get_full_name()} с руководства направлением '{direction.name}'", target=user_to_assign)
+            messages.info(request, f'{user_to_assign.get_full_name()} снят с направления "{direction.name}".')
+            
+        # Если он не лидер — назначаем
         else:
-            if direction.leader:
-                old_leader = direction.leader
-                old_leader.role = 'volunteer'
-                old_leader.save()
-            direction.leader = None; direction.save()
-            AuditLog.objects.create(actor=request.user, action=f"Снял руководителя с направления '{direction.name}'")
-            messages.info(request, f'С направления "{direction.name}" снят руководитель.')
+            direction.leaders.add(user_to_assign)
+            user_to_assign.role = 'leader'
+            user_to_assign.save()
+            log_action(request.user, f"Назначил {user_to_assign.get_full_name()} руководителем направления '{direction.name}'", target=user_to_assign)
+            messages.success(request, f'{user_to_assign.get_full_name()} назначен руководителем направления "{direction.name}".')
+            
     return redirect('direction_management')
 
 @login_required
 def school_management_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
-    schools = School.objects.all().prefetch_related('leaders')
-    volunteers = User.objects.filter(is_approved=True)
+    
+    schools = School.objects.all().prefetch_related('leaders') # Здесь leaders было изначально, это ок
+    
+    # Сортируем волонтеров для удобного поиска
+    volunteers = User.objects.filter(is_approved=True).exclude(is_superuser=True).order_by('last_name')
+    
     return render(request, 'users/school_management.html', {'schools': schools, 'volunteers': volunteers})
 
 @login_required
