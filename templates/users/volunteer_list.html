@@ -5,7 +5,13 @@
 
 {% block content %}
 <div class="container my-5">
-    <h2 class="mb-4">База данных волонтеров</h2>
+    
+    <div class="d-flex align-items-center mb-4">
+        <h2 class="mb-0 me-3">База данных волонтеров</h2>
+        <span class="badge bg-primary rounded-pill fs-6 px-3 py-2 shadow-sm">
+            Найдено: {{ volunteers_count }}
+        </span>
+    </div>
 
     <div class="card shadow-sm mb-5 filter-panel" style="position: relative; z-index: 5000; background-color: #fff;">
         <div class="card-body">
@@ -14,8 +20,9 @@
                     <div class="col-lg-12">
                         <input type="text" name="query" class="form-control" placeholder="Поиск по имени, фамилии или отчеству..." value="{{ form_values.query|default:'' }}">
                     </div>
+                    
                     <div class="col-lg-3 col-md-6">
-                        <select name="status" class="form-select">
+                        <select name="status" class="form-select use-select2">
                             <option value="">Все статусы</option>
                             <option value="president" {% if form_values.status == 'president' %}selected{% endif %}>Президент</option>
                             <option value="leader" {% if form_values.status == 'leader' %}selected{% endif %}>Руководитель направления</option>
@@ -24,7 +31,7 @@
                         </select>
                     </div>
                     <div class="col-lg-3 col-md-6">
-                        <select name="direction" class="form-select">
+                        <select name="direction" class="form-select use-select2">
                             <option value="">Все направления</option>
                             {% for dir in directions %}
                                 <option value="{{ dir.id }}" {% if form_values.direction == dir.id|stringformat:"s" %}selected{% endif %}>{{ dir.name }}</option>
@@ -32,7 +39,7 @@
                         </select>
                     </div>
                     <div class="col-lg-3 col-md-6">
-                        <select name="faculty" class="form-select">
+                        <select name="faculty" class="form-select use-select2">
                             <option value="">Все факультеты</option>
                             {% for faculty in faculties %}
                                 <option value="{{ faculty }}" {% if form_values.faculty == faculty %}selected{% endif %}>{{ faculty }}</option>
@@ -40,7 +47,7 @@
                         </select>
                     </div>
                     <div class="col-lg-3 col-md-6">
-                        <select name="course" class="form-select">
+                        <select name="course" class="form-select use-select2">
                             <option value="">Все курсы</option>
                             {% for course in courses %}
                                 <option value="{{ course }}" {% if form_values.course == course|stringformat:"s" %}selected{% endif %}>{{ course }} курс</option>
@@ -48,7 +55,7 @@
                         </select>
                     </div>
                     <div class="col-lg-3 col-md-6">
-                        <select name="city" class="form-select">
+                        <select name="city" class="form-select use-select2">
                             <option value="">Все города</option>
                             {% for city in cities %}
                                 <option value="{{ city }}" {% if form_values.city == city %}selected{% endif %}>{{ city }}</option>
@@ -62,9 +69,10 @@
                             <option value="F" {% if form_values.gender == 'F' %}selected{% endif %}>Женский</option>
                         </select>
                     </div>
+                    
                     <div class="col-lg-6 col-md-12 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary me-2 w-100">
-                            <i class="fas fa-filter"></i> Применить фильтр
+                            <i class="fas fa-filter"></i> Применить
                         </button>
                         <a href="{% url 'volunteer_list' %}" class="btn btn-outline-secondary w-100">
                             <i class="fas fa-times"></i> Сбросить
@@ -74,6 +82,7 @@
             </form>
         </div>
     </div>
+    
     <div class="row g-4">
         {% for volunteer in volunteers %}
             <div class="col-lg-3 col-md-4 col-sm-6">
@@ -81,12 +90,12 @@
             </div>
         {% empty %}
             <div class="col-12">
-                <div class="alert alert-warning" role="alert">
-                    <h4 class="alert-heading">Волонтеры не найдены</h4>
-                    <p>По вашему запросу никого не найдено. Попробуйте изменить параметры фильтра.</p>
+                <div class="alert alert-warning text-center" role="alert">
+                    <h4 class="alert-heading"><i class="fas fa-search"></i> Никого не найдено</h4>
+                    <p>По вашему запросу волонтеры не найдены. Попробуйте изменить параметры фильтра.</p>
                 </div>
             </div>
         {% endfor %}
     </div>
-    </div>
+</div>
 {% endblock %}
