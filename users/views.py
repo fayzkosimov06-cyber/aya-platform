@@ -1,7 +1,6 @@
 # users/views.py
 
 import json
-import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
@@ -10,7 +9,6 @@ from django.urls import reverse
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
-from django.utils.dateparse import parse_date, parse_datetime
 
 from .forms import UserRegisterForm, UserUpdateForm, AdminUpdateForm, AboutPageForm
 from .models import User, Direction, School, ActivityPeriod, Notification, AboutPage, AuditLog
@@ -27,28 +25,61 @@ def log_action(user, action, target=None):
         pass
 
 
-# --- Проверка прав ---
+# --- HELPER: ПРОВЕРКА ПРАВ НА ПРОСМОТР (НОВОЕ) ---
+def is_privileged_viewer(user):
+    """
+    Возвращает True, если пользователь - "Начальство" 
+    (Супер-админ, Руководитель отдела, Работник, Президент, Модератор).
+    Они видят всё, игнорируя настройки приватности.
+    """
+    if not user.is_authenticated:
+        return False
+    return user.is_superuser or user.role in ['head_admin', 'worker', 'president', 'moderator']
+
+
+def can_view_field(viewer, target_user, privacy_setting):
+    """
+    Решает, можно ли показать поле.
+    """
+    # 1. Если это сам владелец профиля -> Видит всё
+    if viewer == target_user:
+        return True
+    
+    # 2. Если это "Начальство" -> Видит всё
+    if is_privileged_viewer(viewer):
+        return True
+    
+    # 3. Если поле Публичное -> Видят все (даже гости)
+    if privacy_setting == 'public':
+        return True
+    
+    # 4. Если "Только волонтеры" -> Видят только авторизованные и одобренные
+    if privacy_setting == 'volunteers':
+        return viewer.is_authenticated and viewer.is_approved
+    
+    # 5. Если "Приватно" -> Никто больше не видит
+    if privacy_setting == 'private':
+        return False
+    
+    return False
+
+
+# --- Проверка прав доступа к админ-функциям ---
 def is_moderator_or_higher(user):
     return user.is_authenticated and (
         user.role in ['moderator', 'president', 'worker', 'head_admin'] or user.is_superuser
     )
-
 
 def is_admin_or_higher(user):
     return user.is_authenticated and (
         user.role in ['president', 'worker', 'head_admin'] or user.is_superuser
     )
 
-# --- НОВАЯ ФУНКЦИЯ ИЕРАРХИИ ---
 def get_user_power_level(user):
     if user.is_superuser: return 100
     levels = {
-        'head_admin': 90,
-        'worker': 80,
-        'president': 70,
-        'moderator': 50,
-        'leader': 30,
-        'volunteer': 0,
+        'head_admin': 90, 'worker': 80, 'president': 70, 
+        'moderator': 50, 'leader': 30, 'volunteer': 0
     }
     base_level = levels.get(user.role, 0)
     if user.is_active_volunteer_title and user.role == 'volunteer':
@@ -56,79 +87,56 @@ def get_user_power_level(user):
     return base_level
 
 
-# --- Главные view ---
+# --- VIEWS (Представления) ---
 
 def home_view(request):
     president = User.objects.filter(role='president', is_approved=True).first()
-    upcoming_events = Event.objects.filter(is_approved=True, is_completed=False).order_by('start_time')[:3]
-    context = {
-        'president': president,
-        'upcoming_events': upcoming_events,
-    }
+    
+    # Гости видят только публичные мероприятия
+    if request.user.is_authenticated:
+        upcoming_events = Event.objects.filter(is_approved=True, is_completed=False).order_by('start_time')[:3]
+    else:
+        upcoming_events = Event.objects.filter(is_approved=True, is_completed=False, is_public_for_guests=True).order_by('start_time')[:3]
+        
+    context = {'president': president, 'upcoming_events': upcoming_events}
     return render(request, 'users/home.html', context)
 
 
 def about_view(request):
-    about_content = AboutPage.objects.first()
-    return render(request, 'users/about.html', {'about_content': about_content})
+    return render(request, 'users/about.html', {'about_content': AboutPage.objects.first()})
 
 
 def volunteer_list_view(request):
-    """
-    Выводит список волонтеров с фильтрацией и ПОДСЧЕТОМ количества.
-    """
     queryset = User.objects.filter(is_approved=True).order_by('last_name')
     
-    # Списки для выпадающих меню
-    faculties = User.objects.filter(is_approved=True, faculty__isnull=False).exclude(faculty='').values_list('faculty', flat=True).distinct().order_by('faculty')
-    courses = User.objects.filter(is_approved=True, course__isnull=False).values_list('course', flat=True).distinct().order_by('course')
-    cities = User.objects.filter(is_approved=True, city__isnull=False).exclude(city='').values_list('city', flat=True).distinct().order_by('city')
+    # Списки для фильтров
+    faculties = User.objects.filter(is_approved=True).exclude(faculty='').values_list('faculty', flat=True).distinct().order_by('faculty')
+    courses = User.objects.filter(is_approved=True).exclude(course__isnull=True).values_list('course', flat=True).distinct().order_by('course')
+    cities = User.objects.filter(is_approved=True).exclude(city='').values_list('city', flat=True).distinct().order_by('city')
     directions = Direction.objects.all().order_by('name')
 
-    # Получение параметров фильтрации
+    # Фильтрация
     query = request.GET.get('query')
-    faculty = request.GET.get('faculty')
-    course = request.GET.get('course')
-    city = request.GET.get('city')
-    gender = request.GET.get('gender')
-    direction = request.GET.get('direction')
+    if query: queryset = queryset.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(patronymic__icontains=query))
+    
+    if request.GET.get('faculty'): queryset = queryset.filter(faculty=request.GET.get('faculty'))
+    if request.GET.get('course'): queryset = queryset.filter(course=request.GET.get('course'))
+    if request.GET.get('city'): queryset = queryset.filter(city=request.GET.get('city'))
+    if request.GET.get('gender'): queryset = queryset.filter(gender=request.GET.get('gender'))
+    if request.GET.get('direction'): queryset = queryset.filter(directions__id=request.GET.get('direction'))
+    
     status = request.GET.get('status')
+    if status == 'active': queryset = queryset.filter(is_active_volunteer_title=True)
+    elif status == 'leader': queryset = queryset.filter(role='leader')
+    elif status == 'school_leader': queryset = queryset.filter(school_leader_of__isnull=False).distinct()
+    elif status == 'president': queryset = queryset.filter(role='president')
 
-    # Применение фильтров
-    if query:
-        queryset = queryset.filter(
-            Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(patronymic__icontains=query)
-        )
-    if faculty:
-        queryset = queryset.filter(faculty=faculty)
-    if course:
-        queryset = queryset.filter(course=course)
-    if city:
-        queryset = queryset.filter(city=city)
-    if gender:
-        queryset = queryset.filter(gender=gender)
-    if direction:
-        queryset = queryset.filter(directions__id=direction)
-    if status:
-        if status == 'active':
-            queryset = queryset.filter(is_active_volunteer_title=True)
-        if status == 'leader':
-            queryset = queryset.filter(role='leader')
-        if status == 'school_leader':
-            queryset = queryset.filter(school_leader_of__isnull=False).distinct()
-        if status == 'president':
-            queryset = queryset.filter(role='president')
-
-    # !!! ВАЖНО: Считаем количество найденных !!!
     volunteers_count = queryset.count()
 
     context = {
         'volunteers': queryset,
-        'volunteers_count': volunteers_count, # Передаем цифру в шаблон
-        'faculties': faculties,
-        'courses': courses,
-        'cities': cities,
-        'directions': directions,
+        'volunteers_count': volunteers_count,
+        'faculties': faculties, 'courses': courses, 'cities': cities, 'directions': directions,
         'form_values': request.GET,
     }
     return render(request, 'users/volunteer_list.html', context)
@@ -137,28 +145,26 @@ def volunteer_list_view(request):
 def administration_page_view(request):
     head_admin = User.objects.filter(role='head_admin', is_approved=True).exclude(is_superuser=True).first()
     workers = User.objects.filter(role='worker', is_approved=True).exclude(is_superuser=True)
-    context = {'head_admin': head_admin, 'workers': workers}
-    return render(request, 'users/administration_page.html', context)
+    return render(request, 'users/administration_page.html', {'head_admin': head_admin, 'workers': workers})
 
 
 # --- Аутентификация ---
 def signup_view(request):
-    if request.user.is_authenticated:
-        return redirect('home')
+    if request.user.is_authenticated: return redirect('home')
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
             user.is_approved = False
             user.save()
-            moderators = User.objects.filter(role__in=['moderator', 'worker', 'head_admin', 'president'])
-            superusers = User.objects.filter(is_superuser=True)
-            all_staff = moderators | superusers
-            for staff_member in all_staff.distinct():
+            
+            # Уведомления
+            staff = User.objects.filter(Q(role__in=['moderator', 'worker', 'head_admin', 'president']) | Q(is_superuser=True)).distinct()
+            for s in staff:
                 Notification.objects.create(
-                    recipient=staff_member,
+                    recipient=s, 
                     message=f'Новый волонтер "{user.get_full_name()}" зарегистрировался.',
-                    link=reverse('public_profile', kwargs={'pk': user.pk}) 
+                    link=reverse('public_profile', kwargs={'pk': user.pk})
                 )
             messages.success(request, 'Ваш аккаунт создан и отправлен на модерацию!')
             return redirect('login')
@@ -173,24 +179,36 @@ def logout_view(request):
     return redirect('home')
 
 
-# --- Профиль ---
+# --- ПРОФИЛЬ (Личный) ---
 @login_required
 def my_profile_view(request):
+    # В своем профиле человек видит всё, поэтому show={} не нужен, или можно передать всё True
+    # Но проще использовать тот же шаблон и просто не скрывать ничего
+    # Для этого в profile.html мы используем {% if user == profile_user %}
+    
     activity_periods = request.user.activity_periods.all()
+    
+    # Для своего профиля все поля "открыты" для показа самому себе
+    show_fields = {
+        'phone': True, 'telegram': True, 'instagram': True, 'linkedin': True, 'about_me': True
+    }
+    
     context = {
         'profile_user': request.user, 
         'activity_periods': activity_periods,
-        'can_admin_edit': False 
+        'can_admin_edit': False,
+        'show': show_fields # Показываем всё хозяину
     }
     return render(request, 'users/profile.html', context)
 
 
+# --- РЕДАКТИРОВАНИЕ ПРОФИЛЯ ---
 @login_required
 def profile_edit_view(request):
     if request.method == 'POST':
         form = UserUpdateForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
-            form.save() 
+            form.save()
             messages.success(request, 'Ваш профиль успешно обновлен.')
             return redirect('my_profile')
     else:
@@ -198,36 +216,49 @@ def profile_edit_view(request):
     return render(request, 'users/profile_edit.html', {'form': form, 'user_to_edit': request.user})
 
 
+# --- ПРОФИЛЬ (Публичный) - ЗДЕСЬ ГЛАВНАЯ МАГИЯ ---
 def public_profile_view(request, pk):
     profile_user = get_object_or_404(User, pk=pk)
-    if not profile_user.is_approved and not (request.user.is_authenticated and is_moderator_or_higher(request.user)):
-        messages.error(request, "Этот профиль еще не прошел модерацию.")
-        return redirect('home')
+
+    # Проверка одобрения
+    if not profile_user.is_approved:
+        if not is_privileged_viewer(request.user):
+            messages.error(request, "Этот профиль недоступен или находится на проверке.")
+            return redirect('home')
+
     activity_periods = profile_user.activity_periods.all()
+
+    # Право на админское редактирование
     can_admin_edit = False
     if request.user.is_authenticated and request.user != profile_user:
-        viewer_level = get_user_power_level(request.user)
-        target_level = get_user_power_level(profile_user)
-        if viewer_level > target_level:
+        if get_user_power_level(request.user) > get_user_power_level(profile_user):
             can_admin_edit = True
+
+    # --- ПРОВЕРКА ПРИВАТНОСТИ ПОЛЕЙ ---
+    show_fields = {
+        'phone': can_view_field(request.user, profile_user, profile_user.phone_privacy),
+        'telegram': can_view_field(request.user, profile_user, profile_user.telegram_privacy),
+        'instagram': can_view_field(request.user, profile_user, profile_user.instagram_privacy),
+        'linkedin': can_view_field(request.user, profile_user, profile_user.linkedin_privacy),
+        'about_me': can_view_field(request.user, profile_user, profile_user.about_me_privacy),
+    }
+
     context = {
         'profile_user': profile_user, 
         'activity_periods': activity_periods,
-        'can_admin_edit': can_admin_edit
+        'can_admin_edit': can_admin_edit,
+        'show': show_fields, # Передаем результаты проверки
     }
     return render(request, 'users/profile.html', context)
 
 
-# --- Панели управления ---
+# --- АДМИН ПАНЕЛИ (Модератор, Админ) ---
+
 @login_required
 def moderator_dashboard_view(request):
-    if not is_moderator_or_higher(request.user):
-        messages.error(request, "У вас нет доступа к этой странице.")
-        return redirect('home')
+    if not is_moderator_or_higher(request.user): return redirect('home')
     pending_users = User.objects.filter(is_approved=False)
-    context = {'pending_users': pending_users}
-    return render(request, 'users/moderator_dashboard.html', context)
-
+    return render(request, 'users/moderator_dashboard.html', {'pending_users': pending_users})
 
 @login_required
 def approve_user_view(request, pk):
@@ -236,11 +267,10 @@ def approve_user_view(request, pk):
         user_to_approve = get_object_or_404(User, pk=pk)
         user_to_approve.is_approved = True
         user_to_approve.save()
-        AuditLog.objects.create(actor=request.user, action=f"Одобрил пользователя: {user_to_approve.get_full_name()}", target_user=user_to_approve)
+        log_action(request.user, f"Одобрил пользователя: {user_to_approve.get_full_name()}", target=user_to_approve)
         Notification.objects.create(recipient=user_to_approve, message="Поздравляем! Ваш профиль был одобрен.", link=reverse('my_profile'))
         messages.success(request, f'Профиль {user_to_approve.get_full_name()} одобрен.')
     return redirect('moderator_dashboard')
-
 
 @login_required
 def reject_user_view(request, pk):
@@ -248,313 +278,196 @@ def reject_user_view(request, pk):
     user_to_reject = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
         reason = request.POST.get('reason', 'Причина не указана.')
-        Notification.objects.create(recipient=user_to_reject, message=f'Ваша регистрация была отклонена. Причина: "{reason}"',)
+        Notification.objects.create(recipient=user_to_reject, message=f'Ваша регистрация отклонена: {reason}')
+        log_action(request.user, f"Отклонил (удален) пользователя: {user_to_reject.get_full_name()}", target=user_to_reject)
         user_to_reject.delete()
-        AuditLog.objects.create(actor=request.user, action=f"Отклонил (удалил) пользователя: {user_to_reject.get_full_name()}", target_user=user_to_reject)
-        messages.warning(request, f'Профиль {user_to_reject.get_full_name()} отклонен и удален.')
+        messages.warning(request, 'Пользователь отклонен и удален.')
     return redirect('moderator_dashboard')
 
-
-# --- Панель администратора (ОБНОВЛЕННАЯ СТАТИСТИКА) ---
 @login_required
 def admin_dashboard_view(request):
-    if not is_admin_or_higher(request.user):
-        messages.error(request, "У вас нет доступа к этой странице.")
-        return redirect('home')
-    
-    # Собираем статистику для дашборда
-    total_users = User.objects.count()
-    active_count = User.objects.filter(is_active_volunteer_title=True).count()
-    leaders_count = User.objects.filter(role='leader').count()
-    school_leaders_count = User.objects.filter(school_leader_of__isnull=False).distinct().count()
-    
+    if not is_admin_or_higher(request.user): return redirect('home')
     context = {
-        'total_users': total_users,
-        'active_count': active_count,
-        'leaders_count': leaders_count,
-        'school_leaders_count': school_leaders_count,
+        'total_users': User.objects.count(),
+        'active_count': User.objects.filter(is_active_volunteer_title=True).count(),
+        'leaders_count': User.objects.filter(role='leader').count(),
+        'school_leaders_count': User.objects.filter(school_leader_of__isnull=False).distinct().count(),
     }
     return render(request, 'users/admin_dashboard.html', context)
 
-
-# --- Управление пользователями ---
 @login_required
 def user_management_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
     users_list = User.objects.exclude(is_superuser=True).order_by('last_name')
-    search_query = request.GET.get('search', '')
-    role_filter = request.GET.get('role_filter', '')
     
+    search_query = request.GET.get('search')
     if search_query:
-        users_list = users_list.filter(
-            Q(first_name__icontains=search_query) | 
-            Q(last_name__icontains=search_query) | 
-            Q(patronymic__icontains=search_query) |
-            Q(username__icontains=search_query)
-        )
+        users_list = users_list.filter(Q(first_name__icontains=search_query) | Q(last_name__icontains=search_query) | Q(username__icontains=search_query))
+        
+    role_filter = request.GET.get('role_filter')
     if role_filter:
         users_list = users_list.filter(role=role_filter)
-    
-    role_choices = User.ROLE_CHOICES
-    context = {
-        'users_list': users_list, 
-        'role_choices': role_choices,
-        'search_query': search_query,
-        'role_filter': role_filter
-    }
-    return render(request, 'users/user_management.html', context)
-
+        
+    return render(request, 'users/user_management.html', {
+        'users_list': users_list, 'role_choices': User.ROLE_CHOICES,
+        'search_query': search_query, 'role_filter': role_filter
+    })
 
 @login_required
 def update_user_role_view(request, pk):
     if not is_admin_or_higher(request.user): return redirect('home')
     if request.method == 'POST':
         user_to_update = get_object_or_404(User, pk=pk)
-        my_level = get_user_power_level(request.user)
-        target_level = get_user_power_level(user_to_update)
-        
-        if my_level <= target_level:
-             messages.error(request, "Вы не можете менять роль пользователю равного или более высокого ранга.")
-             return redirect('user_management')
-
+        if get_user_power_level(request.user) <= get_user_power_level(user_to_update):
+            messages.error(request, "Недостаточно прав.")
+            return redirect('user_management')
+            
         new_role = request.POST.get('role')
-        if new_role in [role[0] for role in User.ROLE_CHOICES]:
-            if new_role == 'head_admin':
-                if not request.user.is_superuser and request.user.role != 'head_admin':
-                     messages.error(request, "Назначать Руководителя отдела может только Супер-админ или текущий Руководитель.")
-                     return redirect('user_management')
-                old_head = User.objects.filter(role='head_admin').first()
-                if old_head:
-                    old_head.role = 'worker'
-                    old_head.save()
-                    log_action(request.user, f"Автоматически разжаловал {old_head.get_full_name()} до Работника", target=old_head)
-
-            user_to_update.role = new_role
-            user_to_update.save()
-            role_name = dict(User.ROLE_CHOICES).get(new_role)
-            log_action(request.user, f"Изменил роль для {user_to_update.get_full_name()} на '{role_name}'", target=user_to_update)
-            messages.success(request, f'Роль обновлена.')
+        if new_role == 'head_admin':
+             # Логика снятия старого админа
+             old = User.objects.filter(role='head_admin').first()
+             if old: 
+                 old.role = 'worker'; old.save()
+        
+        user_to_update.role = new_role
+        user_to_update.save()
+        log_action(request.user, f"Изменил роль {user_to_update} на {new_role}", target=user_to_update)
+        messages.success(request, "Роль обновлена.")
     return redirect('user_management')
-
 
 @login_required
 def toggle_active_volunteer_view(request, pk):
-    if not is_admin_or_higher(request.user):
-        messages.error(request, "У вас нет прав для выполнения этого действия.")
-        return redirect('home')
+    if not is_admin_or_higher(request.user): return redirect('home')
     if request.method == 'POST':
-        user_to_update = get_object_or_404(User, pk=pk)
-        user_to_update.is_active_volunteer_title = not user_to_update.is_active_volunteer_title
-        user_to_update.save()
-        action_text = "присвоил" if user_to_update.is_active_volunteer_title else "снял"
-        AuditLog.objects.create(actor=request.user, action=f"{action_text} статус 'Активный волонтер' для {user_to_update.get_full_name()}", target_user=user_to_update)
-        if user_to_update.is_active_volunteer_title:
-            messages.success(request, f'Волонтеру {user_to_update.get_full_name()} присвоено звание "Активный волонтер".')
-        else:
-            messages.warning(request, f'С волонтера {user_to_update.get_full_name()} снято звание "Активный волонтер".')
+        u = get_object_or_404(User, pk=pk)
+        u.is_active_volunteer_title = not u.is_active_volunteer_title
+        u.save()
+        log_action(request.user, f"Изменил статус 'Активный' для {u}", target=u)
+        messages.success(request, "Статус обновлен.")
     return redirect('user_management')
 
-
-@login_required
-def pending_changes_view(request):
-    if not is_moderator_or_higher(request.user): return redirect('home')
-    users_with_changes = User.objects.filter(pending_changes__isnull=False).exclude(pending_changes={})
-    for user in users_with_changes:
-        if user.pending_changes:
-            try:
-                user.decoded_changes = json.loads(user.pending_changes)
-            except (json.JSONDecodeError, TypeError):
-                user.decoded_changes = {}
-    return render(request, 'users/pending_changes.html', {'users_with_changes': users_with_changes})
-
-@login_required
-def approve_changes_view(request, pk):
-    if not is_moderator_or_higher(request.user): return redirect('home')
-    if request.method == 'POST':
-        user_to_update = get_object_or_404(User, pk=pk)
-        if user_to_update.pending_changes:
-            try:
-                changes = json.loads(user_to_update.pending_changes)
-                for field, value in changes.items():
-                    setattr(user_to_update, field, value)
-            except (json.JSONDecodeError, TypeError):
-                pass
-            user_to_update.pending_changes = None
-            user_to_update.moderation_comment = ""
-            user_to_update.save()
-            Notification.objects.create(recipient=user_to_update, message="Ваши изменения в профиле были одобрены модератором.", link=reverse('my_profile'))
-            messages.success(request, f'Изменения для {user_to_update.get_full_name()} одобрены.')
-    return redirect('pending_changes')
-
-@login_required
-def reject_changes_view(request, pk):
-    if not is_moderator_or_higher(request.user): return redirect('home')
-    if request.method == 'POST':
-        user_to_update = get_object_or_404(User, pk=pk)
-        reason = request.POST.get('reason', 'Причина не указана.')
-        user_to_update.pending_changes = None
-        user_to_update.moderation_comment = reason
-        user_to_update.save()
-        Notification.objects.create(recipient=user_to_update, message=f'Ваши изменения отклонены. Причина: "{reason}"', link=reverse('my_profile'))
-        messages.warning(request, f'Изменения для {user_to_update.get_full_name()} были отклонены.')
-    return redirect('pending_changes')
-
-
-# --- Управление направлениями и школами ---
+# --- Направления и Школы ---
 @login_required
 def direction_management_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
-    directions = Direction.objects.all().prefetch_related('leaders')
-    volunteers = User.objects.filter(is_approved=True)
-    return render(request, 'users/direction_management.html', {'directions': directions, 'volunteers': volunteers})
+    return render(request, 'users/direction_management.html', {
+        'directions': Direction.objects.all(), 'volunteers': User.objects.filter(is_approved=True)
+    })
 
 @login_required
 def direction_create_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
     if request.method == 'POST':
-        name = request.POST.get('name')
-        if name and not Direction.objects.filter(name=name).exists():
-            Direction.objects.create(name=name)
-            AuditLog.objects.create(actor=request.user, action=f"Создал направление: {name}")
-            messages.success(request, f'Направление "{name}" создано.')
-        else: messages.error(request, 'Направление с таким именем уже существует или имя не указано.')
+        Direction.objects.create(name=request.POST.get('name'))
+        messages.success(request, "Направление создано.")
     return redirect('direction_management')
 
 @login_required
 def direction_delete_view(request, pk):
     if not is_admin_or_higher(request.user): return redirect('home')
-    direction = get_object_or_404(Direction, pk=pk)
     if request.method == 'POST':
-        direction.delete()
-        AuditLog.objects.create(actor=request.user, action=f"Удалил направление: {direction.name}")
-        messages.warning(request, f'Направление "{direction.name}" удалено.')
+        Direction.objects.get(pk=pk).delete()
+        messages.warning(request, "Направление удалено.")
     return redirect('direction_management')
 
 @login_required
 def assign_direction_leader_view(request, pk):
     if not is_admin_or_higher(request.user): return redirect('home')
     if request.method == 'POST':
-        direction = get_object_or_404(Direction, pk=pk)
-        leader_id = request.POST.get('leader')
-        user_to_assign = get_object_or_404(User, pk=leader_id)
-        if user_to_assign in direction.leaders.all():
-            direction.leaders.remove(user_to_assign)
-            log_action(request.user, f"Снял {user_to_assign.get_full_name()} с направления '{direction.name}'", target=user_to_assign)
-            messages.info(request, f'{user_to_assign.get_full_name()} снят с направления "{direction.name}".')
+        d = get_object_or_404(Direction, pk=pk)
+        u = get_object_or_404(User, pk=request.POST.get('leader'))
+        if u in d.leaders.all():
+            d.leaders.remove(u)
+            messages.info(request, f"{u} снят.")
         else:
-            direction.leaders.add(user_to_assign)
-            user_to_assign.role = 'leader'
-            user_to_assign.save()
-            log_action(request.user, f"Назначил {user_to_assign.get_full_name()} руководителем '{direction.name}'", target=user_to_assign)
-            messages.success(request, f'{user_to_assign.get_full_name()} назначен руководителем "{direction.name}".')
+            d.leaders.add(u)
+            u.role = 'leader'; u.save()
+            messages.success(request, f"{u} назначен.")
     return redirect('direction_management')
 
 @login_required
 def school_management_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
-    schools = School.objects.all().prefetch_related('leaders')
-    volunteers = User.objects.filter(is_approved=True).exclude(is_superuser=True).order_by('last_name')
-    return render(request, 'users/school_management.html', {'schools': schools, 'volunteers': volunteers})
+    return render(request, 'users/school_management.html', {
+        'schools': School.objects.all(), 'volunteers': User.objects.filter(is_approved=True).exclude(is_superuser=True)
+    })
 
 @login_required
 def school_create_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
     if request.method == 'POST':
-        name = request.POST.get('name')
-        if name and not School.objects.filter(name=name).exists():
-            School.objects.create(name=name)
-            AuditLog.objects.create(actor=request.user, action=f"Создал школу: {name}")
-            messages.success(request, f'Школа "{name}" создана.')
-        else: messages.error(request, 'Школа с таким именем уже существует.')
+        School.objects.create(name=request.POST.get('name'))
+        messages.success(request, "Школа создана.")
     return redirect('school_management')
 
 @login_required
 def school_delete_view(request, pk):
     if not is_admin_or_higher(request.user): return redirect('home')
-    school = get_object_or_404(School, pk=pk)
     if request.method == 'POST':
-        school.delete()
-        AuditLog.objects.create(actor=request.user, action=f"Удалил школу: {school.name}")
-        messages.warning(request, f'Школа "{school.name}" удалена.')
+        School.objects.get(pk=pk).delete()
+        messages.warning(request, "Школа удалена.")
     return redirect('school_management')
 
 @login_required
 def assign_school_leader_view(request, pk):
     if not is_admin_or_higher(request.user): return redirect('home')
     if request.method == 'POST':
-        school = get_object_or_404(School, pk=pk)
-        leader_id = request.POST.get('leader_id')
-        leader_to_assign = get_object_or_404(User, pk=leader_id)
-        if leader_to_assign in school.leaders.all():
-            leader_to_assign.school_leader_of.remove(school)
-            AuditLog.objects.create(actor=request.user, action=f"Снял {leader_to_assign.get_full_name()} с руководства школой '{school.name}'", target_user=leader_to_assign)
-            messages.info(request, f'{leader_to_assign.get_full_name()} больше не руководит школой "{school.name}".')
+        s = get_object_or_404(School, pk=pk)
+        u = get_object_or_404(User, pk=request.POST.get('leader_id'))
+        if u in s.leaders.all():
+            u.school_leader_of.remove(s)
+            messages.info(request, f"{u} снят.")
         else:
-            leader_to_assign.school_leader_of.add(school)
-            AuditLog.objects.create(actor=request.user, action=f"Назначил {leader_to_assign.get_full_name()} руководителем школы '{school.name}'", target_user=leader_to_assign)
-            messages.success(request, f'{leader_to_assign.get_full_name()} назначен руководителем школы "{school.name}".')
+            u.school_leader_of.add(s)
+            messages.success(request, f"{u} назначен.")
     return redirect('school_management')
 
 @login_required
 def about_page_edit_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
-    about_page, created = AboutPage.objects.get_or_create(pk=1)
+    obj, _ = AboutPage.objects.get_or_create(pk=1)
     if request.method == 'POST':
-        form = AboutPageForm(request.POST, instance=about_page)
+        form = AboutPageForm(request.POST, instance=obj)
         if form.is_valid():
             form.save()
-            log_action(request.user, "Отредактировал страницу 'О нас'")
-            messages.success(request, 'Страница обновлена полностью.')
+            messages.success(request, "Сохранено.")
             return redirect('about_page_edit')
     else:
-        form = AboutPageForm(instance=about_page)
+        form = AboutPageForm(instance=obj)
     return render(request, 'users/about_page_edit.html', {'form': form})
 
-# --- Уведомления и Логи ---
+# --- Уведомления ---
 @login_required
 def notification_list_view(request):
-    notifications = Notification.objects.filter(recipient=request.user)
-    return render(request, 'users/notifications.html', {'notifications': notifications})
+    return render(request, 'users/notifications.html', {'notifications': request.user.notifications.all()})
 
 @login_required
 def mark_notification_as_read_view(request, pk):
-    notification = get_object_or_404(Notification, pk=pk, recipient=request.user)
-    if not notification.is_read:
-        notification.is_read = True
-        notification.save()
-    if notification.link: return redirect(notification.link)
-    else: return redirect('notification_list')
+    n = get_object_or_404(Notification, pk=pk, recipient=request.user)
+    n.is_read = True; n.save()
+    return redirect(n.link if n.link else 'notification_list')
 
 @login_required
 def admin_edit_user_view(request, pk):
-    user_to_edit = get_object_or_404(User, pk=pk)
-    viewer_level = get_user_power_level(request.user)
-    target_level = get_user_power_level(user_to_edit)
-    if viewer_level <= target_level:
-        messages.error(request, "У вас недостаточно прав для редактирования этого профиля.")
+    target = get_object_or_404(User, pk=pk)
+    if get_user_power_level(request.user) <= get_user_power_level(target):
+        messages.error(request, "Недостаточно прав.")
         return redirect('public_profile', pk=pk)
+        
     if request.method == 'POST':
-        form = AdminUpdateForm(request.POST, request.FILES, instance=user_to_edit)
+        form = AdminUpdateForm(request.POST, request.FILES, instance=target)
         if form.is_valid():
             form.save()
-            AuditLog.objects.create(actor=request.user, action=f"Отредактировал профиль: {user_to_edit.get_full_name()}", target_user=user_to_edit)
-            if request.user != user_to_edit:
-                Notification.objects.create(
-                    recipient=user_to_edit,
-                    message=f'Модератор {request.user.get_full_name()} внес изменения в ваш профиль.',
-                    link=reverse('my_profile')
-                )
-            messages.success(request, f'Профиль {user_to_edit.get_full_name()} был успешно обновлен.')
+            log_action(request.user, f"Отредактировал профиль {target}", target=target)
+            if request.user != target:
+                Notification.objects.create(recipient=target, message=f"Модератор {request.user} изменил ваш профиль.")
+            messages.success(request, "Профиль обновлен.")
             return redirect('public_profile', pk=pk)
     else:
-        form = AdminUpdateForm(instance=user_to_edit)
-    return render(request, 'users/profile_edit.html', {'form': form, 'user_to_edit': user_to_edit})
+        form = AdminUpdateForm(instance=target)
+    return render(request, 'users/profile_edit.html', {'form': form, 'user_to_edit': target})
 
 @login_required
 def audit_log_view(request):
-    if not is_admin_or_higher(request.user):
-        messages.error(request, "У вас нет доступа к этой странице.")
-        return redirect('home')
-    audit_logs = AuditLog.objects.all()
-    context = {'audit_logs': audit_logs}
-    return render(request, 'users/audit_log.html', context)
+    if not is_admin_or_higher(request.user): return redirect('home')
+    return render(request, 'users/audit_log.html', {'audit_logs': AuditLog.objects.all()})

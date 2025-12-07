@@ -101,38 +101,101 @@
                 {% endif %}
             {% endif %}
 
-            <h4>Основная информация</h4>
-            <hr>
-            <p><strong>Email:</strong> {{ profile_user.email }}</p>
-            <p><strong>Факультет:</strong> {{ profile_user.faculty|default:"Не указан" }}</p>
-            <p><strong>Курс:</strong> {{ profile_user.course|default:"-" }}</p>
+<div class="col-lg-8 pt-4">
+    {% if not profile_user.is_approved %}
+        {% endif %}
 
-            <h4 class="mt-5">История активности</h4>
-            <hr>
-            {% if activity_periods %}
-                <ul class="timeline">
-                    {% for period in activity_periods %}
-                    <li>
-                        <div class="timeline-badge success"><i class="fa fa-check"></i></div>
-                        <div class="timeline-panel">
-                            <div class="timeline-heading">
-                                <h5 class="timeline-title">
-                                    {{ period.start_date|date:"F Y" }} — {{ period.end_date|date:"F Y" }}
-                                </h5>
-                            </div>
-                            {% if period.description %}
-                            <div class="timeline-body"><p>{{ period.description }}</p></div>
-                            {% endif %}
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
+    <h4>Основная информация</h4>
+    <hr>
+    
+    <p><strong>Факультет:</strong> {{ profile_user.faculty|default:"Не указан" }}</p>
+    <p><strong>Курс:</strong> {{ profile_user.course|default:"-" }}</p>
+    
+    {% if profile_user.about_me %}
+        <div class="mb-3">
+            <strong>О себе:</strong>
+            {% if show.about_me %}
+                <p class="text-muted fst-italic">{{ profile_user.about_me|linebreaks }}</p>
             {% else %}
-                <p class="text-muted">История активности еще не заполнена.</p>
+                <span class="text-muted ms-2"><i class="fas fa-lock"></i> <em>Скрыто настройками приватности</em></span>
             {% endif %}
         </div>
-    </div> 
-</div>
+    {% endif %}
+
+    <h5 class="mt-4">Контакты</h5>
+    <div class="row g-3">
+        
+        <div class="col-md-6">
+            <strong>Email:</strong> 
+            {% if user.is_authenticated %}
+                <a href="mailto:{{ profile_user.email }}">{{ profile_user.email }}</a>
+            {% else %}
+                <span class="text-muted"><i class="fas fa-lock"></i> Войдите, чтобы видеть</span>
+            {% endif %}
+        </div>
+
+        <div class="col-md-6">
+            <strong>Телефон:</strong>
+            {% if show.phone %}
+                {% if profile_user.phone %}
+                    <a href="tel:{{ profile_user.phone }}" class="text-decoration-none">{{ profile_user.phone }}</a>
+                {% else %}
+                    <span class="text-muted">-</span>
+                {% endif %}
+            {% else %}
+                <span class="text-muted"><i class="fas fa-lock"></i> Скрыто</span>
+            {% endif %}
+        </div>
+
+        <div class="col-md-6">
+            <strong>Telegram:</strong>
+            {% if show.telegram %}
+                {% if profile_user.telegram %}
+                    <a href="https://t.me/{{ profile_user.telegram|cut:'@' }}" target="_blank" class="text-decoration-none">
+                        <i class="fab fa-telegram text-primary"></i> {{ profile_user.telegram }}
+                    </a>
+                {% else %}
+                    <span class="text-muted">-</span>
+                {% endif %}
+            {% else %}
+                <span class="text-muted"><i class="fas fa-lock"></i> Скрыто</span>
+            {% endif %}
+        </div>
+
+        <div class="col-md-6">
+            <strong>Instagram:</strong>
+            {% if show.instagram %}
+                {% if profile_user.instagram %}
+                    <a href="{{ profile_user.instagram }}" target="_blank" class="text-decoration-none text-danger">
+                        <i class="fab fa-instagram"></i> Перейти
+                    </a>
+                {% else %}
+                    <span class="text-muted">-</span>
+                {% endif %}
+            {% else %}
+                <span class="text-muted"><i class="fas fa-lock"></i> Скрыто</span>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-6">
+            <strong>LinkedIn:</strong>
+            {% if show.linkedin %}
+                {% if profile_user.linkedin %}
+                    <a href="{{ profile_user.linkedin }}" target="_blank" class="text-decoration-none text-primary">
+                        <i class="fab fa-linkedin"></i> Профиль
+                    </a>
+                {% else %}
+                    <span class="text-muted">-</span>
+                {% endif %}
+            {% else %}
+                <span class="text-muted"><i class="fas fa-lock"></i> Скрыто</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <h4 class="mt-5">История активности</h4>
+    <hr>
+    </div>
 
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog">

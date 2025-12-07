@@ -3,7 +3,7 @@
 
 {% block title %}
     {% if request.user == user_to_edit %}
-        Редактирование моего профиля
+        Редактирование профиля
     {% else %}
         Редактирование (Админ): {{ user_to_edit.get_full_name }}
     {% endif %}
@@ -12,39 +12,194 @@
 {% block content %}
 <div class="container my-5">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-sm">
-
-                {% if request.user == user_to_edit %}
-                    <div class="card-header bg-primary text-white">
-                        <h3>Редактирование профиля</h3>
+        <div class="col-lg-10">
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-header bg-primary text-white p-4 rounded-top-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-1 fw-bold">
+                                    {% if request.user == user_to_edit %}
+                                        Редактирование профиля
+                                    {% else %}
+                                        <i class="fas fa-gavel"></i> Админ-режим: {{ user_to_edit.get_full_name }}
+                                    {% endif %}
+                                </h3>
+                                <p class="mb-0 opacity-75">Заполните информацию о себе и настройте приватность.</p>
+                            </div>
+                            {% if user_to_edit.photo %}
+                                <img src="{{ user_to_edit.photo.url }}" class="rounded-circle border border-2 border-white" width="60" height="60" style="object-fit: cover;">
+                            {% endif %}
+                        </div>
                     </div>
-                {% else %}
-                    <div class="card-header bg-warning text-dark">
-                        <h3><i class="fas fa-gavel"></i> Редактирование от имени модератора</h3>
+
+                    <div class="card-body p-5">
+                        
+                        <h5 class="text-primary mb-3"><i class="fas fa-user-circle"></i> Основное</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Фото профиля</label>
+                                {{ form.photo }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Фамилия</label>
+                                {{ form.last_name }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Имя</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Отчество</label>
+                                {{ form.patronymic }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Дата рождения</label>
+                                {{ form.birth_date }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Пол</label>
+                                {{ form.gender }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Город</label>
+                                {{ form.city }}
+                            </div>
+                        </div>
+
+                        <hr class="text-muted my-4">
+
+                        <h5 class="text-primary mb-3"><i class="fas fa-university"></i> Учеба / Работа</h5>
+                        <div class="row g-3 mb-4">
+                            {% if user_to_edit.role == 'worker' or user_to_edit.role == 'head_admin' %}
+                                <div class="col-md-6">
+                                    <label class="form-label">Должность</label>
+                                    {{ form.job_title }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Кабинет</label>
+                                    {{ form.office_location }}
+                                </div>
+                            {% else %}
+                                <div class="col-md-4">
+                                    <label class="form-label">Факультет</label>
+                                    {{ form.faculty }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Курс</label>
+                                    {{ form.course }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Группа</label>
+                                    {{ form.group }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <hr class="text-muted my-4">
+
+                        <h5 class="text-primary mb-3"><i class="fas fa-shield-alt"></i> Контакты и Приватность</h5>
+                        <div class="alert alert-info py-2 small">
+                            <i class="fas fa-info-circle"></i> Настройте, кто может видеть ваши данные. Администрация видит их всегда.
+                        </div>
+
+                        <div class="row align-items-end mb-3">
+                            <div class="col-md-7">
+                                <label class="form-label fw-bold"><i class="fas fa-phone-alt text-secondary"></i> Телефон</label>
+                                {{ form.phone }}
+                            </div>
+                            {% if request.user == user_to_edit %}
+                            <div class="col-md-5">
+                                <label class="form-label small text-muted">Кто видит?</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
+                                    {{ form.phone_privacy }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row align-items-end mb-3">
+                            <div class="col-md-7">
+                                <label class="form-label fw-bold"><i class="fab fa-telegram text-primary"></i> Telegram</label>
+                                {{ form.telegram }}
+                            </div>
+                            {% if request.user == user_to_edit %}
+                            <div class="col-md-5">
+                                <label class="form-label small text-muted">Кто видит?</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
+                                    {{ form.telegram_privacy }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row align-items-end mb-3">
+                            <div class="col-md-7">
+                                <label class="form-label fw-bold"><i class="fab fa-instagram text-danger"></i> Instagram</label>
+                                {{ form.instagram }}
+                            </div>
+                            {% if request.user == user_to_edit %}
+                            <div class="col-md-5">
+                                <label class="form-label small text-muted">Кто видит?</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
+                                    {{ form.instagram_privacy }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row align-items-end mb-4">
+                            <div class="col-md-7">
+                                <label class="form-label fw-bold"><i class="fab fa-linkedin text-primary"></i> LinkedIn</label>
+                                {{ form.linkedin }}
+                            </div>
+                            {% if request.user == user_to_edit %}
+                            <div class="col-md-5">
+                                <label class="form-label small text-muted">Кто видит?</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
+                                    {{ form.linkedin_privacy }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <hr class="text-muted my-4">
+
+                        <h5 class="text-primary mb-3"><i class="fas fa-pen-nib"></i> О себе (Bio)</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                {{ form.about_me }}
+                            </div>
+                        </div>
+                        {% if request.user == user_to_edit %}
+                        <div class="row justify-content-end">
+                            <div class="col-md-5">
+                                <label class="form-label small text-muted">Кто видит описание?</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
+                                    {{ form.about_me_privacy }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between align-items-center mt-5">
+                            <a href="{% url 'my_profile' %}" class="btn btn-outline-secondary px-4">Отмена</a>
+                            <button type="submit" class="btn btn-success btn-lg px-5 shadow">
+                                <i class="fas fa-save"></i> Сохранить
+                            </button>
+                        </div>
+
                     </div>
-                {% endif %}
-
-                <div class="card-body p-4">
-                    {% if request.user != user_to_edit %}
-                         <h4 class="mb-3">Вы редактируете: {{ user_to_edit.get_full_name }}</h4>
-                         <p class="text-muted">Изменения будут сохранены немедленно. Поля приватности недоступны для редактирования.</p>
-                    {% else %}
-                         <p class="text-muted">Ваши изменения будут сохранены немедленно.</p>
-                    {% endif %}
-
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-
-                        {{ form.as_p }} 
-
-                        <button type="submit" class="btn btn-success mt-3">
-                            <i class="fas fa-save"></i> Сохранить изменения
-                        </button>
-                        <a href="{% url 'public_profile' user_to_edit.pk %}" class="btn btn-secondary mt-3">Отмена</a>
-                    </form>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>

@@ -16,6 +16,9 @@ class Event(models.Model):
     is_approved = models.BooleanField(default=False, verbose_name="Одобрено")
     is_completed = models.BooleanField(default=False, verbose_name="Завершено")
     
+    # НОВОЕ ПОЛЕ: Видимость для гостей
+    is_public_for_guests = models.BooleanField(default=False, verbose_name="Видно для гостей (без регистрации)")
+    
     max_participants = models.PositiveIntegerField(null=True, blank=True, verbose_name="Макс. участников")
     participants = models.ManyToManyField(User, related_name="attending_events", blank=True, verbose_name="Участники")
 
