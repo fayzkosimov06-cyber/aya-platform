@@ -1,47 +1,60 @@
 {% load static %}
 <a href="{% url 'public_profile' volunteer.pk %}" class="text-decoration-none text-dark d-block h-100">
-    <div class="board-of-honor-card text-center p-4 h-100 border rounded shadow-sm bg-white" 
-         style="position: relative; z-index: 0; overflow: hidden; isolation: isolate; transform: translateZ(0);">
+    <div class="board-of-honor-card text-center p-4 h-100 border rounded shadow-sm bg-white">
         
-        <div class="glowing-border-container mx-auto mb-3
-            {% if volunteer.role == 'president' %}president
-            {% elif volunteer.role == 'leader' and volunteer.is_active_volunteer_title %}leader-active
-            {% elif volunteer.role == 'leader' %}leader
-            {% elif volunteer.school_leader_of.exists %}school
-            {% elif volunteer.is_active_volunteer_title %}active{% endif %}"
-            style="width: 110px; height: 110px; padding: 3px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 10px;">
+        <div style="width: 140px; height: 140px; min-width: 140px; min-height: 140px; margin: 0 auto 15px auto; position: relative;">
             
-            {% if volunteer.photo and volunteer.photo.url %}
-                <img src="{{ volunteer.photo.url }}" alt="Фото" 
-                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-            {% else %}
-                {% if volunteer.gender == 'F' %}
-                    <img src="{% static 'img/female_avatar.png' %}" alt="Аватар" 
-                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+            <div class="pulse-container w-100 h-100"
+                 style="
+                 padding: 4px;
+                 border-radius: 50%;
+                 /* ЛОГИКА ЦВЕТОВ (Градиенты) */
+                 {% if volunteer.role == 'president' %}
+                    background: conic-gradient(from var(--angle), #FFD700, #FCE686, #FFD700); --glow-rgb: 255, 215, 0;
+                 {% elif volunteer.role == 'leader' and volunteer.school_leader_of.exists %}
+                    background: conic-gradient(from var(--angle), #9400D3, #00CED1, #9400D3); --glow-rgb: 148, 0, 211;
+                 {% elif volunteer.role == 'leader' %}
+                    background: conic-gradient(from var(--angle), #9400D3, #BA55D3, #9400D3); --glow-rgb: 148, 0, 211;
+                 {% elif volunteer.school_leader_of.exists %}
+                    background: conic-gradient(from var(--angle), #00CED1, #40E0D0, #00CED1); --glow-rgb: 0, 206, 209;
+                 {% elif volunteer.is_active_volunteer_title %}
+                    background: conic-gradient(from var(--angle), #32CD32, #00FF7F, #32CD32); --glow-rgb: 50, 205, 50;
+                 {% else %}
+                    background: #dee2e6; animation: none;
+                 {% endif %}
+                 ">
+                
+                {% if volunteer.photo and volunteer.photo.url %}
+                    <img src="{{ volunteer.photo.url }}" class="profile-photo-round" alt="Фото">
                 {% else %}
-                    <img src="{% static 'img/male_avatar.png' %}" alt="Аватар" 
-                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                    {% if volunteer.gender == 'F' %}
+                        <img src="{% static 'img/female_avatar.png' %}" class="profile-photo-round" alt="Аватар">
+                    {% else %}
+                        <img src="{% static 'img/male_avatar.png' %}" class="profile-photo-round" alt="Аватар">
+                    {% endif %}
                 {% endif %}
-            {% endif %}
+            </div>
         </div>
         
-        <div style="position: relative; z-index: 2;">
-            <h6 class="card-title fw-bold mt-2">{{ volunteer.first_name }} {{ volunteer.last_name }}</h6>
-            
-            <p class="card-text small mb-0 
-                {% if volunteer.role == 'president' %}status-text status-president
-                {% elif volunteer.role == 'leader' %}status-text status-leader
-                {% elif volunteer.school_leader_of.exists %}status-text status-school
-                {% else %}text-muted{% endif %}">
-                
-                {% if volunteer.role == 'leader' and volunteer.led_direction %}
-                    Руководитель "{{ volunteer.led_direction.name }}"
-                {% elif volunteer.school_leader_of.exists %}
-                    Руководитель школы
-                {% else %}
-                    {{ volunteer.get_role_display_custom }}
+        <h6 class="card-title fw-bold mt-2 text-truncate px-1">{{ volunteer.first_name }} {{ volunteer.last_name }}</h6>
+        
+        <div class="small mb-0 fw-bold px-1" style="min-height: 40px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+             {% if volunteer.role == 'president' %}
+                <span style="color: #FFD700;">Президент</span>
+            {% else %}
+                {% if volunteer.role == 'leader' %}
+                    <span style="color: #9400D3;">Руководитель напр.</span>
                 {% endif %}
-            </p>
+                {% if volunteer.school_leader_of.exists %}
+                    <span style="color: #00CED1;">Руководитель школы</span>
+                {% endif %}
+                {% if volunteer.is_active_volunteer_title %}
+                    <span style="color: #32CD32;">Активный волонтер</span>
+                {% endif %}
+                {% if volunteer.role == 'volunteer' and not volunteer.is_active_volunteer_title and not volunteer.school_leader_of.exists %}
+                    <span class="text-muted fw-normal">Волонтер</span>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
 </a>

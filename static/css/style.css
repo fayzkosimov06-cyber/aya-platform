@@ -1,19 +1,19 @@
-/* static/css/style.css */
+/* static/css/style.css - ФИНАЛЬНАЯ ВЕРСИЯ */
 
 :root {
-    /* --- НОВАЯ ЦВЕТОВАЯ ГАММА (СИНЯЯ) --- */
-    --primary-color: #0E3644;       /* Глубокий темно-синий (фон, шапка) */
-    --primary-light: #2a6f97;       /* Светлее (для кнопок) */
-    --accent-color: #00C4CC;        /* Бирюзовый/Циан (акценты вместо оранжевого) */
+    --primary-color: #0E3644;
+    --primary-light: #2a6f97;
+    --accent-color: #00C4CC;
     --text-dark: #212529;
     --text-light: #f8f9fa;
-    --body-bg: #F0F4F8;             /* Очень светло-голубой фон страницы */
+    --body-bg: #F0F4F8;
     
-    /* Цвета статусов для рамок */
-    --president-color: #FFD700;     /* Золото */
-    --leader-color: #9400D3;        /* Фиолетовый */
-    --school-color: #00CED1;        /* Бирюзовый */
-    --active-color: #28a745;        /* Зеленый */
+    /* ЦВЕТА СТАТУСОВ */
+    --col-president: #FFD700;
+    --col-leader: #9400D3;
+    --col-school: #00CED1;
+    --col-active: #32CD32;
+    --col-default: #dee2e6;
 }
 
 body {
@@ -24,151 +24,111 @@ body {
     line-height: 1.6;
 }
 
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
-    color: var(--primary-color);
-}
+h1, h2, h3, h4, h5, h6 { font-weight: 700; color: var(--primary-color); }
 
-/* --- NAVBAR --- */
-.navbar {
-    background-color: var(--primary-color);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
+/* NAVBAR */
+.navbar { background-color: var(--primary-color); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
 .navbar-brand img { height: 40px; margin-right: 10px; }
 .nav-link { color: rgba(255,255,255,0.85) !important; transition: 0.3s; }
 .nav-link:hover, .nav-link.active { color: #fff !important; transform: translateY(-1px); }
 .dropdown-menu { border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
 
-/* --- КНОПКИ (СИНИЕ И БИРЮЗОВЫЕ) --- */
-.btn-primary {
-    background-color: var(--primary-light);
-    border-color: var(--primary-light);
-}
-.btn-primary:hover {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-}
-.btn-cta {
-    background-color: var(--accent-color);
-    color: #fff;
-    font-weight: 700;
-    border-radius: 50px;
-    padding: 12px 30px;
-    border: none;
-    transition: 0.3s;
-}
-.btn-cta:hover {
-    background-color: #00979d;
-    color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 196, 204, 0.4);
-}
+/* BUTTONS */
+.btn-primary { background-color: var(--primary-light); border-color: var(--primary-light); }
+.btn-primary:hover { background-color: var(--primary-color); border-color: var(--primary-color); }
+.btn-cta { background-color: var(--accent-color); color: #fff; font-weight: 700; border-radius: 50px; padding: 12px 30px; border: none; transition: 0.3s; }
+.btn-cta:hover { background-color: #00979d; color: #fff; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 196, 204, 0.4); }
 
-/* --- ИСПРАВЛЕННЫЕ РАМКИ (БЕЗ РАЗРЫВОВ) --- */
+/* =========================================
+   РАМКИ И ФОТО (PULSE)
+   ========================================= */
 @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
-@keyframes spin { to { --angle: 360deg; } }
+@keyframes rotate-gradient { to { --angle: 360deg; } }
+@keyframes pulse-shadow {
+    0% { box-shadow: 0 0 0 0 rgba(var(--glow-rgb), 0.6); transform: scale(1); }
+    50% { box-shadow: 0 0 0 8px rgba(var(--glow-rgb), 0); transform: scale(1.02); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--glow-rgb), 0); transform: scale(1); }
+}
 
-.glowing-border-container {
-    --border-color: #ccc; /* Цвет по умолчанию */
+.pulse-container {
     position: relative;
+    border-radius: 50%;
     z-index: 1;
-    /* Используем conic-gradient с прозрачностью для создания "хвоста" кометы, 
-       это убирает жесткий стык белого цвета */
-    background-image: conic-gradient(from var(--angle), transparent 20%, var(--border-color) 100%);
-    animation: spin 3s linear infinite;
-    padding: 4px; /* Толщина рамки */
-    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    background-color: var(--col-default); 
+    --glow-rgb: 200, 200, 200;
+    animation: rotate-gradient 3s linear infinite, pulse-shadow 2s infinite ease-in-out;
 }
 
-/* Назначение цветов переменной --border-color */
-.glowing-border-container.president { --border-color: var(--president-color); }
-.glowing-border-container.leader { --border-color: var(--leader-color); }
-.glowing-border-container.school { --border-color: var(--school-color); }
-.glowing-border-container.active { --border-color: var(--active-color); }
-/* Для смешанного статуса (Лидер + Активный) делаем полный градиент */
-.glowing-border-container.leader-active { 
-    background-image: conic-gradient(from var(--angle), var(--leader-color), var(--active-color), var(--leader-color)); 
+/* --- ФИНАЛЬНЫЙ ПРЕДОХРАНИТЕЛЬ (ИСПРАВЛЕНИЕ ОВАЛОВ) --- */
+
+/* 1. Глобальное правило для всех аватарок */
+img.profile-photo, 
+img.profile-photo-round,
+.profile-header img {
+    width: 260px !important;       /* Жесткая ширина */
+    height: 260px !important;      /* Жесткая высота (РОВНО КАК ШИРИНА) */
+    min-width: 260px !important;
+    min-height: 260px !important;
+    
+    aspect-ratio: 1 / 1 !important; /* Заставляет быть квадратом */
+    object-fit: cover !important;   /* Обрезает лишнее, чтобы не плющило */
+    border-radius: 50% !important;  /* Делает круг из квадрата */
+    
+    display: block;
+    margin: 0 auto;
 }
 
-.profile-photo {
-    background: #fff; /* Подложка под фото */
-    border-radius: 50%;
-    border: 3px solid #fff; /* Белое кольцо внутри цветной рамки */
-    z-index: 2;
-    position: relative;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+/* 2. Исключение: Внутри маленьких карточек (волонтеры) */
+/* Там размеры задает контейнер (140px), а картинка подстраивается */
+.pulse-container img.profile-photo-round,
+.pulse-container img {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;       /* Сбрасываем ограничение */
+    min-height: 0 !important;
+    border: 3px solid #fff;
+    background: #fff;
+}
+
+/* 2. Исключение: Внутри маленьких рамок (карточек) мы разрешаем фото занимать весь контейнер */
+.pulse-container img.profile-photo-round,
+.pulse-container img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important; /* Снимаем ограничение внутри рамки */
+    max-height: none !important;
+    aspect-ratio: 1 / 1;
+    border: 3px solid #fff;
+    background: #fff;
 }
 
 /* ЦВЕТНОЙ ТЕКСТ */
 .status-text { font-weight: bold; }
-.status-president { color: var(--president-color); }
-.status-leader { color: var(--leader-color); }
-.status-school { color: var(--school-color); }
-.status-active { color: var(--active-color); }
+.status-president { color: var(--col-president); }
+.status-leader { color: var(--col-leader); }
+.status-school { color: var(--col-school); }
+.status-active { color: var(--col-active); }
 
-/* --- КАРТОЧКИ --- */
-.card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    transition: 0.3s;
-}
+/* КАРТОЧКИ */
+.card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); transition: 0.3s; }
 .card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+.board-of-honor-card { background: #fff; transition: 0.3s; position: relative; z-index: 1; }
+.board-of-honor-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 10; }
 
-/* --- ДИЗАЙН МЕРОПРИЯТИЙ (ВАРИАНТ А) --- */
-.event-card-img-wrapper {
-    height: 200px;
-    overflow: hidden;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    position: relative;
-}
-.event-card-img-wrapper img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: 0.5s;
-}
+/* МЕРОПРИЯТИЯ */
+.event-card-img-wrapper { height: 200px; overflow: hidden; position: relative; }
+.event-card-img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
 .card:hover .event-card-img-wrapper img { transform: scale(1.05); }
-
-.event-meta {
-    font-size: 0.9rem;
-    color: var(--secondary-color);
-    background-color: #f8f9fa;
-    padding: 8px 15px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
+.event-card-img-fixed { width: 100%; height: 220px; object-fit: cover; display: block; }
+.event-meta { font-size: 0.9rem; color: #6c757d; background-color: #f8f9fa; padding: 8px 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; }
 .event-meta i { color: var(--accent-color); }
 
-/* --- HERO SECTION (ГЛАВНАЯ) --- */
-.hero-section {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 100px 0;
-    margin-top: -20px;
-    position: relative;
-    overflow: hidden;
-}
-.hero-bg-image {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: url('../img/bg_university.jpg') no-repeat center center;
-    background-size: cover;
-    opacity: 0.2; /* Сильное затемнение */
-}
+/* HERO SECTION */
+.hero-section { background-color: var(--primary-color); color: white; padding: 100px 0; margin-top: -20px; position: relative; overflow: hidden; }
+.hero-bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('../img/bg_university.jpg') no-repeat center center; background-size: cover; opacity: 0.2; }
 .hero-content { position: relative; z-index: 2; }
-
-/* --- О НАС (ИКОНКИ) --- */
-.feature-icon {
-    width: 60px; height: 60px;
-    background-color: rgba(0, 196, 204, 0.1);
-    color: var(--accent-color);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-}
+.feature-icon { width: 60px; height: 60px; background-color: rgba(0, 196, 204, 0.1); color: var(--accent-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1rem; }

@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block title %}Профиль {{ user.get_full_name }}{% endblock %}
 
 {% block content %}
@@ -6,15 +8,50 @@
 <div class="container">
     <div class="row">
         <div class="col-md-4 text-center">
-            <img src="{{ user.photo.url }}" class="rounded-circle profile-photo" alt="Фото профиля">
+            
+            <div style="width: 280px; height: 280px; min-width: 280px; margin: 0 auto 20px auto; position: relative;">
+                
+                <div class="pulse-container w-100 h-100"
+                     style="
+                     padding: 6px;
+                     border-radius: 50%;
+                     /* ЛОГИКА ЦВЕТОВ (Используем переменную user, так как это public_profile) */
+                     {% if user.role == 'president' %}
+                        background: conic-gradient(from var(--angle), #FFD700, #FCE686, #FFD700); --glow-rgb: 255, 215, 0;
+                     {% elif user.role == 'leader' and user.school_leader_of.exists %}
+                        background: conic-gradient(from var(--angle), #9400D3, #00CED1, #9400D3); --glow-rgb: 148, 0, 211;
+                     {% elif user.role == 'leader' %}
+                        background: conic-gradient(from var(--angle), #9400D3, #BA55D3, #9400D3); --glow-rgb: 148, 0, 211;
+                     {% elif user.school_leader_of.exists %}
+                        background: conic-gradient(from var(--angle), #00CED1, #40E0D0, #00CED1); --glow-rgb: 0, 206, 209;
+                     {% elif user.is_active_volunteer_title %}
+                        background: conic-gradient(from var(--angle), #32CD32, #00FF7F, #32CD32); --glow-rgb: 50, 205, 50;
+                     {% else %}
+                        background: #dee2e6; animation: none;
+                     {% endif %}
+                     ">
+                    
+                    {% if user.photo and user.photo.url %}
+                        <img src="{{ user.photo.url }}" class="profile-photo" alt="Фото профиля">
+                    {% else %}
+                        {% if user.gender == 'F' %}
+                            <img src="{% static 'img/female_avatar.png' %}" class="profile-photo" alt="Аватар">
+                        {% else %}
+                            <img src="{% static 'img/male_avatar.png' %}" class="profile-photo" alt="Аватар">
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
             <h3 class="mt-3">{{ user.get_full_name }}</h3>
             <p class="text-muted">{{ user.get_role_display_custom }}</p>
         </div>
+        
         <div class="col-md-8 pt-4">
             <h4>Основная информация</h4>
             <hr>
-            <p><strong>Факультет:</strong> {{ user.faculty }}</p>
-            <p><strong>Курс:</strong> {{ user.course }}</p>
+            <p><strong>Факультет:</strong> {{ user.faculty|default:"Не указан" }}</p>
+            <p><strong>Курс:</strong> {{ user.course|default:"-" }}</p>
             
             {% if user.telegram_privacy == 'public' and user.telegram %}
             <p><strong>Telegram:</strong> {{ user.telegram }}</p>
