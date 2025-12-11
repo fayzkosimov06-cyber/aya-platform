@@ -471,3 +471,19 @@ def admin_edit_user_view(request, pk):
 def audit_log_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
     return render(request, 'users/audit_log.html', {'audit_logs': AuditLog.objects.all()})
+
+# ... (existing imports)
+
+@login_required
+def mark_all_notifications_as_read_view(request):
+    """Marks all unread notifications for the current user as read."""
+    unread_notifications = Notification.objects.filter(recipient=request.user, is_read=False)
+    unread_count = unread_notifications.count()
+    
+    if unread_count > 0:
+        unread_notifications.update(is_read=True)
+        messages.success(request, f"Все уведомления ({unread_count}) отмечены как прочитанные.")
+    else:
+        messages.info(request, "У вас нет непрочитанных уведомлений.")
+        
+    return redirect('notifications')

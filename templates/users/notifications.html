@@ -4,20 +4,40 @@
 
 {% block content %}
 <div class="container my-5">
-    <h2 class="mb-4">Все Уведомления</h2>
-    <div class="card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Все Уведомления</h2>
+        
+        {% if notifications %}
+            <a href="{% url 'mark_all_notifications_as_read' %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-check-double me-1"></i> Прочитать все
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="card shadow-sm border-0">
         <div class="list-group list-group-flush">
             {% for notification in notifications %}
                 <a href="{% url 'mark_notification_as_read' notification.pk %}" 
-                   class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-info{% endif %}">
-                    <div class="d-flex w-100 justify-content-between">
-                        <p class="mb-1">{{ notification.message }}</p>
-                        <small class="text-muted">{{ notification.created_at|timesince }} назад</small>
+                   class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-info{% endif %} p-3">
+                    <div class="d-flex w-100 justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1 text-dark">{{ notification.message }}</p>
+                            <small class="text-muted">
+                                <i class="far fa-clock me-1"></i> {{ notification.created_at|timesince }} назад
+                            </small>
+                        </div>
+                        {% if not notification.is_read %}
+                            <span class="badge bg-primary rounded-pill ms-2" title="Непрочитано">●</span>
+                        {% endif %}
                     </div>
                 </a>
             {% empty %}
-                <div class="list-group-item">
-                    <p class="text-muted text-center my-3">У вас пока нет уведомлений.</p>
+                <div class="list-group-item text-center py-5">
+                    <div class="text-muted mb-3">
+                        <i class="far fa-bell-slash fa-3x"></i>
+                    </div>
+                    <h5>У вас пока нет уведомлений</h5>
+                    <p class="text-muted small">Здесь будут появляться важные сообщения и новости.</p>
                 </div>
             {% endfor %}
         </div>

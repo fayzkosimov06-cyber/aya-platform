@@ -50,4 +50,6 @@ urlpatterns = [
     # Уведомления
     path('notifications/', views.notification_list_view, name='notifications'),
     path('notifications/read/<int:pk>/', views.mark_notification_as_read_view, name='mark_notification_as_read'),
+    # NEW: Mark all as read
+    path('notifications/read-all/', views.mark_all_notifications_as_read_view, name='mark_all_notifications_as_read'),
 ]
