@@ -66,9 +66,11 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; color: var(--primary-color); }
 /* !!! ГЛАВНОЕ ИСПРАВЛЕНИЕ ДЛЯ ФОТО !!! */
 /* 1. Глобальное правило: Фото профиля НЕ МОЖЕТ быть больше 280px */
 /* Это спасет страницу профиля от гигантских фото */
+/* !!! ГЛАВНОЕ ИСПРАВЛЕНИЕ ДЛЯ ФОТО !!! */
 img.profile-photo, 
-img.profile-photo-round {
-    max-width: 280px !important; /* Не больше 280px */
+img.profile-photo-round,
+.profile-header img { /* <-- ДОБАВИЛ ВОТ ЭТУ СТРОЧКУ */
+    max-width: 280px !important;
     max-height: 280px !important;
     width: 100%;
     height: auto;
@@ -116,3 +118,36 @@ img.profile-photo-round {
 .hero-bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('../img/bg_university.jpg') no-repeat center center; background-size: cover; opacity: 0.2; }
 .hero-content { position: relative; z-index: 2; }
 .feature-icon { width: 60px; height: 60px; background-color: rgba(0, 196, 204, 0.1); color: var(--accent-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1rem; }
+
+/* --- ИСПРАВЛЕНИЯ UI (ДОБАВИТЬ В КОНЕЦ) --- */
+
+/* 1. Чтобы длинный текст "НичегоНичего..." переносился и не улетал */
+body, p, h1, h2, h3, h4, h5, h6, div {
+    overflow-wrap: anywhere; /* Принудительный разрыв длинных слов */
+    word-break: break-word;
+}
+
+/* 2. Исправление колокольчика уведомлений */
+.notification-bell {
+    position: relative;
+    display: inline-block;
+}
+.notification-bell .badge {
+    position: absolute;
+    top: 5px;       /* Поднимаем выше */
+    right: 0px;     /* Сдвигаем правее */
+    font-size: 0.6rem;
+    padding: 0.25em 0.4em;
+    transform: translate(25%, -25%); /* Точное центрирование на углу */
+}
+
+/* 3. Гарантия, что выпадающие списки (Select2) будут поверх всего */
+.select2-container--open {
+    z-index: 9999999 !important;
+}
+
+/* 4. Гарантия, что меню профиля (Navbar) выше фильтров */
+.navbar {
+    z-index: 1000 !important;
+}
+

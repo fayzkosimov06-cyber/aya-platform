@@ -27,7 +27,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top" style="z-index: 1000;">
         <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">
                 <img src="{% static 'img/logo_aya.png' %}" alt="Логотип" style="height: 40px; margin-right: 10px;"> AYA
@@ -55,12 +55,14 @@
                 </ul>
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
-                    <li class="nav-item me-3">
-                        <a class="nav-link notification-bell" href="{% url 'notifications' %}">
-                            <i class="fas fa-bell"></i>
-                            {% if unread_notifications_count %}
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ unread_notifications_count }}</span>
-                            {% endif %}
+                    <li class="nav-item me-3 d-flex align-items-center">
+                        <a class="nav-link" href="{% url 'notifications' %}">
+                            <div class="notification-wrapper">
+                                <i class="fas fa-bell fa-lg"></i>
+                                {% if unread_notifications_count %}
+                                    <span class="notification-badge">{{ unread_notifications_count }}</span>
+                                {% endif %}
+                            </div>
                         </a>
                     </li>
                     <li class="nav-item dropdown">
@@ -132,12 +134,17 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
     <script>
-        // Автоматическая активация Select2 для всех селектов с классом 'use-select2'
         $(document).ready(function() {
-            $('.use-select2').select2({
-                width: '100%',
-                placeholder: "Выберите из списка...",
-                allowClear: true
+            $('.use-select2').each(function() {
+                $(this).select2({
+                    width: '100%',
+                    // Теперь берем текст из html-атрибута data-placeholder
+                    placeholder: $(this).data('placeholder') || "Выберите...",
+                    allowClear: true,
+                    // Это решает проблему, когда список прячется ВНУТРИ карточки.
+                    // Теперь список будет открываться поверх всего сайта.
+                    dropdownParent: $('body') 
+                });
             });
         });
     </script>
