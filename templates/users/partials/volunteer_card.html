@@ -3,7 +3,7 @@
 <a href="{% url 'public_profile' volunteer.pk %}" class="text-decoration-none text-dark d-block h-100">
     <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card position-relative" style="border-radius: 20px; background: #fff; transition: 0.3s; overflow: visible;">
         
-        <div class="vol-hat-corner"></div>
+        <div class="vol-hat-corner" style="top: -22px; left: -22px;"></div>
 
         <div class="card-body p-2">
             
@@ -12,7 +12,7 @@
                 <div class="pulse-container w-100 h-100"
                      style="
                      padding: 4px;
-                     border-radius: 50%;
+                     border-radius: 25px; /* SQUIRCLE */
                      /* ЛОГИКА ЦВЕТОВ */
                      {% if volunteer.role == 'president' %}
                         background: conic-gradient(from var(--angle), #FFD700, #FCE686, #FFD700); --glow-rgb: 255, 215, 0;
@@ -30,15 +30,15 @@
                      ">
                     
                     {% if volunteer.photo %}
-                        <img src="{{ volunteer.photo.url }}" class="profile-photo-round w-100 h-100" alt="Фото" 
-                             style="border-radius: 50%; object-fit: cover; border: 3px solid white; background: white;">
+                        <img src="{{ volunteer.photo.url }}" class="w-100 h-100 bg-white" alt="Фото" 
+                             style="object-fit: cover; border-radius: 22px; padding: 2px;">
                     {% else %}
                         {% if volunteer.gender == 'F' %}
-                            <img src="{% static 'img/female_avatar.png' %}" class="profile-photo-round w-100 h-100" alt="Аватар"
-                                 style="border-radius: 50%; object-fit: cover; border: 3px solid white; background: white;">
+                            <img src="{% static 'img/female_avatar.png' %}" class="w-100 h-100 bg-white" alt="Аватар"
+                                 style="object-fit: cover; border-radius: 22px; padding: 2px;">
                         {% else %}
-                            <img src="{% static 'img/male_avatar.png' %}" class="profile-photo-round w-100 h-100" alt="Аватар"
-                                 style="border-radius: 50%; object-fit: cover; border: 3px solid white; background: white;">
+                            <img src="{% static 'img/male_avatar.png' %}" class="w-100 h-100 bg-white" alt="Аватар"
+                                 style="object-fit: cover; border-radius: 22px; padding: 2px;">
                         {% endif %}
                     {% endif %}
                 </div>

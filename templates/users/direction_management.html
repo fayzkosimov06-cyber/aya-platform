@@ -1,94 +1,106 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Управление Направлениями{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <a href="{% url 'admin_dashboard' %}">&larr; Назад в Панель администратора</a>
-    <h2 class="my-4">Управление Направлениями</h2>
 
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header"><h5 class="mb-0">Создать новое направление</h5></div>
-        <div class="card-body">
+<div class="snow-container">
+    <div class="snow"></div><div class="snow"></div><div class="snow"></div>
+</div>
+
+<div class="container py-5" style="padding-top: 60px;">
+    
+    <div class="d-flex align-items-center justify-content-between mb-5 fade-in-up">
+        <div>
+            <a href="{% url 'admin_dashboard' %}" class="text-muted text-decoration-none small fw-bold text-uppercase ls-1">
+                <i class="fas fa-arrow-left me-1"></i> Назад
+            </a>
+            <h2 class="fw-bold mt-2">Управление Направлениями</h2>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-lg mb-5 fade-in-up" style="border-radius: 25px; animation-delay: 0.1s;">
+        <div class="card-body p-4 p-lg-5">
+            <h5 class="fw-bold mb-4"><i class="fas fa-plus-circle text-success me-2"></i>Создать новое направление</h5>
             <form action="{% url 'direction_create' %}" method="post">
                 {% csrf_token %}
-                <div class="input-group">
-                    <input type="text" name="name" class="form-control" placeholder="Название (например, IT, Экология)" required>
-                    <button class="btn btn-success" type="submit">Создать</button>
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <input type="text" name="name" class="form-control form-control-lg bg-light border-0 rounded-pill ps-4" 
+                               placeholder="Например: IT и Медиа" required>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-success w-100 btn-lg rounded-pill fw-bold shadow-sm" type="submit">Создать</button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header"><h5 class="mb-0">Существующие направления</h5></div>
-        <div class="card-body">
-            {% if directions %}
+    <div class="card border-0 shadow-lg fade-in-up" style="border-radius: 25px; animation-delay: 0.2s;">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-uppercase small text-muted">
                         <tr>
-                            <th>Название</th>
-                            <th>Руководители (Кликабельно)</th>
-                            <th style="width: 40%;">Управление</th>
-                            <th>Действия</th>
+                            <th class="ps-4 py-3">Название</th>
+                            <th class="py-3">Руководители</th>
+                            <th class="py-3">Назначить</th>
+                            <th class="pe-4 py-3 text-end">Действие</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="border-top-0">
                     {% for direction in directions %}
                         <tr>
-                            <td class="fw-bold">{{ direction.name }}</td>
+                            <td class="ps-4 fw-bold text-dark fs-5">{{ direction.name }}</td>
                             <td>
+                                <div class="d-flex align-items-center">
                                 {% for leader in direction.leaders.all %}
-                                    <a href="{% url 'public_profile' leader.pk %}" target="_blank" class="admin-link">
-                                        {{ leader.get_full_name }}
-                                    </a><br>
+                                    <a href="{% url 'public_profile' leader.pk %}" target="_blank" class="text-decoration-none me-2" title="{{ leader.get_full_name }}">
+                                        {% if leader.photo %}
+                                            <img src="{{ leader.photo.url }}" class="rounded-3 shadow-sm border border-white" width="40" height="40" style="object-fit: cover;">
+                                        {% else %}
+                                            <img src="{% static 'img/male_avatar.png' %}" class="rounded-3 shadow-sm border border-white" width="40" height="40">
+                                        {% endif %}
+                                    </a>
                                 {% empty %}
-                                    <span class="text-muted small">Нет руководителей</span>
+                                    <span class="badge bg-light text-muted border rounded-pill">Нет лидера</span>
                                 {% endfor %}
+                                </div>
                             </td>
-                            <td>
+                            <td style="min-width: 250px;">
                                 <form action="{% url 'assign_direction_leader' direction.pk %}" method="post" class="d-flex">
                                     {% csrf_token %}
-                                    <select name="leader" class="form-select form-select-sm me-2 use-select2">
-                                        <option value="">Найти волонтера...</option>
+                                    <select name="leader" class="form-select form-select-sm border-0 bg-light rounded-pill me-2">
+                                        <option value="">Выбрать волонтера...</option>
                                         {% for volunteer in volunteers %}
-                                            <option value="{{ volunteer.pk }}">
-                                                {{ volunteer.get_full_name }} ({{ volunteer.username }})
-                                            </option>
+                                            <option value="{{ volunteer.pk }}">{{ volunteer.get_full_name }}</option>
                                         {% endfor %}
                                     </select>
-                                    <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">Добавить / Снять</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary rounded-circle" title="Сохранить"><i class="fas fa-check"></i></button>
                                 </form>
                             </td>
-                            <td>
-                                <form action="{% url 'direction_delete' direction.pk %}" method="post" onsubmit="return confirm('Удалить это направление?');">
+                            <td class="pe-4 text-end">
+                                <form action="{% url 'direction_delete' direction.pk %}" method="post" onsubmit="return confirm('Удалить?');">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    <button type="submit" class="btn btn-light text-danger rounded-circle hover-danger"><i class="fas fa-trash-alt"></i></button>
                                 </form>
                             </td>
                         </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center py-5 text-muted">Список пуст</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
             </div>
-            {% else %}
-            <p class="text-muted">Направлений пока нет.</p>
-            {% endif %}
         </div>
     </div>
 </div>
 
 <style>
-    .admin-link {
-        color: #212529; /* Черный цвет */
-        font-weight: 600; /* Жирный */
-        text-decoration: none; /* Без подчеркивания */
-        transition: color 0.2s;
-    }
-    .admin-link:hover {
-        color: #0E3644; /* Цвет бренда при наведении */
-        text-decoration: underline; /* Подчеркивание при наведении */
-    }
+    .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+    .hover-danger:hover { background-color: #ffe6e6; color: #dc3545; }
 </style>
 {% endblock %}

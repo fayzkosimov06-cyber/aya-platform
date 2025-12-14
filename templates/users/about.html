@@ -4,86 +4,126 @@
 {% block title %}{{ about_content.title }}{% endblock %}
 
 {% block content %}
-<div class="bg-dark text-white py-5" style="background: linear-gradient(45deg, #0E3644, #004e66);">
-    <div class="container text-center">
-        <h1 class="display-4 fw-bold mb-3">{{ about_content.title }}</h1>
-        <p class="lead mx-auto" style="max-width: 700px;">{{ about_content.description|linebreaksbr }}</p>
+
+<div class="snow-container">
+    <div class="snow"></div><div class="snow"></div><div class="snow"></div>
+</div>
+
+<div class="position-relative py-5 overflow-hidden" style="background-color: #0E3644; min-height: 400px; display: flex; align-items: center;">
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('{% static 'img/bg_university.jpg' %}') no-repeat center center; background-size: cover; opacity: 0.2;"></div>
+    
+    <div class="container text-center position-relative z-2">
+        <span class="badge bg-warning text-dark mb-3 px-3 py-2 rounded-pill text-uppercase fw-bold ls-1">Наша Миссия</span>
+        <h1 class="display-3 fw-bold mb-4 text-white">{{ about_content.title }}</h1>
+        <p class="lead mx-auto text-white-50" style="max-width: 800px; font-size: 1.25rem;">
+            {{ about_content.description|linebreaksbr }}
+        </p>
     </div>
 </div>
 
-<div class="container my-5">
-    <div class="row align-items-center mb-5">
+<div class="container my-5 py-4">
+    
+    <div class="row align-items-center mb-5 fade-in-up">
         <div class="col-lg-6 mb-4 mb-lg-0">
             {% if about_content.video_url %}
-                <div class="ratio ratio-16x9 rounded shadow overflow-hidden">
+                <div class="ratio ratio-16x9 rounded-4 shadow-lg overflow-hidden border border-4 border-white">
                     <iframe src="{{ about_content.video_url }}" allowfullscreen></iframe>
                 </div>
             {% else %}
-                <div class="bg-light rounded shadow d-flex align-items-center justify-content-center" style="height: 300px;">
-                    <i class="fas fa-university fa-4x text-muted"></i>
+                <div class="bg-light rounded-4 shadow-sm d-flex align-items-center justify-content-center text-center p-5" style="min-height: 350px; border: 1px solid #eee;">
+                    <div>
+                        <i class="fas fa-university fa-4x text-muted mb-3 opacity-25"></i>
+                        <p class="text-muted fw-bold">Здесь скоро появится видео о нас</p>
+                    </div>
                 </div>
             {% endif %}
         </div>
+        
         <div class="col-lg-6 ps-lg-5">
-            <h2 class="fw-bold text-primary mb-3">{{ about_content.mission_title }}</h2>
-            <p class="fs-5 text-muted">{{ about_content.mission_text|linebreaks }}</p>
+            <h2 class="fw-bold mb-3" style="color: #0E3644;">{{ about_content.mission_title }}</h2>
+            <div style="width: 50px; height: 4px; background: #00C4CC; margin-bottom: 25px;"></div>
             
-            <div class="row mt-4">
-                <div class="col-6 mb-3">
-                    <div class="d-flex align-items-center">
-                        <div class="feature-icon me-3"><i class="fas fa-users"></i></div>
-                        <h6 class="mb-0 fw-bold">Сильное<br>сообщество</h6>
+            <p class="fs-5 text-muted lh-lg mb-4">{{ about_content.mission_text|linebreaks }}</p>
+            
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <div class="d-flex align-items-center p-3 rounded-3 bg-white shadow-sm border">
+                        <div class="feature-icon-small me-3 bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold text-dark">Сильное<br>сообщество</h6>
+                        </div>
                     </div>
                 </div>
-                <div class="col-6 mb-3">
-                    <div class="d-flex align-items-center">
-                        <div class="feature-icon me-3"><i class="fas fa-heart"></i></div>
-                        <h6 class="mb-0 fw-bold">Реальная<br>помощь</h6>
+                <div class="col-sm-6">
+                    <div class="d-flex align-items-center p-3 rounded-3 bg-white shadow-sm border">
+                        <div class="feature-icon-small me-3 bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold text-dark">Реальная<br>помощь</h6>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row text-center g-4 py-5 bg-light rounded-4 mb-5">
+    <div class="row text-center g-4 py-5 bg-white rounded-4 shadow-sm mb-5 border fade-in-up" style="animation-delay: 0.2s;">
         <div class="col-md-4">
-            <h2 class="display-4 fw-bold text-primary">{{ about_content.stat_1_num }}</h2>
-            <p class="text-uppercase text-muted fw-bold">{{ about_content.stat_1_text }}</p>
+            <h2 class="display-4 fw-bold text-primary mb-0">{{ about_content.stat_1_num }}</h2>
+            <p class="text-uppercase text-muted fw-bold small ls-1 mt-2">{{ about_content.stat_1_text }}</p>
         </div>
         <div class="col-md-4 border-start border-end">
-            <h2 class="display-4 fw-bold text-primary">{{ about_content.stat_2_num }}</h2>
-            <p class="text-uppercase text-muted fw-bold">{{ about_content.stat_2_text }}</p>
+            <h2 class="display-4 fw-bold text-primary mb-0">{{ about_content.stat_2_num }}</h2>
+            <p class="text-uppercase text-muted fw-bold small ls-1 mt-2">{{ about_content.stat_2_text }}</p>
         </div>
         <div class="col-md-4">
-            <h2 class="display-4 fw-bold text-primary">{{ about_content.stat_3_num }}</h2>
-            <p class="text-uppercase text-muted fw-bold">{{ about_content.stat_3_text }}</p>
+            <h2 class="display-4 fw-bold text-primary mb-0">{{ about_content.stat_3_num }}</h2>
+            <p class="text-uppercase text-muted fw-bold small ls-1 mt-2">{{ about_content.stat_3_text }}</p>
         </div>
     </div>
     
-    <div class="row justify-content-center">
+    <div class="row justify-content-center fade-in-up" style="animation-delay: 0.3s;">
         <div class="col-lg-8 text-center">
-            <h3 class="mb-4">Свяжитесь с нами</h3>
-            <div class="d-flex justify-content-center gap-4 flex-wrap">
+            <h3 class="mb-4 fw-bold text-dark">Свяжитесь с нами</h3>
+            
+            <div class="d-flex justify-content-center gap-3 flex-wrap mb-4">
                 {% if about_content.instagram %}
-                    <a href="{{ about_content.instagram }}" class="btn btn-outline-danger btn-lg rounded-pill">
+                    <a href="{{ about_content.instagram }}" class="btn btn-outline-danger btn-lg rounded-pill px-4 hover-lift">
                         <i class="fab fa-instagram me-2"></i> Instagram
                     </a>
                 {% endif %}
                 {% if about_content.telegram %}
-                    <a href="{{ about_content.telegram }}" class="btn btn-outline-info btn-lg rounded-pill">
+                    <a href="{{ about_content.telegram }}" class="btn btn-outline-info btn-lg rounded-pill px-4 hover-lift">
                         <i class="fab fa-telegram me-2"></i> Telegram
                     </a>
                 {% endif %}
                 {% if about_content.email %}
-                    <a href="mailto:{{ about_content.email }}" class="btn btn-outline-dark btn-lg rounded-pill">
+                    <a href="mailto:{{ about_content.email }}" class="btn btn-outline-dark btn-lg rounded-pill px-4 hover-lift">
                         <i class="fas fa-envelope me-2"></i> Email
                     </a>
                 {% endif %}
             </div>
+            
             {% if about_content.address %}
-                <p class="mt-4 text-muted"><i class="fas fa-map-marker-alt me-2"></i> {{ about_content.address }}</p>
+                <div class="d-inline-block bg-light px-4 py-2 rounded-pill text-muted small">
+                    <i class="fas fa-map-marker-alt me-2 text-danger"></i> {{ about_content.address }}
+                </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<style>
+    /* Анимация и эффекты */
+    .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+    
+    .hover-lift { transition: transform 0.2s; }
+    .hover-lift:hover { transform: translateY(-3px); }
+    
+    .ls-1 { letter-spacing: 1px; }
+</style>
 {% endblock %}

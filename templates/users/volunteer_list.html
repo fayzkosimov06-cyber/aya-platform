@@ -1,38 +1,63 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}База данных волонтеров{% endblock %}
+{% block title %}Наши Волонтеры - AYA{% endblock %}
 
 {% block content %}
-<div class="container my-5">
+
+<div class="snow-container">
+    <div class="snow"></div><div class="snow"></div><div class="snow"></div>
+</div>
+
+<div class="container py-5" style="padding-top: 40px;">
     
-    <div class="d-flex align-items-center mb-4">
-        <h2 class="mb-0 me-3">База данных волонтеров</h2>
-        <span class="badge bg-primary rounded-pill fs-6 px-3 py-2 shadow-sm">
-            Найдено: {{ volunteers_count }}
-        </span>
+    <div class="text-center mb-5 fade-in-up">
+        <div class="d-inline-flex align-items-center bg-white border px-3 py-1 mb-3 rounded-pill shadow-sm">
+            <span class="badge bg-primary rounded-circle p-1 me-2"> </span>
+            <span class="fw-bold small text-uppercase text-dark ls-1">Команда AYA TGMU</span>
+        </div>
+        <h1 class="display-4 fw-bolder mb-3 text-dark">
+            База данных <span class="text-gradient">Волонтеров</span>
+        </h1>
+        <p class="lead text-muted mx-auto" style="max-width: 600px;">
+            Люди, которые меняют мир. Найди своих единомышленников.
+            <br>
+            <span class="badge bg-light text-dark border mt-2 px-3 py-2 rounded-pill">
+                Найдено анкет: <b>{{ volunteers_count }}</b>
+            </span>
+        </p>
     </div>
 
-    <div class="card shadow-sm mb-5 filter-panel" style="position: relative; z-index: 10; background-color: #fff;">
-        <div class="card-body">
+    <div class="card border-0 shadow-lg mb-5 filter-card fade-in-up" style="border-radius: 25px; overflow: hidden; z-index: 10; position: relative;">
+        <div style="height: 6px; background: linear-gradient(90deg, #0E3644, #00C4CC);"></div>
+        
+        <div class="card-body p-4 p-lg-5 bg-white">
+            <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-filter me-2 text-primary"></i>Поиск и Фильтрация</h5>
+            
             <form method="GET" action="{% url 'volunteer_list' %}">
                 <div class="row g-3">
-                    <div class="col-lg-12">
-                        <input type="text" name="query" class="form-control" placeholder="🔍 Поиск по ФИО..." value="{{ form_values.query|default:'' }}">
+                    <div class="col-lg-12 mb-2">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0 ps-3 rounded-start-pill"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" name="query" class="form-control form-control-lg bg-light border-0 rounded-end-pill ps-2" 
+                                   placeholder="Введите имя или фамилию..." value="{{ form_values.query|default:'' }}" style="font-size: 1rem;">
+                        </div>
                     </div>
                     
                     <div class="col-lg-3 col-md-6">
-                        <select name="status" class="form-select use-select2" data-placeholder="Выберите статус">
+                        <label class="small text-muted fw-bold mb-1 ms-2">Статус</label>
+                        <select name="status" class="form-select use-select2 border-0 bg-light rounded-3">
                             <option value="">Все статусы</option>
                             <option value="president" {% if form_values.status == 'president' %}selected{% endif %}>Президент</option>
-                            <option value="leader" {% if form_values.status == 'leader' %}selected{% endif %}>Руководитель направления</option>
+                            <option value="leader" {% if form_values.status == 'leader' %}selected{% endif %}>Руководитель напр.</option>
                             <option value="school_leader" {% if form_values.status == 'school_leader' %}selected{% endif %}>Руководитель школы</option>
                             <option value="active" {% if form_values.status == 'active' %}selected{% endif %}>Активный волонтер</option>
                         </select>
                     </div>
 
                     <div class="col-lg-3 col-md-6">
-                        <select name="direction" class="form-select use-select2" data-placeholder="Выберите направление">
+                        <label class="small text-muted fw-bold mb-1 ms-2">Направление</label>
+                        <select name="direction" class="form-select use-select2 border-0 bg-light rounded-3">
                             <option value="">Все направления</option>
                             {% for dir in directions %}
                                 <option value="{{ dir.id }}" {% if form_values.direction == dir.id|stringformat:"s" %}selected{% endif %}>{{ dir.name }}</option>
@@ -41,7 +66,8 @@
                     </div>
 
                     <div class="col-lg-3 col-md-6">
-                        <select name="faculty" class="form-select use-select2" data-placeholder="Выберите факультет">
+                        <label class="small text-muted fw-bold mb-1 ms-2">Факультет</label>
+                        <select name="faculty" class="form-select use-select2 border-0 bg-light rounded-3">
                             <option value="">Все факультеты</option>
                             {% for faculty in faculties %}
                                 <option value="{{ faculty }}" {% if form_values.faculty == faculty %}selected{% endif %}>{{ faculty }}</option>
@@ -50,7 +76,8 @@
                     </div>
 
                     <div class="col-lg-3 col-md-6">
-                        <select name="course" class="form-select use-select2" data-placeholder="Выберите курс">
+                        <label class="small text-muted fw-bold mb-1 ms-2">Курс</label>
+                        <select name="course" class="form-select use-select2 border-0 bg-light rounded-3">
                             <option value="">Все курсы</option>
                             {% for course in courses %}
                                 <option value="{{ course }}" {% if form_values.course == course|stringformat:"s" %}selected{% endif %}>{{ course }} курс</option>
@@ -59,7 +86,8 @@
                     </div>
 
                     <div class="col-lg-3 col-md-6">
-                        <select name="city" class="form-select use-select2" data-placeholder="Город / Регион">
+                        <label class="small text-muted fw-bold mb-1 ms-2">Город</label>
+                        <select name="city" class="form-select use-select2 border-0 bg-light rounded-3">
                             <option value="">Все города</option>
                             {% for city in cities %}
                                 <option value="{{ city }}" {% if form_values.city == city %}selected{% endif %}>{{ city }}</option>
@@ -68,35 +96,51 @@
                     </div>
 
                     <div class="col-lg-3 col-md-6">
-                        <select name="gender" class="form-select" data-placeholder="Пол">
-                            <option value="">Любой пол</option>
+                        <label class="small text-muted fw-bold mb-1 ms-2">Пол</label>
+                        <select name="gender" class="form-select border-0 bg-light rounded-3" style="height: 38px;">
+                            <option value="">Любой</option>
                             <option value="M" {% if form_values.gender == 'M' %}selected{% endif %}>Мужской</option>
                             <option value="F" {% if form_values.gender == 'F' %}selected{% endif %}>Женский</option>
                         </select>
                     </div>
                     
                     <div class="col-lg-6 col-md-12 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary me-2 w-100">Применить</button>
-                        <a href="{% url 'volunteer_list' %}" class="btn btn-outline-secondary w-100">Сбросить</a>
+                        <div class="d-flex w-100 gap-2">
+                            <button type="submit" class="btn btn-brand flex-grow-1 rounded-pill fw-bold">Применить</button>
+                            <a href="{% url 'volunteer_list' %}" class="btn btn-light border flex-grow-1 rounded-pill">Сбросить</a>
+                        </div>
                     </div>
                 </div>
             </form>
         </div>
     </div>
     
-    <div class="row g-4">
+    <div class="row g-4 fade-in-up" style="animation-delay: 0.2s;">
         {% for volunteer in volunteers %}
-            <div class="col-lg-3 col-md-4 col-sm-6">
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
                 {% include 'users/partials/volunteer_card.html' with volunteer=volunteer %}
             </div>
         {% empty %}
             <div class="col-12">
-                <div class="alert alert-warning text-center" role="alert">
-                    <h4 class="alert-heading"><i class="fas fa-search"></i> Никого не найдено</h4>
-                    <p>По вашему запросу волонтеры не найдены. Попробуйте изменить параметры фильтра.</p>
+                <div class="alert alert-light text-center py-5 shadow-sm border-0 rounded-4">
+                    <div class="mb-3"><i class="fas fa-ghost fa-3x text-muted opacity-25"></i></div>
+                    <h4 class="alert-heading fw-bold text-dark">Никого не найдено</h4>
+                    <p class="text-muted">Попробуйте изменить параметры поиска или сбросить фильтр.</p>
+                    <a href="{% url 'volunteer_list' %}" class="btn btn-outline-primary rounded-pill px-4 mt-2">Сбросить фильтры</a>
                 </div>
             </div>
         {% endfor %}
     </div>
 </div>
+
+<style>
+    /* Легкая анимация появления */
+    .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+    
+    /* Стили для Select2, чтобы они выглядели как наши инпуты */
+    .select2-container--default .select2-selection--single {
+        background-color: #f8f9fa !important; border: none !important; border-radius: 0.5rem !important; height: 38px !important; padding-top: 5px;
+    }
+</style>
 {% endblock %}

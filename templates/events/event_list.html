@@ -1,80 +1,103 @@
 {% extends "base.html" %}
-{% block title %}Мероприятия{% endblock %}
+{% load static %}
+
+{% block title %}Мероприятия - AYA{% endblock %}
 
 {% block content %}
-<div class="container my-5">
+
+<div class="snow-container">
+    <div class="snow"></div><div class="snow"></div><div class="snow"></div>
+</div>
+
+<div class="container py-5" style="padding-top: 60px;">
     
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-        <div>
-            <h2 class="fw-bold mb-0" style="color: #0E3644;">Афиша мероприятий</h2>
-            <p class="text-muted mb-0">Присоединяйся к нашим акциям</p>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 fade-in-up">
+        <div class="mb-3 mb-md-0">
+            <h1 class="display-5 fw-bolder mb-1 text-dark">Афиша событий</h1>
+            <p class="text-muted mb-0 lead">Присоединяйся, развивайся, действуй.</p>
         </div>
         {% if user.is_authenticated %}
-            <a href="{% url 'event_create' %}" class="btn btn-success rounded-pill px-4 shadow-sm">
-                <i class="fas fa-plus me-1"></i> Создать
+            <a href="{% url 'event_create' %}" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm hover-lift fw-bold">
+                <i class="fas fa-plus me-2"></i> Создать событие
             </a>
         {% endif %}
     </div>
 
-    <ul class="nav nav-pills mb-4 gap-2" id="eventsTab" role="tablist">
+    <div class="row mb-5 fade-in-up" style="animation-delay: 0.1s;">
+        <div class="col-lg-12">
+            <form method="GET" class="position-relative">
+                <input type="text" name="q" class="form-control form-control-lg border-0 shadow-sm ps-5 rounded-pill" 
+                       placeholder="Поиск по названию или локации..." value="{{ request.GET.q }}" style="height: 60px;">
+                <button type="submit" class="btn position-absolute top-50 start-0 translate-middle-y ms-3 border-0 bg-transparent text-muted">
+                    <i class="fas fa-search fa-lg"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <ul class="nav nav-pills mb-4 gap-3 justify-content-center justify-content-md-start fade-in-up" id="eventsTab" role="tablist" style="animation-delay: 0.2s;">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active rounded-pill fw-bold px-4" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">
-                Предстоящие
+            <button class="nav-link active rounded-pill fw-bold px-4 py-2" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">
+                📅 Предстоящие
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link rounded-pill fw-bold px-4" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button" role="tab">
-                Архив
+            <button class="nav-link rounded-pill fw-bold px-4 py-2" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button" role="tab">
+                📂 Архив
             </button>
         </li>
     </ul>
 
-    <div class="tab-content" id="eventsTabContent">
+    <div class="tab-content fade-in-up" id="eventsTabContent" style="animation-delay: 0.3s;">
         
         <div class="tab-pane fade show active" id="upcoming" role="tabpanel" tabindex="0">
             <div class="row g-4">
                 {% for event in upcoming_events %}
                 <div class="col-lg-4 col-md-6">
-                    <div class="card h-100 border-0 shadow-sm hover-lift overflow-hidden">
+                    <div class="card h-100 border-0 shadow-lg hover-lift overflow-hidden position-relative" style="border-radius: 30px;">
                         
-                        <div class="position-relative" style="height: 220px;">
+                        <div class="position-relative" style="height: 240px;">
                             {% if event.cover_image %}
-                                <img src="{{ event.cover_image.url }}" class="w-100 h-100" style="object-fit: cover;" alt="Обложка">
+                                <img src="{{ event.cover_image.url }}" class="w-100 h-100 object-fit-cover" alt="Обложка">
                             {% else %}
-                                <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-white">
-                                    <i class="fas fa-calendar-alt fa-3x"></i>
+                                <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-secondary">
+                                    <i class="fas fa-calendar-alt fa-4x opacity-25"></i>
                                 </div>
                             {% endif %}
                             
-                            <div class="position-absolute top-0 end-0 m-3 bg-white rounded-3 px-2 py-1 text-center shadow-sm" style="min-width: 50px;">
-                                <div class="small fw-bold text-danger text-uppercase" style="font-size: 0.7rem;">{{ event.start_time|date:"M" }}</div>
-                                <div class="fw-bold fs-4 lh-1 text-dark">{{ event.start_time|date:"d" }}</div>
+                            <div class="position-absolute top-0 end-0 m-3 bg-white shadow text-center d-flex flex-column justify-content-center" 
+                                 style="width: 60px; height: 60px; border-radius: 18px;">
+                                <span class="text-danger fw-bold small text-uppercase" style="line-height: 1;">{{ event.start_time|date:"M" }}</span>
+                                <span class="fw-bold fs-3 text-dark" style="line-height: 1;">{{ event.start_time|date:"d" }}</span>
                             </div>
                         </div>
 
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark mb-3">{{ event.title|truncatechars:50 }}</h5>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <h5 class="fw-bold text-dark mb-3 text-truncate-2">{{ event.title }}</h5>
                             
                             <div class="d-flex align-items-center text-muted small mb-2">
-                                <i class="far fa-clock text-warning me-3" style="width: 20px; text-align: center;"></i>
+                                <i class="far fa-clock text-warning me-2 fs-5"></i>
                                 <span class="fw-bold text-dark">{{ event.start_time|date:"H:i" }}</span>
                             </div>
                             
-                            <div class="d-flex align-items-center text-muted small">
-                                <i class="fas fa-map-marker-alt text-danger me-3" style="width: 20px; text-align: center;"></i>
+                            <div class="d-flex align-items-center text-muted small mb-4">
+                                <i class="fas fa-map-marker-alt text-danger me-2 fs-5 ps-1"></i>
                                 <span class="text-truncate">{{ event.location|default:"ТГМУ" }}</span>
                             </div>
-                        </div>
-                        
-                        <div class="card-footer bg-white border-0 pt-0 pb-4">
-                            <a href="{% url 'event_detail' event.pk %}" class="btn btn-outline-primary w-100 rounded-pill">Подробнее</a>
+                            
+                            <div class="mt-auto">
+                                <a href="{% url 'event_detail' event.pk %}" class="btn btn-outline-dark w-100 rounded-pill fw-bold">Подробнее</a>
+                            </div>
                         </div>
                     </div>
                 </div>
                 {% empty %}
-                    <div class="col-12 py-5 text-center text-muted bg-light rounded-3">
-                        <i class="far fa-calendar-times fa-3x mb-3"></i>
-                        <h4>Нет предстоящих мероприятий</h4>
+                    <div class="col-12 py-5 text-center">
+                        <div class="bg-light rounded-4 p-5 shadow-sm d-inline-block">
+                            <i class="far fa-calendar-times fa-4x text-muted mb-3 opacity-50"></i>
+                            <h4 class="text-dark">Нет предстоящих мероприятий</h4>
+                            <p class="text-muted">Отдыхайте, пока тихо. Скоро будет жарко! 🔥</p>
+                        </div>
                     </div>
                 {% endfor %}
             </div>
@@ -87,36 +110,40 @@
                     
                     {% if event.is_report_published or user.is_superuser or user == event.organizer or user.role in 'moderator,president,head_admin,worker' %}
                         
-                        <div class="card h-100 border-0 shadow-sm hover-lift overflow-hidden grayscale-hover">
-                            <div class="position-relative" style="height: 220px;">
+                        <div class="card h-100 border-0 shadow-sm hover-lift overflow-hidden grayscale-hover" style="border-radius: 30px;">
+                            <div class="position-relative" style="height: 240px;">
                                 {% if event.cover_image %}
-                                    <img src="{{ event.cover_image.url }}" class="w-100 h-100" style="object-fit: cover; filter: grayscale(100%); transition: 0.3s;" alt="Обложка">
+                                    <img src="{{ event.cover_image.url }}" class="w-100 h-100 object-fit-cover transition-img" alt="Обложка">
                                 {% else %}
                                     <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-muted">
-                                        <i class="fas fa-history fa-3x"></i>
+                                        <i class="fas fa-history fa-3x opacity-25"></i>
                                     </div>
                                 {% endif %}
                                 
-                                <div class="position-absolute top-0 start-0 m-2">
+                                <div class="position-absolute top-0 start-0 m-3">
                                     {% if not event.is_report_published %}
-                                        <span class="badge bg-warning text-dark shadow">ЧЕРНОВИК</span>
+                                        <span class="badge bg-warning text-dark shadow rounded-pill px-3 py-2">
+                                            <i class="fas fa-pen-nib me-1"></i> ЧЕРНОВИК
+                                        </span>
                                     {% else %}
-                                        <span class="badge bg-dark opacity-75 shadow">Завершено</span>
+                                        <span class="badge bg-dark bg-opacity-75 shadow rounded-pill px-3 py-2">
+                                            <i class="fas fa-check me-1"></i> Завершено
+                                        </span>
                                     {% endif %}
                                 </div>
                             </div>
                             
-                            <div class="card-body">
-                                <h6 class="card-title fw-bold text-muted mb-2">{{ event.title }}</h6>
-                                <p class="card-text small text-muted mb-0"><i class="far fa-calendar-check me-2"></i> {{ event.end_time|date:"d F Y" }}</p>
+                            <div class="card-body p-4">
+                                <h6 class="fw-bold text-dark mb-2 text-truncate">{{ event.title }}</h6>
+                                <p class="small text-muted mb-0"><i class="far fa-calendar-check me-2"></i> {{ event.end_time|date:"d F Y" }}</p>
                             </div>
 
-                            <div class="card-footer bg-white border-0 pb-3">
+                            <div class="card-footer bg-white border-0 p-3 pt-0">
                                 {% if event.is_report_published %}
-                                    <a href="{% url 'event_detail' event.pk %}" class="btn btn-sm btn-outline-secondary w-100 stretched-link">Смотреть отчет</a>
+                                    <a href="{% url 'event_detail' event.pk %}" class="btn btn-sm btn-outline-secondary w-100 rounded-pill stretched-link fw-bold">Смотреть отчет</a>
                                 {% else %}
-                                    <a href="{% url 'event_report_edit' event.pk %}" class="btn btn-sm btn-primary w-100 stretched-link">
-                                        <i class="fas fa-pen"></i> Редактировать отчет
+                                    <a href="{% url 'event_report_edit' event.pk %}" class="btn btn-sm btn-primary w-100 rounded-pill stretched-link fw-bold shadow-sm">
+                                        <i class="fas fa-pen me-2"></i> Редактировать отчет
                                     </a>
                                 {% endif %}
                             </div>
@@ -125,7 +152,7 @@
                     {% endif %} 
                 </div>
                 {% empty %}
-                    <div class="col-12 py-5 text-center text-muted bg-light rounded-3">
+                    <div class="col-12 py-5 text-center text-muted">
                         <p>Архив пуст.</p>
                     </div>
                 {% endfor %}
@@ -135,35 +162,28 @@
 </div>
 
 <style>
-    /* Эффект поднятия при наведении */
-    .hover-lift {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .hover-lift:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
-    }
+    /* Стили анимации и эффектов */
+    .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+    .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .hover-lift:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important; }
     
-    /* Возвращаем цвет при наведении на архивные фото */
-    .grayscale-hover:hover img {
-        filter: grayscale(0%) !important;
-    }
+    .grayscale-hover img { filter: grayscale(100%); transition: filter 0.3s ease; }
+    .grayscale-hover:hover img { filter: grayscale(0%); }
     
-    /* Активная вкладка синяя */
-    .nav-pills .nav-link.active {
-        background-color: #0E3644;
-    }
-    .nav-pills .nav-link {
-        color: #0E3644;
-        background-color: #e9ecef;
-    }
+    .nav-pills .nav-link.active { background-color: #0E3644; color: #fff; }
+    .nav-pills .nav-link { color: #0E3644; background-color: #f8f9fa; transition: 0.3s; }
+    .nav-pills .nav-link:hover { background-color: #e2e6ea; }
+
+    .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 </style>
 
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Скрипт для принудительного переключения вкладок (если Bootstrap тупит)
+    // Скрипт для вкладок (оставлен как есть)
     document.addEventListener("DOMContentLoaded", function() {
         var triggerTabList = [].slice.call(document.querySelectorAll('#eventsTab button'))
         triggerTabList.forEach(function (triggerEl) {

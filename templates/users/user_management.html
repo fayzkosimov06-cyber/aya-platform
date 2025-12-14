@@ -4,99 +4,118 @@
 {% block title %}Управление пользователями{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <a href="{% url 'admin_dashboard' %}" class="text-decoration-none">&larr; Назад в Панель администратора</a>
-    <h2 class="my-4">Управление Пользователями</h2>
 
-    <div class="card shadow-sm mb-4 bg-light">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-6">
-                    <input type="text" name="search" class="form-control" placeholder="Поиск по ФИО или логину..." value="{{ search_query }}">
+<div class="snow-container">
+    <div class="snow"></div><div class="snow"></div><div class="snow"></div>
+</div>
+
+<div class="container py-5" style="padding-top: 60px;">
+    
+    <div class="mb-5 fade-in-up">
+        <a href="{% url 'admin_dashboard' %}" class="text-muted text-decoration-none small fw-bold text-uppercase ls-1">
+            <i class="fas fa-arrow-left me-1"></i> Назад
+        </a>
+        <h2 class="fw-bold mt-2">База пользователей</h2>
+    </div>
+
+    <div class="card border-0 shadow-lg mb-4 fade-in-up" style="border-radius: 25px; animation-delay: 0.1s;">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0 ps-3 rounded-start-pill"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" name="search" class="form-control form-control-lg bg-light border-0 rounded-end-pill ps-2" 
+       placeholder="Поиск по имени или логину..." 
+       value="{{ search_query|default:'' }}"> ```
+                    </div>
                 </div>
                 <div class="col-md-4">
-                    <select name="role_filter" class="form-select">
-                        <option value="">-- Все роли --</option>
+                    <select name="role_filter" class="form-select form-select-lg border-0 bg-light rounded-pill">
+                        <option value="">Все роли</option>
                         {% for code, name in role_choices %}
                             <option value="{{ code }}" {% if role_filter == code %}selected{% endif %}>{{ name }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Найти</button>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100 btn-lg rounded-pill fw-bold shadow-sm">Найти</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body">
+    <div class="card border-0 shadow-lg fade-in-up" style="border-radius: 25px; animation-delay: 0.2s;">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-uppercase small text-muted">
                         <tr>
-                            <th>Пользователь</th>
-                            <th>Роль</th>
-                            <th>Действия со статусом</th>
+                            <th class="ps-4 py-3">Пользователь</th>
+                            <th class="py-3">Роль</th>
+                            <th class="py-3">Статус</th>
+                            <th class="pe-4 py-3 text-end">Действия</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="border-top-0">
                         {% for user in users_list %}
                         <tr>
-                            <td>
+                            <td class="ps-4">
                                 <div class="d-flex align-items-center">
                                     {% if user.photo %}
-                                        <img src="{{ user.photo.url }}" class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
+                                        <img src="{{ user.photo.url }}" class="rounded-4 shadow-sm me-3" width="50" height="50" style="object-fit: cover;">
                                     {% else %}
-                                        <img src="{% static 'img/male_avatar.png' %}" class="rounded-circle me-2" width="40" height="40">
+                                        <img src="{% static 'img/male_avatar.png' %}" class="rounded-4 shadow-sm me-3" width="50" height="50">
                                     {% endif %}
-                                    
                                     <div>
                                         <a href="{% url 'public_profile' user.pk %}" class="fw-bold text-dark text-decoration-none">
                                             {{ user.get_full_name }}
                                         </a>
-                                        <div class="small text-muted">{{ user.username }}</div>
+                                        <div class="small text-muted">@{{ user.username }}</div>
                                     </div>
                                 </div>
                             </td>
 
                             <td>
                                 {% if not user.is_superuser %}
-                                <form action="{% url 'update_user_role' user.pk %}" method="post" class="d-flex gap-2">
+                                <form action="{% url 'update_user_role' user.pk %}" method="post" class="d-flex align-items-center">
                                     {% csrf_token %}
-                                    <select name="role" class="form-select form-select-sm" style="max-width: 150px;">
+                                    <select name="role" class="form-select form-select-sm border-0 bg-light rounded-pill me-2" style="max-width: 160px;" onchange="this.form.submit()">
                                         {% for code, name in role_choices %}
-                                            <option value="{{ code }}" {% if user.role == code %}selected{% endif %}>
-                                                {{ name }}
-                                            </option>
+                                            <option value="{{ code }}" {% if user.role == code %}selected{% endif %}>{{ name }}</option>
                                         {% endfor %}
                                     </select>
-                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Сохранить роль">
-                                        <i class="fas fa-save"></i>
-                                    </button>
                                 </form>
                                 {% else %}
-                                    <span class="badge bg-danger">SuperAdmin</span>
+                                    <span class="badge bg-danger rounded-pill px-3">SuperAdmin</span>
                                 {% endif %}
                             </td>
 
                             <td>
-                                {% if not user.is_superuser %}
-                                <form action="{% url 'toggle_active_volunteer' user.pk %}" method="post">
-                                    {% csrf_token %}
-                                    {% if user.is_active_volunteer_title %}
-                                        <button type="submit" class="btn btn-sm btn-warning text-dark"><i class="fas fa-star"></i> Активный</button>
-                                    {% else %}
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="far fa-star"></i> Обычный</button>
-                                    {% endif %}
-                                </form>
-                                {% endif %}
+    {% if not user.is_superuser %}
+    <form action="{% url 'toggle_active_volunteer' user.pk %}" method="post">
+        {% csrf_token %}
+        {% if user.is_active_volunteer_title %}
+            <button type="submit" class="btn btn-sm rounded-pill px-3 border-0 fw-bold" 
+                    style="background-color: rgba(25, 135, 84, 0.15); color: #198754; transition: 0.3s;">
+                <i class="fas fa-star me-1"></i> Активный
+            </button>
+        {% else %}
+            <button type="submit" class="btn btn-sm btn-light text-muted rounded-pill px-3 border fw-bold">
+                Обычный
+            </button>
+        {% endif %}
+    </form>
+    {% endif %}
+</td>
+                            
+                            <td class="pe-4 text-end">
+                                <a href="{% url 'admin_edit_user' user.pk %}" class="btn btn-light btn-sm rounded-circle text-primary hover-primary">
+                                    <i class="fas fa-pen"></i>
+                                </a>
                             </td>
                         </tr>
                         {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center text-muted py-4">Пользователи не найдены</td>
-                        </tr>
+                        <tr><td colspan="4" class="text-center py-5 text-muted">Никого не найдено</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -104,4 +123,10 @@
         </div>
     </div>
 </div>
+
+<style>
+    .hover-primary:hover { background-color: #e7f1ff; color: #0d6efd; }
+    .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+</style>
 {% endblock %}

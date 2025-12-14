@@ -4,39 +4,56 @@
 {% block title %}{{ event.title }}{% endblock %}
 
 {% block content %}
-<div class="position-relative bg-dark text-white" style="min-height: 300px; display: flex; align-items: center; overflow: hidden;">
+
+<div class="snow-container">
+    <div class="snow"></div><div class="snow"></div><div class="snow"></div>
+</div>
+
+<div class="position-relative bg-dark text-white overflow-hidden" style="min-height: 400px; display: flex; align-items: flex-end;">
     {% if event.cover_image %}
-        <img src="{{ event.cover_image.url }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4;">
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: url('{{ event.cover_image.url }}') no-repeat center center; 
+                    background-size: cover; opacity: 0.6;"></div>
+    {% else %}
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: linear-gradient(135deg, #0E3644, #2a5298);"></div>
     {% endif %}
-    <div class="container position-relative z-1 py-5">
-        <h1 class="display-4 fw-bold">{{ event.title }}</h1>
-        <p class="fs-4"><i class="fas fa-map-marker-alt me-2"></i>{{ event.location }}</p>
-        <p class="fs-5"><i class="far fa-clock me-2"></i>{{ event.start_time|date:"d F Y, H:i" }}</p>
+    
+    <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 80%; 
+                background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);"></div>
+
+    <div class="container position-relative z-2 pb-5 mb-4">
+        <span class="badge bg-warning text-dark mb-3 px-3 py-2 rounded-pill fw-bold text-uppercase ls-1">Мероприятие</span>
+        <h1 class="display-3 fw-bold mb-3">{{ event.title }}</h1>
+        <div class="d-flex align-items-center flex-wrap gap-4 fs-5 text-white-50">
+            <span><i class="fas fa-map-marker-alt me-2 text-danger"></i>{{ event.location }}</span>
+            <span><i class="far fa-clock me-2 text-warning"></i>{{ event.start_time|date:"d F Y, H:i" }}</span>
+        </div>
         
         {% if can_manage %}
-            <div class="mt-4 p-3 bg-dark bg-opacity-50 rounded border border-secondary">
-                <h5 class="text-warning"><i class="fas fa-cog"></i> Управление мероприятием</h5>
+            <div class="mt-4 p-4 bg-dark bg-opacity-75 rounded-4 border border-secondary backdrop-blur">
+                <h5 class="text-warning mb-3"><i class="fas fa-cog me-2"></i> Панель организатора</h5>
                 <div class="d-flex flex-wrap gap-2">
-                    <a href="{% url 'event_edit' event.pk %}" class="btn btn-primary">
-                        <i class="fas fa-edit"></i> Изм. время/обложку
+                    <a href="{% url 'event_edit' event.pk %}" class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-edit me-1"></i> Изменить
                     </a>
 
                     {% if not event.is_completed %}
-                        <form action="{% url 'event_finish' event.pk %}" method="post" onsubmit="return confirm('Вы уверены? Событие перейдет в архив, и вы сможете добавить отчет.');">
+                        <form action="{% url 'event_finish' event.pk %}" method="post" onsubmit="return confirm('Вы уверены? Событие перейдет в архив.');">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-flag-checkered"></i> Завершить и заполнить отчет
+                            <button type="submit" class="btn btn-success rounded-pill px-4">
+                                <i class="fas fa-flag-checkered me-1"></i> Завершить
                             </button>
                         </form>
-                        <form action="{% url 'event_delete' event.pk %}" method="post" class="ms-auto" onsubmit="return confirm('ВНИМАНИЕ! Вы уверены, что хотите удалить это мероприятие НАВСЕГДА? Это действие нельзя отменить.');">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-trash-alt"></i> Удалить
-                        </button>
-                    </form>
+                        <form action="{% url 'event_delete' event.pk %}" method="post" class="ms-auto" onsubmit="return confirm('Удалить НАВСЕГДА?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger rounded-pill px-4">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
                     {% else %}
-                        <a href="{% url 'event_report_edit' event.pk %}" class="btn btn-info">
-                            <i class="fas fa-camera"></i> Ред. отчет / Фото
+                        <a href="{% url 'event_report_edit' event.pk %}" class="btn btn-info rounded-pill px-4 text-white fw-bold">
+                            <i class="fas fa-camera me-1"></i> Ред. отчет
                         </a>
                     {% endif %}
                 </div>
@@ -45,69 +62,79 @@
     </div>
 </div>
 
-<div class="container my-5">
+<div class="container my-5" style="margin-top: -60px; position: relative; z-index: 10;">
     <div class="row">
         <div class="col-lg-8">
-            <div class="card shadow-sm mb-5">
-                <div class="card-body">
+            <div class="card border-0 shadow-lg mb-5 fade-in-up" style="border-radius: 30px;">
+                <div class="card-body p-5">
                     {% if event.is_completed and event.is_report_published %}
-                        <h3 class="mb-4 text-primary">Отчет о мероприятии</h3>
-                        <div class="lead mb-4">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="bg-success bg-opacity-10 p-3 rounded-circle me-3 text-success"><i class="fas fa-check-double fa-lg"></i></div>
+                            <h3 class="fw-bold mb-0 text-dark">Отчет о мероприятии</h3>
+                        </div>
+                        
+                        <div class="lead mb-5 text-dark" style="white-space: pre-line;">
                             {{ event.report_text|linebreaks }}
                         </div>
 
                         {% if event.photos.exists %}
-                            <h4 class="mb-3">Фотогалерея</h4>
-                            <div class="row row-cols-1 row-cols-md-2 g-3 mb-4">
+                            <h4 class="mb-3 fw-bold">Фотогалерея</h4>
+                            <div class="row row-cols-1 row-cols-md-2 g-3 mb-5">
                                 {% for photo in event.photos.all %}
                                     <div class="col">
-                                        <a href="{{ photo.image.url }}" target="_blank">
-                                            <img src="{{ photo.image.url }}" class="img-fluid rounded shadow-sm" alt="Фото" style="width: 100%; height: 250px; object-fit: cover;">
+                                        <a href="{{ photo.image.url }}" target="_blank" class="d-block hover-lift">
+                                            <img src="{{ photo.image.url }}" class="img-fluid shadow-sm" alt="Фото" 
+                                                 style="width: 100%; height: 250px; object-fit: cover; border-radius: 20px;">
                                         </a>
-                                        {% if photo.caption %}<p class="text-muted small mt-1">{{ photo.caption }}</p>{% endif %}
+                                        {% if photo.caption %}<p class="text-muted small mt-2 ps-1">{{ photo.caption }}</p>{% endif %}
                                     </div>
                                 {% endfor %}
                             </div>
                         {% endif %}
 
                         {% if event.videos.exists %}
-                            <h4 class="mb-3">Видео</h4>
+                            <h4 class="mb-3 fw-bold">Видео</h4>
                             {% for video in event.videos.all %}
                                 <div class="mb-3">
-                                    <a href="{{ video.video_url }}" target="_blank" class="btn btn-outline-danger">
-                                        <i class="fab fa-youtube"></i> Смотреть видео ({{ forloop.counter }})
+                                    <a href="{{ video.video_url }}" target="_blank" class="btn btn-outline-danger w-100 rounded-pill py-3 fw-bold">
+                                        <i class="fab fa-youtube me-2"></i> Смотреть видео #{{ forloop.counter }}
                                     </a>
                                 </div>
                             {% endfor %}
                         {% endif %}
 
                     {% else %}
-                        <h4>О мероприятии</h4>
-                        <p>{{ event.description|linebreaks }}</p>
+                        <h4 class="fw-bold mb-4">О мероприятии</h4>
+                        <div class="fs-5 text-muted" style="line-height: 1.8;">
+                            {{ event.description|linebreaks }}
+                        </div>
                     {% endif %}
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-lg-4 fade-in-up" style="animation-delay: 0.2s;">
+            
             {% if event.heroes.exists %}
-            <div class="card shadow-sm mb-4 border-warning">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0"><i class="fas fa-star"></i> Герои мероприятия</h5>
+            <div class="card border-0 shadow-lg mb-4" style="border-radius: 25px; overflow: hidden;">
+                <div class="card-header bg-warning text-dark border-0 p-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-star me-2"></i> Герои события</h5>
                 </div>
                 <ul class="list-group list-group-flush">
                     {% for hero in event.heroes.all %}
-                    <li class="list-group-item d-flex align-items-center">
-                        {% if hero.user.photo %}
-                            <img src="{{ hero.user.photo.url }}" class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
-                        {% else %}
-                             <img src="{% static 'img/male_avatar.png' %}" class="rounded-circle me-2" width="40" height="40">
-                        {% endif %}
-                        <div>
+                    <li class="list-group-item d-flex align-items-center p-3 border-light">
+                        <div style="width: 50px; height: 50px; flex-shrink: 0;">
+                            {% if hero.user.photo %}
+                                <img src="{{ hero.user.photo.url }}" class="w-100 h-100 object-fit-cover" style="border-radius: 15px;">
+                            {% else %}
+                                 <img src="{% static 'img/male_avatar.png' %}" class="w-100 h-100 object-fit-cover" style="border-radius: 15px;">
+                            {% endif %}
+                        </div>
+                        <div class="ms-3">
                             <a href="{% url 'public_profile' hero.user.pk %}" class="fw-bold text-dark text-decoration-none">
                                 {{ hero.user.get_full_name }}
                             </a>
-                            <small class="text-muted d-block">{{ hero.role_name }}</small>
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">{{ hero.role_name }}</small>
                         </div>
                     </li>
                     {% endfor %}
@@ -115,21 +142,29 @@
             </div>
             {% endif %}
 
-            <div class="card shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Участники ({{ event.participants.count }})</h5>
-                </div>
-                <div class="card-body p-0">
+            <div class="card border-0 shadow-lg" style="border-radius: 25px;">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="mb-0 fw-bold">Участники</h5>
+                        <span class="badge bg-primary rounded-pill">{{ event.participants.count }}</span>
+                    </div>
+                    
                     {% if not event.is_completed %}
-                        <div class="p-3 border-bottom">
+                        <div class="mb-4">
                             {% if user.is_authenticated %}
                                 {% if is_participant %}
-                                    <a href="{% url 'event_join' event.pk %}" class="btn btn-outline-danger w-100">Отменить запись</a>
+                                    <a href="{% url 'event_join' event.pk %}" class="btn btn-outline-danger w-100 rounded-pill py-2 fw-bold">
+                                        <i class="fas fa-times me-1"></i> Отменить запись
+                                    </a>
                                 {% else %}
-                                    <a href="{% url 'event_join' event.pk %}" class="btn btn-success w-100">Записаться</a>
+                                    <a href="{% url 'event_join' event.pk %}" class="btn btn-success w-100 rounded-pill py-3 fw-bold shadow-sm hover-lift">
+                                        <i class="fas fa-check me-2"></i> Я пойду!
+                                    </a>
                                 {% endif %}
                             {% else %}
-                                <a href="{% url 'login' %}" class="btn btn-primary w-100">Войдите, чтобы записаться</a>
+                                <a href="{% url 'login' %}" class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-sm">
+                                    Войти и записаться
+                                </a>
                             {% endif %}
                         </div>
                     {% endif %}
@@ -137,16 +172,17 @@
                     <div class="accordion accordion-flush" id="participantsAccordion">
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="flush-headingOne">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne">
+                                <button class="accordion-button collapsed rounded-pill bg-light text-dark fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne">
                                     Показать всех
                                 </button>
                             </h2>
                             <div id="flush-collapseOne" class="accordion-collapse collapse" data-bs-parent="#participantsAccordion">
-                                <div class="accordion-body p-0">
-                                    <ul class="list-group list-group-flush">
+                                <div class="accordion-body p-0 mt-3">
+                                    <ul class="list-group list-group-flush rounded-4 overflow-hidden">
                                         {% for participant in event.participants.all %}
-                                            <li class="list-group-item">
-                                                <a href="{% url 'public_profile' participant.pk %}" class="text-decoration-none text-dark">
+                                            <li class="list-group-item px-3 py-2 border-light">
+                                                <a href="{% url 'public_profile' participant.pk %}" class="text-decoration-none text-dark d-flex align-items-center">
+                                                    <i class="fas fa-user-circle text-muted me-2"></i>
                                                     {{ participant.get_full_name }}
                                                 </a>
                                             </li>
@@ -161,4 +197,12 @@
         </div>
     </div>
 </div>
+
+<style>
+    .ls-1 { letter-spacing: 1px; }
+    .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+    .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important; }
+    .backdrop-blur { backdrop-filter: blur(10px); }
+</style>
 {% endblock %}
