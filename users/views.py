@@ -90,15 +90,24 @@ def get_user_power_level(user):
 # --- VIEWS (Представления) ---
 
 def home_view(request):
+    # 1. Получаем Президента (для цитат)
     president = User.objects.filter(role='president', is_approved=True).first()
     
-    # Гости видят только публичные мероприятия
+    # 2. Получаем Направления (для блока иконок)
+    directions = Direction.objects.all() 
+    
+    # 3. Получаем Мероприятия (для афиши)
+    # Гости видят только публичные, свои видят все
     if request.user.is_authenticated:
         upcoming_events = Event.objects.filter(is_approved=True, is_completed=False).order_by('start_time')[:3]
     else:
         upcoming_events = Event.objects.filter(is_approved=True, is_completed=False, is_public_for_guests=True).order_by('start_time')[:3]
         
-    context = {'president': president, 'upcoming_events': upcoming_events}
+    context = {
+        'president': president, 
+        'upcoming_events': upcoming_events,
+        'directions': directions  # <-- Важно: передаем направления в шаблон
+    }
     return render(request, 'users/home.html', context)
 
 
