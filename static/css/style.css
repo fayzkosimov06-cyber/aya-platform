@@ -299,33 +299,51 @@ img.profile-photo-round,
    ФИНАЛЬНЫЕ НАСТРОЙКИ ПОЗИЦИИ (КОНЕЦ ФАЙЛА)
    ========================================= */
 
-/* 1. ШАПКА НА УГЛУ КАРТОЧКИ (Надета на угол) */
-.vol-hat-corner {
+/* --- НОВОГОДНИЕ ШАПКИ (ЛОКАЛЬНЫЕ) --- */
+
+/* 1. Шапка для больших фото (Профиль, Админка) */
+.vol-hat-profile {
     position: absolute;
-    /* Сдвигаем сильнее (-22px), чтобы угол карточки зашел внутрь */
-    top: -38px;      
-    left: -30px;     
-    width: 75px;     /* Чуть увеличил для надежности */
-    height: 70px;
-    background: url('https://cdn-icons-png.flaticon.com/512/744/744546.png') no-repeat center center;
+    top: -45px;
+    left: -50px;
+    width: 120px;
+    height: 150px;
+    /* Указываем путь от CSS файла к папке img. 
+       Если css лежит в static/css/, а картинка в static/img/, то путь такой: */
+    background: url('../img/hat.png') no-repeat center center; 
     background-size: contain;
-    transform: rotate(-45deg); /* Поворот под угол квадрата */
-    filter: drop-shadow(4px 4px 3px rgba(0,0,0,0.2));
+    transform: rotate(-30deg);
     z-index: 20;
+    pointer-events: none;
+    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3));
+}
+
+/* 2. Шапка для маленькой иконки в меню (справа сверху) */
+.nav-hat {
+    position: absolute;
+    top: -12px;
+    left: -2px;
+    width: 25px;
+    height: 25px;
+    background: url('../img/hat.png') no-repeat center center;
+    background-size: contain;
+    transform: rotate(-15deg);
+    z-index: 100;
     pointer-events: none;
 }
 
-/* 2. ШАПКА В МЕНЮ (Слегка сдвинута вправо) */
-.nav-hat {
+/* 3. Шапка для карточек в списке волонтеров (если нужно) */
+.vol-hat-corner {
     position: absolute;
-    top: -12px; 
-    left: 1px;  /* Было 12, вернул на 4. Идеальный баланс. */
-    width: 28px; 
-    height: 28px;
-    background: url('https://cdn-icons-png.flaticon.com/512/744/744546.png') no-repeat center center;
+    top: -55spx;
+    left: -45px;
+    width: 100px;
+    height: 80px;
+    background: url('../img/hat.png') no-repeat center center;
     background-size: contain;
-    transform: rotate(10deg);
-    z-index: 10;
+    transform: rotate(-30deg);
+    z-index: 20;
+    pointer-events: none;
 }
 
 /* ОСТАЛЬНОЕ БЕЗ ИЗМЕНЕНИЙ (на всякий случай дублирую) */
@@ -343,7 +361,6 @@ img.profile-photo-round,
     background-size: contain;
     transform: rotate(10deg); /* Легкий наклон в другую сторону */
     z-index: 10;
-} 
 
 /* 3. ОСТАЛЬНОЕ (Без изменений, просто чтобы не потерялось) */
 .main-navbar { background-color: #0E3644 !important; padding: 12px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
