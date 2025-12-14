@@ -40,6 +40,30 @@
                         
                         <h5 class="text-primary mb-3"><i class="fas fa-user-circle"></i> Основное</h5>
                         <div class="row g-3 mb-4">
+                            
+                            {% if form.username %} 
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-danger">Логин (обязательно)</label>
+                                {{ form.username }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-danger">Email (обязательно)</label>
+                                {{ form.email }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-danger">Роль</label>
+                                {{ form.role }}
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end pb-2">
+                                <div class="form-check form-switch p-0">
+                                    {{ form.is_active_volunteer_title }}
+                                    <label class="form-check-label fw-bold text-success ms-2" for="{{ form.is_active_volunteer_title.id_for_label }}">
+                                        Статус "Активный волонтер"
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12"><hr class="text-danger border-2 opacity-25"></div>
+                            {% endif %}
                             <div class="col-md-12">
                                 <label class="form-label fw-bold">Фото профиля</label>
                                 {{ form.photo }}

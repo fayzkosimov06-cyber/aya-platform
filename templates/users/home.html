@@ -7,50 +7,65 @@
 
 <div class="snow-container">
     <div class="snow"></div><div class="snow"></div><div class="snow"></div>
+    <div class="snow"></div><div class="snow"></div><div class="snow"></div>
 </div>
 
-<div class="hero-split bg-white position-relative overflow-hidden">
+<div class="position-relative overflow-hidden" 
+     style="background: linear-gradient(135deg, #0E3644 0%, #104e63 100%); min-height: 85vh; padding-top: 80px;">
+    
+    <div style="position: absolute; top: -10%; left: -10%; width: 500px; height: 500px; 
+                background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); 
+                border-radius: 50%; pointer-events: none;"></div>
+    
+    <div style="position: absolute; bottom: 10%; right: -5%; width: 400px; height: 400px; 
+                background: radial-gradient(circle, rgba(0, 196, 204, 0.1) 0%, transparent 70%); 
+                border-radius: 50%; pointer-events: none;"></div>
+
     <div class="container position-relative z-2">
-        <div class="row align-items-center" style="min-height: 85vh;">
+        <div class="row align-items-center" style="min-height: 80vh;">
             
-            <div class="col-lg-5 py-5 order-2 order-lg-1">
-                <div class="d-inline-flex align-items-center bg-light border px-3 py-1 mb-4 rounded-pill">
+            <div class="col-lg-5 py-5 text-white order-2 order-lg-1 fade-in-up">
+                <div class="d-inline-flex align-items-center bg-white bg-opacity-10 border border-white border-opacity-25 px-3 py-1 mb-4 rounded-pill backdrop-blur">
                     <span class="badge bg-danger rounded-circle p-1 me-2">❄️</span>
-                    <span class="fw-bold small text-uppercase text-dark">Новый Год с AYA 2025</span>
+                    <span class="fw-bold small text-uppercase ls-1">Новый Год с AYA 2025</span>
                 </div>
                 
-                <h1 class="display-3 fw-bolder mb-3 text-dark lh-1">
+                <h1 class="display-3 fw-bolder mb-3 lh-1 text-white">
                     Энергия <br>
-                    <span class="text-gradient">Твоего Успеха.</span>
+                    <span style="color: #00C4CC;">Твоего Успеха.</span>
                 </h1>
                 
-                <p class="lead text-muted mb-5">
+                <p class="lead text-white-50 mb-5">
                     Официальное волонтерское движение ТГМУ. Присоединяйся к команде лидеров, развивайся и меняй мир вместе с нами.
                 </p>
                 
                 <div class="d-flex flex-wrap gap-3">
                     {% if not user.is_authenticated %}
-                        <a href="{% url 'signup' %}" class="btn btn-brand btn-lg px-5 shadow-lg rounded-pill">Стать волонтёром</a>
+                        <a href="{% url 'signup' %}" class="btn btn-primary btn-lg px-5 shadow-lg rounded-pill fw-bold hover-lift">Стать волонтёром</a>
                     {% else %}
-                        <a href="{% url 'event_list' %}" class="btn btn-brand btn-lg px-5 shadow-lg rounded-pill">Афиша событий</a>
+                        <a href="{% url 'event_list' %}" class="btn btn-primary btn-lg px-5 shadow-lg rounded-pill fw-bold hover-lift">Афиша событий</a>
                     {% endif %}
-                    <a href="{% url 'about_page' %}" class="btn btn-outline-dark btn-lg px-4 rounded-pill">О нас</a>
+                    <a href="{% url 'about_page' %}" class="btn btn-outline-light btn-lg px-4 rounded-pill fw-bold hover-lift">О нас</a>
                 </div>
             </div>
 
-            <div class="col-lg-6 offset-lg-1 order-1 order-lg-2 mb-5 mb-lg-0">
-                <div class="hero-slider-wrapper">
-                    <div class="slider-frame"></div>
-                    <div id="splitHeroCarousel" class="carousel slide carousel-fade shadow-xl rounded-4 overflow-hidden" data-bs-ride="carousel" data-bs-interval="4000">
-                        <div class="carousel-inner">
+            <div class="col-lg-6 offset-lg-1 order-1 order-lg-2 mb-5 mb-lg-0 fade-in-up" style="animation-delay: 0.2s;">
+                <div class="position-relative">
+                    <div style="position: absolute; top: 20px; left: 20px; width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.2); border-radius: 25px; z-index: 0;"></div>
+                    
+                    <div id="heroCarousel" class="carousel slide carousel-fade shadow-2xl rounded-4 overflow-hidden position-relative z-1" data-bs-ride="carousel" data-bs-interval="3000">
+                        <div class="carousel-inner" style="border-radius: 25px;">
                             <div class="carousel-item active">
-                                <img src="https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&q=80" class="d-block w-100 object-fit-cover" style="height: 500px;" alt="Команда">
+                                <img src="{% static 'img/collage_1.jpg' %}" class="d-block w-100 object-fit-cover" style="height: 500px;" 
+                                     alt="Команда" onerror="this.src='https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800'">
                             </div>
                             <div class="carousel-item">
-                                <img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80" class="d-block w-100 object-fit-cover" style="height: 500px;" alt="Собрание">
+                                <img src="{% static 'img/collage_2.jpg' %}" class="d-block w-100 object-fit-cover" style="height: 500px;" 
+                                     alt="Собрание" onerror="this.src='https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800'">
                             </div>
                             <div class="carousel-item">
-                                <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80" class="d-block w-100 object-fit-cover" style="height: 500px;" alt="Учеба">
+                                <img src="{% static 'img/collage_3.jpg' %}" class="d-block w-100 object-fit-cover" style="height: 500px;" 
+                                     alt="Учеба" onerror="this.src='https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800'">
                             </div>
                         </div>
                     </div>
@@ -59,31 +74,36 @@
 
         </div>
     </div>
+    
+    <div style="position: absolute; bottom: 0; left: 0; width: 100%; overflow: hidden; line-height: 0;">
+        <svg viewBox="0 0 1200 120" preserveAspectRatio="none" style="width: 100%; height: 60px; fill: #f8f9fa;">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+        </svg>
+    </div>
 </div>
 
 <div class="py-5 bg-light position-relative">
     <div class="container position-relative z-2">
-        <div class="text-center mb-5">
+        <div class="text-center mb-5 fade-in-up">
             <h6 class="text-primary fw-bold text-uppercase ls-2">Наши направления</h6>
             <h2 class="fw-bold text-dark">Где ты можешь помочь</h2>
         </div>
 
         <div class="row g-4 justify-content-center">
             {% for direction in directions %}
-            <div class="col-lg-3 col-md-4 col-sm-6">
+            <div class="col-lg-3 col-md-4 col-sm-6 fade-in-up" style="animation-delay: 0.{{ forloop.counter }}s;">
                 <a href="{% url 'volunteer_list' %}?direction={{ direction.id }}" class="text-decoration-none">
-                    <div class="direction-card h-100 position-relative">
-                        <div class="holiday-icon">🎄</div>
-                        <div class="icon-box mb-3">
-                            {% if 'Спорт' in direction.name %} <i class="fas fa-running text-warning"></i>
-                            {% elif 'Эколог' in direction.name %} <i class="fas fa-leaf text-success"></i>
-                            {% elif 'IT' in direction.name %} <i class="fas fa-laptop-code text-info"></i>
-                            {% elif 'Наука' in direction.name %} <i class="fas fa-microscope text-primary"></i>
-                            {% else %} <i class="fas fa-star text-primary"></i>
+                    <div class="card h-100 border-0 shadow-sm hover-lift p-4 text-center" style="border-radius: 20px;">
+                        <div class="mb-3">
+                            {% if 'Спорт' in direction.name %} <div class="bg-warning bg-opacity-10 text-warning d-inline-block p-3 rounded-circle"><i class="fas fa-running fa-2x"></i></div>
+                            {% elif 'Эколог' in direction.name %} <div class="bg-success bg-opacity-10 text-success d-inline-block p-3 rounded-circle"><i class="fas fa-leaf fa-2x"></i></div>
+                            {% elif 'IT' in direction.name %} <div class="bg-info bg-opacity-10 text-info d-inline-block p-3 rounded-circle"><i class="fas fa-laptop-code fa-2x"></i></div>
+                            {% elif 'Наука' in direction.name %} <div class="bg-primary bg-opacity-10 text-primary d-inline-block p-3 rounded-circle"><i class="fas fa-microscope fa-2x"></i></div>
+                            {% else %} <div class="bg-secondary bg-opacity-10 text-secondary d-inline-block p-3 rounded-circle"><i class="fas fa-star fa-2x"></i></div>
                             {% endif %}
                         </div>
-                        <h5 class="fw-bold text-dark mb-1">{{ direction.name }}</h5>
-                        <p class="text-muted small mb-0">Присоединиться &rarr;</p>
+                        <h5 class="fw-bold text-dark mb-2">{{ direction.name }}</h5>
+                        <p class="text-muted small mb-0">Подробнее &rarr;</p>
                     </div>
                 </a>
             </div>
@@ -94,87 +114,89 @@
     </div>
 </div>
 
-<section class="quotes-parallax py-5 position-relative">
-    <div class="parallax-overlay"></div>
-    <div class="container position-relative z-2 py-5">
+<section class="py-5 position-relative text-white" style="background: linear-gradient(180deg, #0a2731 0%, #0E3644 100%);">
+    
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('{% static 'img/pattern.png' %}') repeat; opacity: 0.05;"></div>
+
+    <div class="container position-relative z-2 py-4">
         
         <div id="quotesCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="12000">
             <div class="carousel-inner">
                 
                 <div class="carousel-item active">
-                    <div class="row justify-content-center">
+                    <div class="row justify-content-center align-items-center">
                         <div class="col-lg-8 text-center">
+                            <div class="d-inline-block p-2 bg-white bg-opacity-10 rounded-circle mb-4" style="backdrop-filter: blur(5px);">
+                                <img src="{% static 'img/president.jpg' %}" 
+                                     alt="Эмомали Рахмон" 
+                                     class="rounded-circle shadow-lg"
+                                     style="width: 200px; height: 200px; object-fit: cover; border: 4px solid #fff;"
+                                     onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/7/7b/Emomali_Rahmon_2023.jpg'">
+                            </div>
                             
-                            <div style="width: 220px; height: 220px; margin: 0 auto 20px auto; padding: 15px;">
-                                <div class="pulse-container w-100 h-100"
-                                     style="background: conic-gradient(from var(--angle), #ffffff, #dcdcdc, #ffffff); 
-                                            --glow-rgb: 255, 255, 255; 
-                                            border-radius: 50%; 
-                                            padding: 6px;">
-                                    
-                                    {% if president and president.photo %}
-                                        <img src="{{ president.photo.url }}" class="profile-photo-round w-100 h-100" alt="Президент" 
-                                             style="border-radius: 50%; border: 4px solid white; object-fit: cover;">
-                                    {% else %}
-                                        <img src="{% static 'img/male_avatar.png' %}" class="profile-photo-round w-100 h-100" alt="Президент"
-                                             style="border-radius: 50%; border: 4px solid white; object-fit: cover;">
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <h3 class="text-white fst-italic fw-light mb-4 display-6">«Молодежь — это созидательная сила нашей Родины.»</h3>
-                            <div>
-                                <h5 class="fw-bold text-white mb-0">Эмомали Рахмон</h5>
-                                <small class="text-white-50 text-uppercase fw-bold">Президент Республики Таджикистан</small>
-                            </div>
+                            <figure>
+                                <blockquote class="blockquote display-6 fst-italic mb-4">
+                                    «Студенты нуждаются не только в книгах и тетрадях. Им нужны знания, интеллект, профессиональные навыки и языковая подготовка.»
+                                </blockquote>
+                                <figcaption class="blockquote-footer text-white-50 fs-5">
+                                    <strong class="text-white">Эмомали Рахмон</strong> <br>
+                                    <span class="small">Президент Республики Таджикистан, Лидер Нации</span>
+                                </figcaption>
+                            </figure>
                         </div>
                     </div>
                 </div>
                 
                 <div class="carousel-item">
-                    <div class="row justify-content-center">
+                    <div class="row justify-content-center align-items-center">
                         <div class="col-lg-8 text-center">
+                            <div class="d-inline-block p-2 bg-white bg-opacity-10 rounded-circle mb-4" style="backdrop-filter: blur(5px);">
+                                <img src="{% static 'img/sino.jpg' %}" 
+                                     alt="Абуали ибни Сино" 
+                                     class="rounded-circle shadow-lg"
+                                     style="width: 200px; height: 200px; object-fit: cover; border: 4px solid #fff;"
+                                     onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/2/22/Avicenna_Portrait_on_Silver_Vase_-_Museum_at_BuAli_Sina_Mausoleum.jpg'">
+                            </div>
                             
-                            <div style="width: 220px; height: 220px; margin: 0 auto 20px auto; padding: 15px;">
-                                <div class="pulse-container w-100 h-100"
-                                     style="background: conic-gradient(from var(--angle), #ffffff, #dcdcdc, #ffffff); 
-                                            --glow-rgb: 255, 255, 255; 
-                                            border-radius: 50%; 
-                                            padding: 6px;">
-                                    
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/22/Avicenna_Portrait_on_Silver_Vase_-_Museum_at_BuAli_Sina_Mausoleum.jpg" class="profile-photo-round w-100 h-100" alt="Авиценна"
-                                         style="border-radius: 50%; border: 4px solid white; object-fit: cover;">
-                                </div>
-                            </div>
-
-                            <h3 class="text-white fst-italic fw-light mb-4 display-6">«Врач должен обладать глазами сокола, руками девушки, мудростью змеи и сердцем льва.»</h3>
-                            <div>
-                                <h5 class="fw-bold text-white mb-0">Абуали ибни Сино</h5>
-                                <small class="text-white-50 text-uppercase fw-bold">Великий ученый и врач</small>
-                            </div>
+                            <figure>
+                                <blockquote class="blockquote display-6 fst-italic mb-4">
+                                    «Врач должен обладать глазом сокола, руками девушки, мудростью змеи и сердцем льва.»
+                                </blockquote>
+                                <figcaption class="blockquote-footer text-white-50 fs-5">
+                                    <strong class="text-white">Абуали ибни Сино</strong> <br>
+                                    <span class="small">Великий ученый, философ и врач</span>
+                                </figcaption>
+                            </figure>
                         </div>
                     </div>
                 </div>
 
             </div>
             
-            <button class="carousel-control-prev" type="button" data-bs-target="#quotesCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
-            <button class="carousel-control-next" type="button" data-bs-target="#quotesCarousel" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+            <button class="carousel-control-prev" type="button" data-bs-target="#quotesCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon bg-dark rounded-circle p-3 bg-opacity-25" aria-hidden="true"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#quotesCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon bg-dark rounded-circle p-3 bg-opacity-25" aria-hidden="true"></span>
+            </button>
         </div>
     </div>
 </section>
 
 <div class="py-5 bg-white">
     <div class="container mb-5">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold mb-0 text-dark">Ближайшие события</h2>
-            <a href="{% url 'event_list' %}" class="btn btn-link text-decoration-none fw-bold">Вся афиша</a>
+        <div class="d-flex justify-content-between align-items-end mb-5 border-bottom pb-3 fade-in-up">
+            <div>
+                <h6 class="text-muted fw-bold text-uppercase small">Афиша</h6>
+                <h2 class="fw-bold mb-0 text-dark">Ближайшие события</h2>
+            </div>
+            <a href="{% url 'event_list' %}" class="btn btn-outline-primary rounded-pill px-4 fw-bold">Вся афиша</a>
         </div>
         
-        <div class="row g-4 justify-content-center">
+        <div class="row g-4">
             {% for event in upcoming_events %}
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-card bg-light">
+            <div class="col-lg-4 col-md-6 fade-in-up">
+                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-card">
                     <div class="position-relative" style="height: 220px;">
                         {% if event.cover_image %}
                             <img src="{{ event.cover_image.url }}" class="w-100 h-100 object-fit-cover" alt="Event">
@@ -188,8 +210,8 @@
                     </div>
                     <div class="card-body">
                         <h5 class="fw-bold text-dark">{{ event.title|truncatechars:35 }}</h5>
-                        <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt text-primary me-1"></i> {{ event.location }}</p>
-                        <a href="{% url 'event_detail' event.pk %}" class="btn btn-outline-primary w-100 rounded-pill mt-2">Участвовать</a>
+                        <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-primary me-1"></i> {{ event.location }}</p>
+                        <a href="{% url 'event_detail' event.pk %}" class="btn btn-light w-100 rounded-pill fw-bold text-primary">Участвовать</a>
                     </div>
                 </div>
             </div>
@@ -201,5 +223,16 @@
         </div>
     </div>
 </div>
+
+<style>
+    .backdrop-blur { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    .ls-1 { letter-spacing: 1px; }
+    
+    .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .hover-lift:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important; }
+    
+    .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+</style>
 
 {% endblock %}

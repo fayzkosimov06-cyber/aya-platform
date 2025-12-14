@@ -37,12 +37,12 @@
 
     <ul class="nav nav-pills mb-4 gap-3 justify-content-center justify-content-md-start fade-in-up" id="eventsTab" role="tablist" style="animation-delay: 0.2s;">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active rounded-pill fw-bold px-4 py-2" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">
+            <button class="nav-link active rounded-pill fw-bold px-4 py-2 custom-tab" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">
                 📅 Предстоящие
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link rounded-pill fw-bold px-4 py-2" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button" role="tab">
+            <button class="nav-link rounded-pill fw-bold px-4 py-2 custom-tab" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button" role="tab">
                 📂 Архив
             </button>
         </li>
@@ -107,49 +107,38 @@
             <div class="row g-4">
                 {% for event in past_events %}
                 <div class="col-lg-4 col-md-6">
-                    
-                    {% if event.is_report_published or user.is_superuser or user == event.organizer or user.role in 'moderator,president,head_admin,worker' %}
-                        
-                        <div class="card h-100 border-0 shadow-sm hover-lift overflow-hidden grayscale-hover" style="border-radius: 30px;">
-                            <div class="position-relative" style="height: 240px;">
-                                {% if event.cover_image %}
-                                    <img src="{{ event.cover_image.url }}" class="w-100 h-100 object-fit-cover transition-img" alt="Обложка">
-                                {% else %}
-                                    <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-muted">
-                                        <i class="fas fa-history fa-3x opacity-25"></i>
-                                    </div>
-                                {% endif %}
-                                
-                                <div class="position-absolute top-0 start-0 m-3">
-                                    {% if not event.is_report_published %}
-                                        <span class="badge bg-warning text-dark shadow rounded-pill px-3 py-2">
-                                            <i class="fas fa-pen-nib me-1"></i> ЧЕРНОВИК
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-dark bg-opacity-75 shadow rounded-pill px-3 py-2">
-                                            <i class="fas fa-check me-1"></i> Завершено
-                                        </span>
-                                    {% endif %}
+                    <div class="card h-100 border-0 shadow-sm hover-lift overflow-hidden grayscale-hover" style="border-radius: 30px;">
+                        <div class="position-relative" style="height: 240px;">
+                            {% if event.cover_image %}
+                                <img src="{{ event.cover_image.url }}" class="w-100 h-100 object-fit-cover transition-img" alt="Обложка">
+                            {% else %}
+                                <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-muted">
+                                    <i class="fas fa-history fa-3x opacity-25"></i>
                                 </div>
-                            </div>
+                            {% endif %}
                             
-                            <div class="card-body p-4">
-                                <h6 class="fw-bold text-dark mb-2 text-truncate">{{ event.title }}</h6>
-                                <p class="small text-muted mb-0"><i class="far fa-calendar-check me-2"></i> {{ event.end_time|date:"d F Y" }}</p>
-                            </div>
-
-                            <div class="card-footer bg-white border-0 p-3 pt-0">
-                                {% if event.is_report_published %}
-                                    <a href="{% url 'event_detail' event.pk %}" class="btn btn-sm btn-outline-secondary w-100 rounded-pill stretched-link fw-bold">Смотреть отчет</a>
-                                {% else %}
-                                    <a href="{% url 'event_report_edit' event.pk %}" class="btn btn-sm btn-primary w-100 rounded-pill stretched-link fw-bold shadow-sm">
-                                        <i class="fas fa-pen me-2"></i> Редактировать отчет
-                                    </a>
-                                {% endif %}
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <span class="badge bg-dark bg-opacity-75 shadow rounded-pill px-3 py-2">
+                                    <i class="fas fa-check me-1"></i> Завершено
+                                </span>
                             </div>
                         </div>
+                        
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold text-dark mb-2 text-truncate">{{ event.title }}</h6>
+                            <p class="small text-muted mb-0"><i class="far fa-calendar-check me-2"></i> {{ event.end_time|date:"d F Y" }}</p>
+                        </div>
 
-                    {% endif %} 
+                        <div class="card-footer bg-white border-0 p-3 pt-0">
+                            {% if event.is_report_published %}
+                                <a href="{% url 'event_detail' event.pk %}" class="btn btn-sm btn-outline-secondary w-100 rounded-pill stretched-link fw-bold">Смотреть отчет</a>
+                            {% else %}
+                                <a href="{% url 'event_report_edit' event.pk %}" class="btn btn-sm btn-primary w-100 rounded-pill stretched-link fw-bold shadow-sm">
+                                    <i class="fas fa-pen me-2"></i> Редактировать отчет
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
                 {% empty %}
                     <div class="col-12 py-5 text-center text-muted">
@@ -162,7 +151,25 @@
 </div>
 
 <style>
-    /* Стили анимации и эффектов */
+    /* Стили для табов - жесткая фиксация цветов */
+    .custom-tab {
+        background-color: #fff !important; /* Белый фон по умолчанию */
+        color: #000 !important; /* Черный текст по умолчанию */
+        border: 1px solid #dee2e6 !important; /* Серая рамка */
+        transition: all 0.3s ease;
+    }
+
+    .custom-tab.active {
+        background-color: #0E3644 !important; /* Темно-синий для активной */
+        color: #fff !important; /* Белый текст для активной */
+        border-color: #0E3644 !important;
+    }
+
+    .custom-tab:hover:not(.active) {
+        background-color: #f8f9fa !important;
+        border-color: #cdd4db !important;
+    }
+
     .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
     @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
 
@@ -172,10 +179,6 @@
     .grayscale-hover img { filter: grayscale(100%); transition: filter 0.3s ease; }
     .grayscale-hover:hover img { filter: grayscale(0%); }
     
-    .nav-pills .nav-link.active { background-color: #0E3644; color: #fff; }
-    .nav-pills .nav-link { color: #0E3644; background-color: #f8f9fa; transition: 0.3s; }
-    .nav-pills .nav-link:hover { background-color: #e2e6ea; }
-
     .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 </style>
 
@@ -183,7 +186,6 @@
 
 {% block extra_js %}
 <script>
-    // Скрипт для вкладок (оставлен как есть)
     document.addEventListener("DOMContentLoaded", function() {
         var triggerTabList = [].slice.call(document.querySelectorAll('#eventsTab button'))
         triggerTabList.forEach(function (triggerEl) {
