@@ -307,7 +307,7 @@ img.profile-photo-round,
     top: -45px;
     left: -50px;
     width: 120px;
-    height: 150px;
+    height: 10px;
     /* Указываем путь от CSS файла к папке img. 
        Если css лежит в static/css/, а картинка в static/img/, то путь такой: */
     background: url('../img/hat.png') no-repeat center center; 
@@ -322,7 +322,7 @@ img.profile-photo-round,
 .nav-hat {
     position: absolute;
     top: -12px;
-    left: -2px;
+    left: -1px;
     width: 25px;
     height: 25px;
     background: url('../img/hat.png') no-repeat center center;
@@ -335,7 +335,7 @@ img.profile-photo-round,
 /* 3. Шапка для карточек в списке волонтеров (если нужно) */
 .vol-hat-corner {
     position: absolute;
-    top: -55spx;
+    top: -5spx;
     left: -45px;
     width: 100px;
     height: 80px;
