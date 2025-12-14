@@ -1,95 +1,122 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Регистрация нового волонтера{% endblock %}
+{% block title %}Регистрация - AYA{% endblock %}
 
 {% block extra_css %}
 <style>
+    .navbar, .footer { display: none !important; }
+
     body {
-        padding-top: 0; /* Убираем отступ для navbar на этой странице */
+        background: linear-gradient(135deg, #0E3644 0%, #1a5c70 100%);
+        min-height: 100vh;
+        /* Разрешаем скролл для регистрации, так как форма длинная */
+        padding: 40px 0; 
+        font-family: 'Inter', sans-serif;
     }
-    .navbar, .footer {
-        display: none; /* Скрываем шапку и подвал на странице регистрации */
-    }
-    /* Стили для красивого отображения полей формы */
-    .auth-card p {
-        margin-bottom: 1rem; /* Отступ между каждым полем, которое Django оборачивает в <p> */
-    }
-    .auth-card p label {
-        display: block; /* Чтобы метка была над полем */
-        margin-bottom: .5rem;
-        font-weight: 500;
-        color: var(--dark-color);
-    }
-    .auth-card p input:not([type="checkbox"]), /* Применяем ко всем инпутам, кроме чекбоксов */
-    .auth-card p select,
-    .auth-card p textarea {
+
+    .snow-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+    .snow { position: absolute; width: 10px; height: 10px; background: white; border-radius: 50%; opacity: 0.3; animation: snowfall 10s linear infinite; }
+    .snow:nth-child(1) { left: 15%; animation-duration: 15s; }
+    .snow:nth-child(2) { left: 35%; width: 12px; height: 12px; animation-duration: 20s; delay: 2s; }
+    .snow:nth-child(3) { left: 75%; animation-duration: 12s; delay: 4s; }
+    @keyframes snowfall { 0% { transform: translateY(-100px); opacity: 0; } 100% { transform: translateY(100vh); opacity: 0; } }
+
+    .auth-card {
+        background: #ffffff;
         width: 100%;
-        padding: 0.75rem 1rem;
-        border: 1px solid #ced4da;
-        border-radius: 0.5rem;
-        box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); /* Легкая внутренняя тень */
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        max-width: 500px; /* Чуть шире для удобства */
+        padding: 40px;
+        border-radius: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        position: relative;
+        z-index: 2;
+        margin: 0 auto;
+        animation: fadeUp 0.8s ease-out;
     }
-    .auth-card p input:focus,
-    .auth-card p select:focus,
-    .auth-card p textarea:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), .25);
-        outline: none; /* Убираем стандартный outline */
+
+    .brand-logo { color: #0E3644; font-weight: 800; font-size: 2rem; margin-bottom: 5px; }
+    
+    .form-control {
+        border-radius: 50px;
+        padding: 12px 20px;
+        border: 1px solid #e0e0e0;
+        background: #f8f9fa;
     }
-    .auth-card p .helptext {
-        font-size: 0.8rem;
-        color: #6c757d;
-        margin-top: 0.25rem;
+    .form-control:focus {
+        background: #fff;
+        border-color: #00C4CC;
+        box-shadow: 0 0 0 4px rgba(0, 196, 204, 0.1);
     }
-    /* Стилизация для ошибок полей */
-    .auth-card p ul.errorlist {
-        list-style: none;
-        padding: 0;
-        margin-top: 0.25rem;
-        margin-bottom: 0;
-        color: var(--danger-color);
-        font-size: 0.85rem;
+    
+    .btn-primary {
+        background: #00C4CC;
+        border: none;
+        border-radius: 50px;
+        padding: 12px;
+        font-weight: bold;
+        transition: transform 0.2s;
     }
+    .btn-primary:hover { background: #00b0b8; transform: translateY(-2px); }
+    
+    .auth-link { color: #0E3644; text-decoration: none; font-weight: 600; }
+    .auth-link:hover { color: #00C4CC; }
+
+    .helptext { font-size: 0.75rem; color: #999; margin-left: 10px; margin-top: 2px; }
+    ul.errorlist { list-style: none; padding: 0; color: #dc3545; font-size: 0.85rem; margin-bottom: 10px; }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="auth-page">
+<div class="snow-container">
+    <div class="snow"></div><div class="snow"></div><div class="snow"></div><div class="snow"></div>
+</div>
+
+<div class="container">
     <div class="auth-card">
-        <h3 class="h3-title">Присоединяйтесь к AYA</h3>
-        <p class="text-center text-muted mb-4">Создайте свой профиль волонтера за несколько шагов.</p>
+        <div class="text-center mb-4">
+            <h1 class="brand-logo">AYA</h1>
+            <h4 class="fw-bold text-dark mt-3">Создание аккаунта</h4>
+            <p class="text-muted small">Присоединяйся к команде лучших</p>
+        </div>
 
         <form method="post">
             {% csrf_token %}
             
             {% if form.non_field_errors %}
-                <div class="alert alert-danger" role="alert">
+                <div class="alert alert-danger rounded-4 text-center">
                     {% for error in form.non_field_errors %}{{ error }}{% endfor %}
                 </div>
             {% endif %}
 
-            {# Отрисовываем каждое поле формы вручную, чтобы добавить классы Bootstrap и избежать дублирования #}
             {% for field in form %}
                 <div class="mb-3">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    <label for="{{ field.id_for_label }}" class="form-label ms-2 small fw-bold text-muted">{{ field.label }}</label>
                     {{ field }}
+                    
                     {% if field.help_text %}
-                        <div class="form-text">{{ field.help_text }}</div>
+                        <div class="helptext">{{ field.help_text|safe }}</div>
                     {% endif %}
+                    
                     {% if field.errors %}
-                        <ul class="errorlist">
-                            {% for error in field.errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
+                        <ul class="errorlist ms-2">
+                            {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
                         </ul>
                     {% endif %}
                 </div>
             {% endfor %}
 
-            <button type="submit" class="btn btn-primary w-100 py-3 mt-3">Зарегистрироваться</button>
-            <a href="{% url 'login' %}" class="auth-link">Уже есть аккаунт? Войдите!</a>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary w-100 shadow mb-3">Зарегистрироваться</button>
+                <div class="text-center">
+                    <span class="text-muted small">Уже есть аккаунт?</span>
+                    <a href="{% url 'login' %}" class="auth-link small ms-1">Войти</a>
+                    <br>
+                    <a href="{% url 'home' %}" class="text-muted small text-decoration-none mt-3 d-inline-block">&larr; На главную</a>
+                </div>
+            </div>
         </form>
     </div>
 </div>

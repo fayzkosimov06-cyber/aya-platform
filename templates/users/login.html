@@ -1,62 +1,135 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Вход в аккаунт{% endblock %}
+{% block title %}Вход - AYA{% endblock %}
 
 {% block extra_css %}
 <style>
+    /* Отключаем стандартный навбар и футер, так как у нас свой фон */
+    .navbar, .footer { display: none !important; }
+    
     body {
-        padding-top: 0; /* Убираем отступ для navbar на этой странице */
+        /* Темный градиент как на главной */
+        background: linear-gradient(135deg, #0E3644 0%, #1a5c70 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Inter', sans-serif; /* Или ваш шрифт */
+        overflow-x: hidden;
     }
-    .navbar {
-        display: none; /* Скрываем navbar на странице входа */
+
+    /* Контейнер для снега (копия с главной) */
+    .snow-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+    .snow { position: absolute; width: 10px; height: 10px; background: white; border-radius: 50%; opacity: 0.3; animation: snowfall 10s linear infinite; }
+    .snow:nth-child(1) { left: 10%; animation-duration: 15s; animation-delay: 0s; }
+    .snow:nth-child(2) { left: 20%; width: 15px; height: 15px; animation-duration: 20s; animation-delay: 2s; }
+    .snow:nth-child(3) { left: 40%; animation-duration: 12s; animation-delay: 4s; }
+    .snow:nth-child(4) { left: 60%; width: 8px; height: 8px; animation-duration: 18s; animation-delay: 1s; }
+    .snow:nth-child(5) { left: 80%; animation-duration: 14s; animation-delay: 3s; }
+    @keyframes snowfall { 0% { transform: translateY(-100px); opacity: 0; } 20% { opacity: 0.5; } 100% { transform: translateY(100vh); opacity: 0; } }
+
+    /* Карточка входа */
+    .auth-card {
+        background: #ffffff;
+        width: 100%;
+        max-width: 420px;
+        padding: 40px;
+        border-radius: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        position: relative;
+        z-index: 2;
+        animation: fadeUp 0.8s ease-out;
     }
-    .footer {
-        display: none; /* Скрываем footer на странице входа */
+
+    .brand-logo {
+        color: #0E3644;
+        font-weight: 800;
+        font-size: 2rem;
+        margin-bottom: 5px;
+        letter-spacing: 1px;
     }
+    
+    .form-control {
+        border-radius: 50px; /* Скругленные поля */
+        padding: 12px 20px;
+        border: 1px solid #e0e0e0;
+        background: #f8f9fa;
+        transition: all 0.3s;
+    }
+    .form-control:focus {
+        background: #fff;
+        border-color: #00C4CC;
+        box-shadow: 0 0 0 4px rgba(0, 196, 204, 0.1);
+    }
+    
+    .btn-primary {
+        background: #00C4CC; /* Цвет акцента с главной */
+        border: none;
+        border-radius: 50px;
+        padding: 12px;
+        font-weight: bold;
+        transition: transform 0.2s;
+    }
+    .btn-primary:hover {
+        background: #00b0b8;
+        transform: translateY(-2px);
+    }
+    
+    .auth-link {
+        color: #0E3644;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+    .auth-link:hover { color: #00C4CC; }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="auth-page">
-    <div class="auth-card">
-        <h3 class="h3-title">Добро пожаловать обратно!</h3>
-        <p class="text-center text-muted mb-4">Войдите в свой аккаунт, чтобы продолжить.</p>
 
-        <form method="post">
+<div class="snow-container">
+    <div class="snow"></div><div class="snow"></div><div class="snow"></div>
+    <div class="snow"></div><div class="snow"></div>
+</div>
+
+<div class="container d-flex justify-content-center">
+    <div class="auth-card text-center">
+        <div class="mb-4">
+            <h1 class="brand-logo">AYA</h1>
+            <p class="text-muted small text-uppercase fw-bold ls-1">Волонтерское движение</p>
+        </div>
+
+        <h4 class="fw-bold text-dark mb-4">С возвращением!</h4>
+
+        <form method="post" class="text-start">
             {% csrf_token %}
+            
             {% if form.non_field_errors %}
-                <div class="alert alert-danger" role="alert">
-                    {% for error in form.non_field_errors %}
-                        {{ error }}
-                    {% endfor %}
+                <div class="alert alert-danger rounded-4 text-center small">
+                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
                 </div>
             {% endif %}
 
-            {# username #}
             <div class="mb-3">
-                <label for="{{ form.username.id_for_label }}" class="form-label">Имя пользователя</label>
+                <label class="form-label ms-2 small fw-bold text-muted">Логин</label>
                 {{ form.username }}
-                {% if form.username.errors %}
-                    <div class="text-danger small mt-1">
-                        {% for error in form.username.errors %}{{ error }}{% endfor %}
-                    </div>
-                {% endif %}
             </div>
 
-            {# password #}
             <div class="mb-4">
-                <label for="{{ form.password.id_for_label }}" class="form-label">Пароль</label>
+                <label class="form-label ms-2 small fw-bold text-muted">Пароль</label>
                 {{ form.password }}
-                {% if form.password.errors %}
-                    <div class="text-danger small mt-1">
-                        {% for error in form.password.errors %}{{ error }}{% endfor %}
-                    </div>
-                {% endif %}
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 py-3 mb-3">Войти</button>
-            <a href="{% url 'signup' %}" class="auth-link">Нет аккаунта? Зарегистрируйтесь!</a>
+            <button type="submit" class="btn btn-primary w-100 mb-3 shadow">Войти</button>
+            
+            <div class="text-center mt-4">
+                <a href="{% url 'signup' %}" class="auth-link small">Нет аккаунта? Зарегистрироваться</a>
+                <br>
+                <a href="{% url 'home' %}" class="text-muted small text-decoration-none mt-2 d-inline-block">&larr; Вернуться на главную</a>
+            </div>
         </form>
     </div>
 </div>
