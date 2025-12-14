@@ -116,7 +116,10 @@ def about_view(request):
 
 
 def volunteer_list_view(request):
-    queryset = User.objects.filter(is_approved=True).order_by('last_name')
+    # Показываем одобренных, НО ИСКЛЮЧАЕМ (exclude) работников, админов и президента
+    queryset = User.objects.filter(is_approved=True).exclude(
+        role__in=['worker', 'head_admin']
+    ).order_by('last_name')
     
     # Списки для фильтров
     faculties = User.objects.filter(is_approved=True).exclude(faculty='').values_list('faculty', flat=True).distinct().order_by('faculty')
