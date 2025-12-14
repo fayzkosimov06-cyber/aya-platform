@@ -52,4 +52,5 @@ urlpatterns = [
     path('notifications/read/<int:pk>/', views.mark_notification_as_read_view, name='mark_notification_as_read'),
     # NEW: Mark all as read
     path('notifications/read-all/', views.mark_all_notifications_as_read_view, name='mark_all_notifications_as_read'),
+    path('profile/<int:pk>/admin-password-change/', views.admin_password_change_view, name='admin_password_change'),
 ]

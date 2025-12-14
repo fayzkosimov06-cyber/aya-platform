@@ -30,9 +30,18 @@
                                 </h3>
                                 <p class="mb-0 opacity-75">Заполните информацию о себе и настройте приватность.</p>
                             </div>
-                            {% if user_to_edit.photo %}
-                                <img src="{{ user_to_edit.photo.url }}" class="rounded-circle border border-2 border-white" width="60" height="60" style="object-fit: cover;">
-                            {% endif %}
+                            
+                            <div style="width: 60px; height: 60px;">
+                                {% if user_to_edit.photo %}
+                                    <img src="{{ user_to_edit.photo.url }}" class="rounded-circle border border-2 border-white w-100 h-100" style="object-fit: cover;">
+                                {% else %}
+                                    {% if user_to_edit.gender == 'female' or user_to_edit.gender == 'F' or user_to_edit.gender == '2' %}
+                                        <img src="{% static 'img/female_avatar.png' %}" class="rounded-circle border border-2 border-white w-100 h-100" style="object-fit: cover;">
+                                    {% else %}
+                                        <img src="{% static 'img/male_avatar.png' %}" class="rounded-circle border border-2 border-white w-100 h-100" style="object-fit: cover;">
+                                    {% endif %}
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
 
@@ -42,27 +51,36 @@
                         <div class="row g-3 mb-4">
                             
                             {% if form.username %} 
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-danger">Логин (обязательно)</label>
-                                {{ form.username }}
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-danger">Email (обязательно)</label>
-                                {{ form.email }}
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-danger">Роль</label>
-                                {{ form.role }}
-                            </div>
-                            <div class="col-md-6 d-flex align-items-end pb-2">
-                                <div class="form-check form-switch p-0">
-                                    {{ form.is_active_volunteer_title }}
-                                    <label class="form-check-label fw-bold text-success ms-2" for="{{ form.is_active_volunteer_title.id_for_label }}">
-                                        Статус "Активный волонтер"
-                                    </label>
+                            <div class="p-3 mb-3 bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-3">
+                                <h6 class="fw-bold text-danger mb-3"><i class="fas fa-lock"></i> Служебные данные (видит только Админ)</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-dark">Логин (Username)</label>
+                                        {{ form.username }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-dark">Email</label>
+                                        {{ form.email }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-dark">Роль</label>
+                                        {{ form.role }}
+                                    </div>
+                                    <div class="col-md-6 d-flex align-items-end">
+                                        <div class="form-check form-switch mb-2">
+                                            {{ form.is_active_volunteer_title }}
+                                            <label class="form-check-label fw-bold text-success" for="{{ form.is_active_volunteer_title.id_for_label }}">
+                                                Статус "Активный волонтер"
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mt-2">
+                                        <a href="{% url 'admin_password_change' user_to_edit.pk %}" class="btn btn-warning w-100 fw-bold shadow-sm">
+                                            <i class="fas fa-key me-2"></i> Принудительно сменить пароль
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-12"><hr class="text-danger border-2 opacity-25"></div>
                             {% endif %}
                             <div class="col-md-12">
                                 <label class="form-label fw-bold">Фото профиля</label>

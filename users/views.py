@@ -499,3 +499,29 @@ def mark_all_notifications_as_read_view(request):
         messages.info(request, "У вас нет непрочитанных уведомлений.")
         
     return redirect('notifications')
+
+from django.contrib.auth.forms import SetPasswordForm
+
+@login_required
+def admin_password_change_view(request, pk):
+    # Проверка: только супер-админ может менять пароли другим
+    if not request.user.is_superuser:
+        messages.error(request, "У вас нет прав для этого.")
+        return redirect('home')
+
+    target_user = get_object_or_404(User, pk=pk)
+
+    if request.method == 'POST':
+        form = SetPasswordForm(target_user, request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Пароль для {target_user.get_full_name()} успешно изменен!")
+            # Важно: не даем админу "войти" под этим паролем, просто возвращаем в профиль
+            return redirect('public_profile', pk=pk)
+    else:
+        form = SetPasswordForm(target_user)
+
+    return render(request, 'users/admin_password_change.html', {
+        'form': form,
+        'target_user': target_user
+    })
