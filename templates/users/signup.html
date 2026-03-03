@@ -1,26 +1,4 @@
-{% extends "base.html" %}
-{% load static %}
-
-{% block title %}Регистрация - AYA{% endblock %}
-
-{% block extra_css %}
-<style>
-    .navbar, .footer { display: none !important; }
-
-    body {
-        background: linear-gradient(135deg, #0E3644 0%, #1a5c70 100%);
-        min-height: 100vh;
-        /* Разрешаем скролл для регистрации, так как форма длинная */
-        padding: 40px 0; 
-        font-family: 'Inter', sans-serif;
-    }
-
-    .snow-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-    .snow { position: absolute; width: 10px; height: 10px; background: white; border-radius: 50%; opacity: 0.3; animation: snowfall 10s linear infinite; }
-    .snow:nth-child(1) { left: 15%; animation-duration: 15s; }
-    .snow:nth-child(2) { left: 35%; width: 12px; height: 12px; animation-duration: 20s; delay: 2s; }
-    .snow:nth-child(3) { left: 75%; animation-duration: 12s; delay: 4s; }
-    @keyframes snowfall { 0% { transform: translateY(-100px); opacity: 0; } 100% { transform: translateY(100vh); opacity: 0; } }
+100% { transform: translateY(100vh); opacity: 0; } }
 
     .auth-card {
         background: #ffffff;
@@ -70,9 +48,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="snow-container">
-    <div class="snow"></div><div class="snow"></div><div class="snow"></div><div class="snow"></div>
-</div>
+
+
+
 
 <div class="container">
     <div class="auth-card">

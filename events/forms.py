@@ -22,7 +22,7 @@ class MultipleFileField(forms.FileField):
 class EventCreateForm(forms.ModelForm):
     class Meta:
         model = Event
-        fields = ['title', 'cover_image', 'description', 'start_time', 'end_time', 'location', 'max_participants']
+        fields = ['title', 'cover_image', 'description', 'start_time', 'end_time', 'location', 'max_participants', 'is_public_for_guests']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
@@ -31,6 +31,7 @@ class EventCreateForm(forms.ModelForm):
             'location': forms.TextInput(attrs={'class': 'form-control'}),
             'max_participants': forms.NumberInput(attrs={'class': 'form-control'}),
             'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'is_public_for_guests': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
 class EventReportForm(forms.ModelForm):

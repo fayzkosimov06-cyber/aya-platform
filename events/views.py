@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Q
 from .models import Event, EventPhoto, EventVideo, EventHero
 from .forms import EventCreateForm, EventReportForm, EventVideoForm, EventHeroForm
 from users.models import AuditLog
@@ -23,22 +24,58 @@ def can_create_instantly(user):
 # events/views.py
 
 def event_list_view(request):
-    upcoming_events = Event.objects.filter(is_approved=True, is_completed=False).order_by('start_time')
-    
-    # ИСПРАВЛЕНИЕ: Показываем ВСЕ завершенные мероприятия, даже если отчет не опубликован
-    # (фильтрацию "кто что видит" сделаем в шаблоне)
-    past_events = Event.objects.filter(is_completed=True).order_by('-end_time')
-    
+    q = (request.GET.get('q') or '').strip()
+
+    # База: показываем только одобренные
+    upcoming_events = Event.objects.filter(is_approved=True, is_completed=False)
+    past_events = Event.objects.filter(is_approved=True, is_completed=True)
+
+    # Гости видят только публичные для гостей
+    if not request.user.is_authenticated:
+        upcoming_events = upcoming_events.filter(is_public_for_guests=True)
+        past_events = past_events.filter(is_public_for_guests=True)
+
+    # Поиск (название, описание, локация)
+    if q:
+        upcoming_events = upcoming_events.filter(
+            Q(title__icontains=q) | Q(description__icontains=q) | Q(location__icontains=q)
+        )
+        past_events = past_events.filter(
+            Q(title__icontains=q) | Q(description__icontains=q) | Q(location__icontains=q)
+        )
+
+    upcoming_events = upcoming_events.order_by('start_time')
+    past_events = past_events.order_by('-end_time')
+
     return render(request, 'events/event_list.html', {
         'upcoming_events': upcoming_events,
         'past_events': past_events
     })
-@login_required
 def event_detail_view(request, pk):
     event = get_object_or_404(Event, pk=pk)
-    is_participant = request.user in event.participants.all()
-    can_manage = can_manage_event(request.user, event)
-    return render(request, 'events/event_detail.html', {'event': event, 'is_participant': is_participant, 'can_manage': can_manage})
+
+    # 1) Неодобренное мероприятие: показываем только тем, кто может управлять
+    if not event.is_approved:
+        if not (request.user.is_authenticated and can_manage_event(request.user, event)):
+            messages.error(request, "Мероприятие еще не опубликовано.")
+            return redirect('event_list')
+
+    # 2) Гости могут видеть только публичные для гостей
+    if not request.user.is_authenticated and not event.is_public_for_guests:
+        messages.info(request, "Войдите, чтобы просмотреть это мероприятие.")
+        return redirect('login')
+
+    is_participant = False
+    can_manage = False
+    if request.user.is_authenticated:
+        is_participant = event.participants.filter(pk=request.user.pk).exists()
+        can_manage = can_manage_event(request.user, event)
+
+    return render(request, 'events/event_detail.html', {
+        'event': event,
+        'is_participant': is_participant,
+        'can_manage': can_manage
+    })
 
 @login_required
 def event_create_view(request):
@@ -140,13 +177,33 @@ def event_report_edit_view(request, pk):
 @login_required
 def event_join_view(request, pk):
     event = get_object_or_404(Event, pk=pk)
-    if not event.is_completed:
-        if request.user in event.participants.all():
-            event.participants.remove(request.user)
-            messages.info(request, "Вы отменили запись.")
-        else:
-            event.participants.add(request.user)
-            messages.success(request, "Вы записаны!")
+
+    if not request.user.is_approved:
+        messages.error(request, "Ваш профиль еще не одобрен. Запись на мероприятия будет доступна после одобрения.")
+        return redirect('event_detail', pk=pk)
+
+    if not event.is_approved:
+        messages.error(request, "Это мероприятие еще не опубликовано.")
+        return redirect('event_detail', pk=pk)
+
+    if event.is_completed:
+        messages.info(request, "Мероприятие уже завершено.")
+        return redirect('event_detail', pk=pk)
+
+    if event.participants.filter(pk=request.user.pk).exists():
+        event.participants.remove(request.user)
+        messages.info(request, "Вы отменили запись.")
+        return redirect('event_detail', pk=pk)
+
+    # Проверка лимита участников
+    if event.max_participants is not None:
+        current_count = event.participants.count()
+        if current_count >= event.max_participants:
+            messages.error(request, "Достигнут лимит участников для этого мероприятия.")
+            return redirect('event_detail', pk=pk)
+
+    event.participants.add(request.user)
+    messages.success(request, "Вы записаны!")
     return redirect('event_detail', pk=pk)
 
 # --- УДАЛЕНИЕ ФОТО ---

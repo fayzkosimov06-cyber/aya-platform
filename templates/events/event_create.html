@@ -44,6 +44,14 @@
                             {{ form.max_participants }}
                         </div>
 
+                        <div class="form-check mb-3">
+                            {{ form.is_public_for_guests }}
+                            <label class="form-check-label ms-2">
+                                Видно для гостей (без регистрации)
+                            </label>
+                        </div>
+
+
                         <div class="mb-3">
                             <label class="form-label">Описание</label>
                             {{ form.description }}

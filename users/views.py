@@ -112,14 +112,15 @@ def home_view(request):
 
 
 def about_view(request):
-    return render(request, 'users/about.html', {'about_content': AboutPage.objects.first()})
+    about_content, _ = AboutPage.objects.get_or_create(pk=1)
+    return render(request, 'users/about.html', {'about_content': about_content})
 
 
 def volunteer_list_view(request):
     # Показываем одобренных, НО ИСКЛЮЧАЕМ (exclude) работников, админов и президента
     queryset = User.objects.filter(is_approved=True).exclude(
         role__in=['worker', 'head_admin']
-    ).order_by('last_name')
+    ).prefetch_related('directions', 'school_leader_of').order_by('last_name')
     
     # Списки для фильтров
     faculties = User.objects.filter(is_approved=True).exclude(faculty='').values_list('faculty', flat=True).distinct().order_by('faculty')
@@ -310,7 +311,7 @@ def admin_dashboard_view(request):
 @login_required
 def user_management_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
-    users_list = User.objects.exclude(is_superuser=True).order_by('last_name')
+    users_list = User.objects.exclude(is_superuser=True).prefetch_related('directions', 'school_leader_of').order_by('last_name')
     
     search_query = request.GET.get('search')
     if search_query:

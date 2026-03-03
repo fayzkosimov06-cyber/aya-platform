@@ -18,16 +18,7 @@
         font-family: 'Inter', sans-serif; /* Или ваш шрифт */
         overflow-x: hidden;
     }
-
-    /* Контейнер для снега (копия с главной) */
-    .snow-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-    .snow { position: absolute; width: 10px; height: 10px; background: white; border-radius: 50%; opacity: 0.3; animation: snowfall 10s linear infinite; }
-    .snow:nth-child(1) { left: 10%; animation-duration: 15s; animation-delay: 0s; }
-    .snow:nth-child(2) { left: 20%; width: 15px; height: 15px; animation-duration: 20s; animation-delay: 2s; }
-    .snow:nth-child(3) { left: 40%; animation-duration: 12s; animation-delay: 4s; }
-    .snow:nth-child(4) { left: 60%; width: 8px; height: 8px; animation-duration: 18s; animation-delay: 1s; }
-    .snow:nth-child(5) { left: 80%; animation-duration: 14s; animation-delay: 3s; }
-    @keyframes snowfall { 0% { transform: translateY(-100px); opacity: 0; } 20% { opacity: 0.5; } 100% { transform: translateY(100vh); opacity: 0; } }
+20% { opacity: 0.5; } 100% { transform: translateY(100vh); opacity: 0; } }
 
     /* Карточка входа */
     .auth-card {
@@ -90,10 +81,9 @@
 
 {% block content %}
 
-<div class="snow-container">
-    <div class="snow"></div><div class="snow"></div><div class="snow"></div>
-    <div class="snow"></div><div class="snow"></div>
-</div>
+
+
+
 
 <div class="container d-flex justify-content-center">
     <div class="auth-card text-center">
