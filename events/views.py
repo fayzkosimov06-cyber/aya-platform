@@ -130,48 +130,98 @@ def event_finish_view(request, pk):
 @login_required
 def event_report_edit_view(request, pk):
     event = get_object_or_404(Event, pk=pk)
-    if not can_manage_event(request.user, event): return redirect('event_detail', pk=pk)
+    if not can_manage_event(request.user, event):
+        return redirect('event_detail', pk=pk)
+
+    # Формы по умолчанию (GET)
+    report_form = EventReportForm(instance=event)
+    video_form = EventVideoForm()
+    hero_form = EventHeroForm()
 
     if request.method == 'POST':
-        report_form = EventReportForm(request.POST, instance=event)
-        video_form = EventVideoForm(request.POST)
-        hero_form = EventHeroForm(request.POST)
-        
-        log_details = []
+        action = (request.POST.get('action') or '').strip()
 
-        if report_form.is_valid():
-            report_form.save()
-            photos = request.FILES.getlist('photos')
-            if photos:
-                for photo in photos:
-                    EventPhoto.objects.create(event=event, image=photo)
-                log_details.append(f"добавил {len(photos)} фото")
-            
-            if video_form.is_valid() and video_form.cleaned_data['video_url']:
+        # 1) Сохранить основной отчёт + фото + публикация
+        if action == 'save_report':
+            report_form = EventReportForm(request.POST, instance=event)
+            if report_form.is_valid():
+                report_form.save()
+
+                photos = request.FILES.getlist('photos')
+                if photos:
+                    for photo in photos:
+                        EventPhoto.objects.create(event=event, image=photo)
+                    log_event_action(request.user, f"Добавил {len(photos)} фото в отчет '{event.title}'")
+
+                log_event_action(request.user, f"Обновил основной контент отчета '{event.title}'")
+                messages.success(request, "Отчет сохранен.")
+                return redirect('event_report_edit', pk=pk)
+
+        # 2) Добавить видео
+        elif action == 'add_video':
+            video_form = EventVideoForm(request.POST)
+            if video_form.is_valid() and video_form.cleaned_data.get('video_url'):
                 v = video_form.save(commit=False)
                 v.event = event
                 v.save()
-                log_details.append("добавил видео")
-                
-            if hero_form.is_valid() and hero_form.cleaned_data['user']:
-                h = hero_form.save(commit=False)
-                h.event = event
-                h.save()
-                log_details.append(f"отметил героя {h.user.get_full_name()}")
+                log_event_action(request.user, f"Добавил видео в отчет '{event.title}'")
+                messages.success(request, "Видео добавлено.")
+                return redirect('event_report_edit', pk=pk)
 
-            if log_details:
-                log_event_action(request.user, f"Обновил отчет '{event.title}': {', '.join(log_details)}")
+        # 3) Добавить героя (если уже был — обновим роль)
+        elif action == 'add_hero':
+            hero_form = EventHeroForm(request.POST)
+            if hero_form.is_valid() and hero_form.cleaned_data.get('user'):
+                user = hero_form.cleaned_data['user']
+                role_name = (hero_form.cleaned_data.get('role_name') or '').strip()
 
-            messages.success(request, "Отчет сохранен.")
+                hero_obj, created = EventHero.objects.update_or_create(
+                    event=event,
+                    user=user,
+                    defaults={'role_name': role_name}
+                )
+
+                if created:
+                    log_event_action(request.user, f"Отметил героя {user.get_full_name()} в '{event.title}'")
+                    messages.success(request, "Герой отмечен.")
+                else:
+                    log_event_action(request.user, f"Обновил роль героя {user.get_full_name()} в '{event.title}'")
+                    messages.success(request, "Роль героя обновлена.")
+                return redirect('event_report_edit', pk=pk)
+
+        # 4) Редактировать роль героя
+        elif action == 'update_hero':
+            hero_id = request.POST.get('hero_id')
+            role_name = (request.POST.get('role_name') or '').strip()
+
+            hero_obj = get_object_or_404(EventHero, pk=hero_id, event=event)
+            hero_obj.role_name = role_name
+            hero_obj.save(update_fields=['role_name'])
+
+            log_event_action(request.user, f"Изменил роль героя {hero_obj.user.get_full_name()} в '{event.title}'")
+            messages.success(request, "Роль обновлена.")
             return redirect('event_report_edit', pk=pk)
-    else:
-        report_form = EventReportForm(instance=event)
-        video_form = EventVideoForm()
-        hero_form = EventHeroForm()
-        
+
+        # 5) Удалить героя
+        elif action == 'delete_hero':
+            hero_id = request.POST.get('hero_id')
+            hero_obj = get_object_or_404(EventHero, pk=hero_id, event=event)
+
+            full_name = hero_obj.user.get_full_name()
+            hero_obj.delete()
+
+            log_event_action(request.user, f"Удалил отметку героя {full_name} в '{event.title}'")
+            messages.success(request, "Отметка героя удалена.")
+            return redirect('event_report_edit', pk=pk)
+
+        else:
+            messages.error(request, "Неизвестное действие формы.")
+
     return render(request, 'events/event_report_edit.html', {
-        'event': event, 'report_form': report_form, 
-        'video_form': video_form, 'hero_form': hero_form
+        'event': event,
+        'report_form': report_form,
+        'video_form': video_form,
+        'hero_form': hero_form
     })
 
 @login_required

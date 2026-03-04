@@ -1,4 +1,12 @@
-100% { transform: translateY(100vh); opacity: 0; } }
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Регистрация - AYA{% endblock %}
+
+{% block content %}
+<style>
+    /* NOTE: Этот CSS был в вашем signup.html; я просто вернул корректную структуру шаблона,
+       чтобы убрать TemplateSyntaxError (лишний {% endblock %} после </style>). */
 
     .auth-card {
         background: #ffffff;
@@ -14,7 +22,7 @@
     }
 
     .brand-logo { color: #0E3644; font-weight: 800; font-size: 2rem; margin-bottom: 5px; }
-    
+
     .form-control {
         border-radius: 50px;
         padding: 12px 20px;
@@ -26,7 +34,7 @@
         border-color: #00C4CC;
         box-shadow: 0 0 0 4px rgba(0, 196, 204, 0.1);
     }
-    
+
     .btn-primary {
         background: #00C4CC;
         border: none;
@@ -36,7 +44,7 @@
         transition: transform 0.2s;
     }
     .btn-primary:hover { background: #00b0b8; transform: translateY(-2px); }
-    
+
     .auth-link { color: #0E3644; text-decoration: none; font-weight: 600; }
     .auth-link:hover { color: #00C4CC; }
 
@@ -45,14 +53,8 @@
 
     @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
-{% endblock %}
 
-{% block content %}
-
-
-
-
-<div class="container">
+<div class="container my-5">
     <div class="auth-card">
         <div class="text-center mb-4">
             <h1 class="brand-logo">AYA</h1>
@@ -62,7 +64,7 @@
 
         <form method="post">
             {% csrf_token %}
-            
+
             {% if form.non_field_errors %}
                 <div class="alert alert-danger rounded-4 text-center">
                     {% for error in form.non_field_errors %}{{ error }}{% endfor %}
@@ -73,11 +75,11 @@
                 <div class="mb-3">
                     <label for="{{ field.id_for_label }}" class="form-label ms-2 small fw-bold text-muted">{{ field.label }}</label>
                     {{ field }}
-                    
+
                     {% if field.help_text %}
                         <div class="helptext">{{ field.help_text|safe }}</div>
                     {% endif %}
-                    
+
                     {% if field.errors %}
                         <ul class="errorlist ms-2">
                             {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
