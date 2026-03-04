@@ -1,7 +1,7 @@
 # users/forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, AboutPage
+from .models import User, AboutPage, ActivityPeriod
 
 class UserRegisterForm(UserCreationForm):
     first_name = forms.CharField(max_length=150, required=True, label="Имя", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ваше имя'}))
@@ -108,6 +108,26 @@ class AdminUpdateForm(forms.ModelForm):
             'linkedin': forms.TextInput(attrs={'class': 'form-control'}),
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
+
+
+class ActivityPeriodForm(forms.ModelForm):
+    """Периоды активности волонтёра. Заполняют только Руководитель направления и Работники/Руководитель отдела."""
+    class Meta:
+        model = ActivityPeriod
+        fields = ['start_date', 'end_date', 'description']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Напр.: Активный волонтёр, Координатор, перерыв из-за учёбы...'}),
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        start = cleaned.get('start_date')
+        end = cleaned.get('end_date')
+        if start and end and end < start:
+            raise forms.ValidationError("Дата окончания не может быть раньше даты начала.")
+        return cleaned
 
 class AboutPageForm(forms.ModelForm):
     class Meta:

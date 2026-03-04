@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center">
+    <div class="container">
+        <h1 class="display-3 fw-bold">ASSOCIATION OF YOUTH OF ATSMU</h1>
+        {% if not user.is_authenticated %}
+            <a href="{% url 'signup' %}" class="btn btn-success btn-lg join-button mt-4">Присоединиться!</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if president %}
+<div class="president-section">
+    <a href="{% url 'public_profile' president.pk %}" class="text-decoration-none">
+        <div class="president-card">
+            <h2 class="mb-5 display-5">Наш Президент</h2>
+            <div class="glowing-border-container mb-3 president">
+                {% if president.photo and president.photo.url %}
+                    <img src="{{ president.photo.url }}" class="profile-photo" alt="Фото профиля">
+                {% else %}
+                    <img src="{% static 'img/male_avatar.png' %}" class="profile-photo" alt="Аватар">
+                {% endif %}
+            </div>
+            <h3 class="mt-3">{{ president.get_full_name }}</h3>
+            <p class="fs-5 status-text status-president">
+                {{ president.get_role_display_custom }}
+            </p>
+        </div>
+    </a>
+</div>
+{% endif %}
+
+{% if board_of_honor %}
+<div class="board-of-honor-section">
+    <div class="container">
+        <h2 class="text-center mb-5 display-5">Ключевые лица</h2>
+        <div class="row justify-content-center g-4">
+            {% for figure in board_of_honor %}
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    {% include 'users/partials/volunteer_card.html' with volunteer=figure %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if upcoming_events %}
+<div class="container my-5">
+    <h2 class="text-center mb-5 display-5">Ближайшие мероприятия</h2>
+    <div class="row g-4">
+        {% for event in upcoming_events %}
+        <div class="col-md-4">
+            <div class="card h-100 event-card">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ event.title }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ event.start_time|date:"d F Y, H:i" }}</h6>
+                    <p class="card-text">{{ event.description|truncatewords:15 }}</p>
+                    <a href="#" class="btn btn-primary mt-auto">Подробнее</a> {# ЗАГЛУШКА, т.к. event_detail нет в urls.py #}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

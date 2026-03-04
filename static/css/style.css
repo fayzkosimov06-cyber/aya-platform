@@ -165,10 +165,73 @@ img.profile-photo-round,
 }
 
 
+bg-brand-red { background-color: #d32f2f; color: white; }
+
+/* Общие стили (если вдруг пропали) */
+.text-brand { color: #0E3644; }
+.text-gradient {
+    background: linear-gradient(90deg, #0E3644, #00C4CC);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.btn-brand {
+    background-color: #0E3644;
+    color: white;
+    border: none;
+}
+.btn-brand:hover { background-color: #00C4CC; transform: translateY(-3px); color: white; }
+.direction-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    transition: 0.3s;
+    border: 1px solid rgba(0,0,0,0.03);
+}
+.direction-card:hover { transform: translateY(-5px); border-color: #00C4CC; }
+.icon-box { font-size: 2.5rem; margin-bottom: 15px; }
+.quotes-parallax {
+    background: url('../img/bg_university.jpg') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+.parallax-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(14, 54, 68, 0.9);
+}
+.avatar-glow img {
+    width: 150px; height: 150px;
+    object-fit: cover;
+    border: 4px solid #FFD700;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+}
+
+
+/* =========================================
+   ДОБАВИТЬ В КОНЕЦ style.css
+   ========================================= */
+
+/* =========================================
+   ДОБАВИТЬ В КОНЕЦ style.css
+   (Замените предыдущий блок с шапками на этот)
+   ========================================= */
+
+/* =========================================
+   ФИНАЛЬНЫЕ НАСТРОЙКИ ПОЗИЦИИ (КОНЕЦ ФАЙЛА)
+   ========================================= */
+
+/* --- НОВОГОДНИЕ ШАПКИ (ЛОКАЛЬНЫЕ) --- */
+
+/* 1. Шапка для больших фото (Профиль, Админка) */
+/* 2. Шапка для маленькой иконки в меню (справа сверху) */
+/* 3. Шапка для карточек в списке волонтеров (если нужно) */
+/* ОСТАЛЬНОЕ БЕЗ ИЗМЕНЕНИЙ (на всякий случай дублирую) */
 .main-navbar { background-color: #0E3644 !important; padding: 12px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
 10% { opacity: 1; }
     100% { transform: translateY(110vh); opacity: 0.2; }
-}und: url('https://cdn-icons-png.flaticon.com/512/744/744546.png') no-repeat center center;
+}
     background-size: contain;
     transform: rotate(10deg); /* Легкий наклон в другую сторону */
     z-index: 10;
@@ -190,11 +253,3 @@ img.profile-photo-round,
 10% { opacity: 1; }
     100% { transform: translateY(110vh); opacity: 0.2; }
 }
-
-/* =========================================
-   QUOTES CAROUSEL (фикс высоты, без "прыжков")
-   ========================================= */
-#quotesCarousel { overflow: hidden; }
-#quotesCarousel .carousel-inner { transition: height 0.35s ease; }
-/* На всякий случай — чтобы слайды не схлопывались */
-#quotesCarousel .carousel-item { padding-top: 12px; padding-bottom: 12px; }

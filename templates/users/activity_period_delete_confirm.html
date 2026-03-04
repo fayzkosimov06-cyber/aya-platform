@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Удалить период — {{ target_user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card border-0 shadow-sm" style="border-radius: 18px;">
+    <div class="card-body p-4">
+      <h4 class="fw-bold mb-2">Удалить период активности?</h4>
+      <p class="mb-3 text-muted">
+        Волонтёр: <strong>{{ target_user.get_full_name }}</strong><br>
+        Период: <strong>{{ period.start_date|date:"d.m.Y" }} — {% if period.end_date %}{{ period.end_date|date:"d.m.Y" }}{% else %}по настоящее время{% endif %}</strong>
+      </p>
+
+      {% if period.description %}
+        <div class="alert alert-light border">
+          {{ period.description }}
+        </div>
+      {% endif %}
+
+      <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <button class="btn btn-danger">
+          <i class="fas fa-trash me-1"></i> Удалить
+        </button>
+        <a class="btn btn-outline-secondary" href="{% url 'activity_periods_manage' target_user.pk %}">Отмена</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,196 +1,391 @@
-{% extends "base.html" %}
-{% block title %}Редактирование отчета{% endblock %}
+{% extends 'base.html' %}
+
+{% block title %}Редактирование отчёта{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Отчет: {{ event.title }}</h2>
-        <a href="{% url 'event_detail' event.pk %}" class="btn btn-outline-secondary">Просмотр</a>
+<div class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+    <div>
+      <h2 class="mb-1">Отчёт: {{ event.title }}</h2>
+      <div class="text-muted">Редактирование отчёта и управление участниками</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" href="{% url 'event_detail' event.pk %}">Просмотр</a>
+      <a class="btn btn-outline-secondary" href="{% url 'event_list' %}">К мероприятиям</a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- LEFT: Report -->
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-primary text-white rounded-top-4">
+          Основной контент
+        </div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data" class="d-grid gap-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_report">
+
+            <div>
+              <label class="form-label fw-semibold">Текст отчёта</label>
+              {{ report_form.report_text }}
+            </div>
+
+            <div>
+              <label class="form-label fw-semibold">Загрузить новые фото</label>
+              {{ report_form.photos }}
+              <div class="form-text">Зажмите Ctrl, чтобы выбрать несколько файлов.</div>
+            </div>
+
+            <div class="form-check">
+              {{ report_form.is_report_published }}
+              <label class="form-check-label" for="{{ report_form.is_report_published.id_for_label }}">
+                Опубликовать отчёт (будет виден всем)
+              </label>
+            </div>
+
+            <button class="btn btn-primary rounded-3" type="submit">
+              Сохранить изменения
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {% if event.photos.count %}
+      <div class="card shadow-sm border-0 rounded-4 mt-4">
+        <div class="card-header bg-light rounded-top-4">
+          Загруженные фото
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            {% for photo in event.photos.all %}
+              <div class="col-6 col-md-4">
+                <a href="{{ photo.image.url }}" target="_blank" rel="noopener">
+                  <img src="{{ photo.image.url }}" class="img-fluid rounded-3 border" alt="Фото">
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </div>
 
-    <div class="row">
-        <div class="col-md-7">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">Основной контент</div>
-                <div class="card-body">
+    <!-- RIGHT: Tools -->
+    <div class="col-lg-5">
+      <!-- Videos -->
+      <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-header bg-danger text-white rounded-top-4">
+          Добавить видео
+        </div>
+        <div class="card-body">
+          <form method="post" class="d-flex gap-2">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_video">
+            <input type="url" name="video_url" class="form-control" placeholder="YouTube / Instagram ссылка" required>
+            <button class="btn btn-danger" type="submit">Добавить</button>
+          </form>
 
-                    <!-- Сохранение основного отчёта -->
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="save_report">
+          {% if event.videos.count %}
+            <div class="mt-3">
+              <div class="fw-semibold mb-2">Добавленные видео:</div>
+              <ul class="list-unstyled mb-0">
+                {% for v in event.videos.all %}
+                  <li class="mb-2">
+                    <a href="{{ v.video_url }}" target="_blank" rel="noopener">{{ v.video_url }}</a>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+        </div>
+      </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Текст отчета</label>
-                            {{ report_form.report_text }}
-                            {% if report_form.report_text.errors %}
-                                <div class="text-danger small mt-1">{{ report_form.report_text.errors }}</div>
-                            {% endif %}
-                        </div>
+      <!-- Roles -->
+      <div class="card shadow-sm border-0 rounded-4 mb-4" id="roles">
+        <div class="card-header bg-warning text-dark rounded-top-4">
+          ⭐ Роли на мероприятии
+        </div>
+        <div class="card-body">
+          <form method="post" class="d-grid gap-2 mb-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="set_role">
 
-                        <div class="mb-3 p-3 bg-light border rounded">
-                            <label class="form-label fw-bold"><i class="fas fa-images"></i> Загрузить НОВЫЕ фото</label>
-                            {{ report_form.photos }}
-                            <small class="text-muted">Зажмите Ctrl, чтобы выбрать несколько файлов сразу.</small>
-                            {% if report_form.photos.errors %}
-                                <div class="text-danger small mt-1">{{ report_form.photos.errors }}</div>
-                            {% endif %}
-                        </div>
+            <label class="form-label mb-0">Волонтёр</label>
+            {{ hero_form.user }}
 
-                        <div class="form-check mb-3">
-                            {{ report_form.is_report_published }}
-                            <label class="form-check-label fw-bold text-success">Опубликовать отчет (будет виден всем)</label>
-                        </div>
+            <label class="form-label mb-0">Роль / звание</label>
+            {{ hero_form.role_name }}
+            <datalist id="roleOptions">
+              <option value="Победитель"></option>
+              <option value="Фотограф"></option>
+              <option value="Ведущий"></option>
+              <option value="Докладчик"></option>
+              <option value="Организатор"></option>
+              <option value="Координатор"></option>
+              <option value="Модератор"></option>
+              <option value="Техподдержка"></option>
+              <option value="Секретарь"></option>
+              <option value="Спикер"></option>
+            </datalist>
 
-                        <button type="submit" class="btn btn-primary w-100">Сохранить изменения</button>
+            <button class="btn btn-warning" type="submit">Сохранить роль</button>
+            <div class="form-text">Чтобы исправить роль: выберите того же волонтёра и введите новую роль.</div>
+          </form>
+
+          <div class="fw-semibold mb-2">Отмеченные роли:</div>
+          <div class="border rounded-3 p-2" style="max-height: 240px; overflow:auto;">
+            {% if roles %}
+              <ul class="mb-0">
+                {% for hero in roles %}
+                  <li class="mb-1">
+                    <strong>{{ hero.user.get_full_name|default:hero.user.username }}</strong>
+                    — {{ hero.role_name }}
+                    <form method="post" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete_role">
+                      <input type="hidden" name="hero_id" value="{{ hero.id }}">
+                      <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-1" onclick="return confirm('Удалить роль?')">Удалить</button>
                     </form>
-                </div>
-            </div>
-
-            {% if event.photos.exists %}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-secondary text-white">
-                    <i class="fas fa-edit"></i> Управление загруженными фотографиями
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        {% for photo in event.photos.all %}
-                        <div class="col-md-4 col-6">
-                            <div class="position-relative group-hover-container">
-                                <img src="{{ photo.image.url }}" class="img-fluid rounded border" style="height: 100px; width: 100%; object-fit: cover;">
-
-                                <form action="{% url 'event_photo_delete' photo.pk %}" method="post" class="position-absolute top-0 end-0 m-1" onsubmit="return confirm('Удалить это фото?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger opacity-75 hover-opacity-100" title="Удалить фото">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="text-muted">Пока никто не отмечен.</div>
             {% endif %}
+          </div>
         </div>
+      </div>
 
-        <div class="col-md-5">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-danger text-white"><i class="fab fa-youtube"></i> Добавить видео</div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="add_video">
-
-                        <div class="input-group">
-                            {{ video_form.video_url }}
-                            <button class="btn btn-outline-secondary" type="submit">Добавить</button>
-                        </div>
-
-                        {% if video_form.video_url.errors %}
-                            <div class="text-danger small mt-2">{{ video_form.video_url.errors }}</div>
-                        {% endif %}
-                    </form>
-                    <hr>
-                    <h6>Добавленные видео:</h6>
-                    <ul>
-                        {% for vid in event.videos.all %}
-                            <li><a href="{{ vid.video_url }}" target="_blank">Ссылка {{ forloop.counter }}</a></li>
-                        {% empty %}
-                            <li class="text-muted">Пока нет видео.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-
-            <div class="card shadow-sm border-warning">
-                <div class="card-header bg-warning text-dark"><i class="fas fa-star"></i> Отметить героя</div>
-                <div class="card-body">
-
-                    <!-- Добавление героя -->
-                    <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="add_hero">
-
-                        <div class="mb-2">
-                            {{ hero_form.user }}
-                            {% if hero_form.user.errors %}
-                                <div class="text-danger small mt-1">{{ hero_form.user.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="input-group mb-2">
-                            {{ hero_form.role_name }}
-                            <button class="btn btn-dark" type="submit">Отметить</button>
-                        </div>
-
-                        {% if hero_form.role_name.errors %}
-                            <div class="text-danger small mt-1">{{ hero_form.role_name.errors }}</div>
-                        {% endif %}
-                    </form>
-
-                    <hr>
-                    <h6>Отмеченные люди:</h6>
-                    <ul class="list-unstyled">
-                        {% for hero in event.heroes.all %}
-                            <li class="mb-2 p-2 border rounded">
-                                <div class="fw-bold">{{ hero.user.get_full_name }}</div>
-
-                                <div class="d-flex gap-2 flex-wrap mt-2">
-                                    <!-- Редактировать роль -->
-                                    <form method="post" class="d-flex gap-2 align-items-center flex-wrap">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="update_hero">
-                                        <input type="hidden" name="hero_id" value="{{ hero.id }}">
-
-                                        <input type="text"
-                                               name="role_name"
-                                               value="{{ hero.role_name }}"
-                                               class="form-control form-control-sm"
-                                               style="max-width: 260px;"
-                                               placeholder="Роль (победитель, фотограф...)">
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">Сохранить</button>
-                                    </form>
-
-                                    <!-- Удалить героя -->
-                                    <form method="post" onsubmit="return confirm('Удалить отметку героя?');">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="delete_hero">
-                                        <input type="hidden" name="hero_id" value="{{ hero.id }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
-                                    </form>
-                                </div>
-                            </li>
-                        {% empty %}
-                            <li class="text-muted">Пока никто не отмечен.</li>
-                        {% endfor %}
-                    </ul>
-
-                    <small class="text-muted d-block mt-2">
-                        Подсказка: в поле выбора человека включён поиск (можно печатать имя).
-                    </small>
-                </div>
-            </div>
+      <!-- Evaluation -->
+      <div class="card shadow-sm border-0 rounded-4" id="evaluation">
+        <div class="card-header bg-info text-white rounded-top-4">
+          ✅ Оценка волонтёров
         </div>
+        <div class="card-body">
+          {% if not can_evaluate %}
+            <div class="alert alert-warning mb-0">У вас нет прав оценивать волонтёров для этого мероприятия.</div>
+          {% else %}
+            <form method="post" class="d-grid gap-2 mb-3">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="save_evaluation">
+              {% if editing_evaluation %}
+                <input type="hidden" name="evaluation_id" value="{{ editing_evaluation.id }}">
+              {% endif %}
+
+              <label class="form-label mb-0">Волонтёр</label>
+              <select name="volunteer_id" class="form-select use-select2" required>
+                <option value="">— выберите —</option>
+                {% for u in participants %}
+                  <option value="{{ u.id }}" {% if editing_evaluation and editing_evaluation.volunteer_id == u.id %}selected{% endif %}>
+                    {{ u.get_full_name|default:u.username }}
+                  </option>
+                {% endfor %}
+              </select>
+
+              <label class="form-label mb-0">Роль на мероприятии (не обязательно)</label>
+              <input type="text" name="role_name" class="form-control" list="roleOptions" value="{% if editing_evaluation %}{{ editing_evaluation.role_name }}{% endif %}" placeholder="Напр.: Фотограф">
+
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <div class="fw-semibold">Критерии (1–5)</div>
+                <button class="btn btn-sm btn-outline-primary" type="button" id="add-criterion">+ Критерий</button>
+              </div>
+
+              <datalist id="criteriaOptions">
+                <option value="Дисциплина и пунктуальность"></option>
+                <option value="Ответственность"></option>
+                <option value="Командная работа"></option>
+                <option value="Инициативность"></option>
+                <option value="Качество выполнения задач"></option>
+                <option value="Коммуникация"></option>
+                <option value="Соблюдение инструкций"></option>
+                <option value="Самостоятельность"></option>
+              </datalist>
+
+              <div id="criteria-list" class="border rounded-3 p-2">
+                {% if editing_evaluation and editing_evaluation.criteria %}
+                  {% for c in editing_evaluation.criteria %}
+                    <div class="row g-2 align-items-center criterion-row mb-2">
+                      <div class="col-7">
+                        <input type="text" name="criteria_name" class="form-control" list="criteriaOptions" value="{{ c.name }}" placeholder="Критерий" required>
+                      </div>
+                      <div class="col-3">
+                        <select name="criteria_score" class="form-select" required>
+                          {% for s in '12345' %}
+                            <option value="{{ s }}" {% if c.score|stringformat:'s' == s %}selected{% endif %}>{{ s }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="col-2 text-end">
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-criterion">×</button>
+                      </div>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="row g-2 align-items-center criterion-row mb-2">
+                    <div class="col-7">
+                      <input type="text" name="criteria_name" class="form-control" list="criteriaOptions" value="Дисциплина и пунктуальность" required>
+                    </div>
+                    <div class="col-3">
+                      <select name="criteria_score" class="form-select" required>
+                        <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>
+                      </select>
+                    </div>
+                    <div class="col-2 text-end">
+                      <button type="button" class="btn btn-sm btn-outline-danger remove-criterion">×</button>
+                    </div>
+                  </div>
+                  <div class="row g-2 align-items-center criterion-row mb-2">
+                    <div class="col-7">
+                      <input type="text" name="criteria_name" class="form-control" list="criteriaOptions" value="Ответственность" required>
+                    </div>
+                    <div class="col-3">
+                      <select name="criteria_score" class="form-select" required>
+                        <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>
+                      </select>
+                    </div>
+                    <div class="col-2 text-end">
+                      <button type="button" class="btn btn-sm btn-outline-danger remove-criterion">×</button>
+                    </div>
+                  </div>
+                  <div class="row g-2 align-items-center criterion-row mb-0">
+                    <div class="col-7">
+                      <input type="text" name="criteria_name" class="form-control" list="criteriaOptions" value="Командная работа" required>
+                    </div>
+                    <div class="col-3">
+                      <select name="criteria_score" class="form-select" required>
+                        <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>
+                      </select>
+                    </div>
+                    <div class="col-2 text-end">
+                      <button type="button" class="btn btn-sm btn-outline-danger remove-criterion">×</button>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+
+              <label class="form-label mb-0 mt-2">Комментарий (не обязательно)</label>
+              <textarea name="comment" class="form-control" rows="3" placeholder="Коротко: что было хорошо / что улучшить">{% if editing_evaluation %}{{ editing_evaluation.comment }}{% endif %}</textarea>
+
+              <div class="d-flex gap-2 mt-2">
+                <button class="btn btn-info text-white" type="submit">{% if editing_evaluation %}Сохранить правки{% else %}Сохранить оценку{% endif %}</button>
+                {% if editing_evaluation %}
+                  <a class="btn btn-outline-secondary" href="{% url 'event_report_edit' event.pk %}#evaluation">Отмена</a>
+                {% endif %}
+              </div>
+              <div class="form-text">Оценка сохраняется отдельно для каждого оценщика. Админы/руководитель могут исправлять ошибки.</div>
+            </form>
+
+            <hr>
+
+            <div class="fw-semibold mb-2">Сохранённые оценки:</div>
+            <div class="border rounded-3 p-2" style="max-height: 320px; overflow:auto;">
+              {% if evaluations %}
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Волонтёр</th>
+                      <th>Оценщик</th>
+                      <th>Баллы</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for ev in evaluations %}
+                      <tr>
+                        <td>
+                          <div class="fw-semibold">{{ ev.volunteer.get_full_name|default:ev.volunteer.username }}</div>
+                          {% if ev.role_name %}<div class="text-muted small">{{ ev.role_name }}</div>{% endif %}
+                        </td>
+                        <td class="small">{{ ev.evaluator.get_full_name|default:ev.evaluator.username }}</td>
+                        <td class="small">
+                          <span class="fw-semibold">{{ ev.points_total }}/{{ ev.points_max }} <span class="text-muted">({{ ev.total_score|floatformat:1 }}/5)</span></span>
+                        </td>
+                        <td class="text-end">
+                          <a class="btn btn-sm btn-outline-primary" href="{% url 'event_report_edit' event.pk %}?eval={{ ev.id }}#evaluation">Править</a>
+                          <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete_evaluation">
+                            <input type="hidden" name="evaluation_id" value="{{ ev.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Удалить оценку?')">×</button>
+                          </form>
+                        </td>
+                      </tr>
+                      {% if ev.criteria %}
+                        <tr class="table-light">
+                          <td colspan="4" class="small">
+                            <div class="d-flex flex-wrap gap-2">
+                              {% for c in ev.criteria %}
+                                <span class="badge text-bg-secondary">{{ c.name }}: {{ c.score }}</span>
+                              {% endfor %}
+                            </div>
+                            {% if ev.comment %}<div class="mt-1">{{ ev.comment }}</div>{% endif %}
+                          </td>
+                        </tr>
+                      {% endif %}
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <div class="text-muted">Пока оценок нет.</div>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
     </div>
+  </div>
 </div>
+{% endblock %}
 
-<!-- Поиск в выборе пользователя (Select2).
-     Если у вас уже подключены jquery/select2 в base.html — этот блок можно удалить. -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{% block extra_js %}
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    if (window.jQuery && jQuery.fn.select2) {
-      // hero_form.user обычно имеет id="id_user"
-      const $el = jQuery("#id_user");
-      if ($el.length) {
-        $el.select2({
-          width: "100%",
-          placeholder: "Начните вводить имя...",
-          allowClear: true
-        });
-      }
+(function(){
+  // критерии: добавить/удалить
+  const list = document.getElementById('criteria-list');
+  const addBtn = document.getElementById('add-criterion');
+
+  function wireRow(row){
+    const btn = row.querySelector('.remove-criterion');
+    if(btn){
+      btn.addEventListener('click', function(){
+        row.remove();
+      });
     }
-  });
+  }
+
+  if(list){
+    list.querySelectorAll('.criterion-row').forEach(wireRow);
+  }
+
+  if(addBtn && list){
+    addBtn.addEventListener('click', function(){
+      const row = document.createElement('div');
+      row.className = 'row g-2 align-items-center criterion-row mb-2';
+      row.innerHTML = `
+        <div class="col-7">
+          <input type="text" name="criteria_name" class="form-control" list="criteriaOptions" placeholder="Критерий" required>
+        </div>
+        <div class="col-3">
+          <select name="criteria_score" class="form-select" required>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+        <div class="col-2 text-end">
+          <button type="button" class="btn btn-sm btn-outline-danger remove-criterion">×</button>
+        </div>
+      `;
+      list.appendChild(row);
+      wireRow(row);
+    });
+  }
+
+})();
 </script>
 {% endblock %}

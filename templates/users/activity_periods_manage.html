@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}История активности — {{ target_user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="mb-1 fw-bold">История активности</h3>
+      <div class="text-muted">Волонтёр: <a href="{% url 'public_profile' target_user.pk %}">{{ target_user.get_full_name }}</a></div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" href="{% url 'public_profile' target_user.pk %}">
+        <i class="fas fa-arrow-left me-1"></i> Назад в профиль
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm" style="border-radius: 18px;">
+        <div class="card-header bg-white border-0 py-3 px-4">
+          <h5 class="mb-0 fw-bold"><i class="fas fa-history me-2 text-primary"></i>Периоды</h5>
+        </div>
+        <div class="card-body px-4">
+          {% if periods %}
+            <div class="table-responsive">
+              <table class="table align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th style="min-width: 170px;">Период</th>
+                    <th>Описание</th>
+                    <th class="text-end" style="width: 120px;">Действия</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for p in periods %}
+                    <tr>
+                      <td class="small">
+                        <div class="fw-semibold">{{ p.start_date|date:"d.m.Y" }} — {% if p.end_date %}{{ p.end_date|date:"d.m.Y" }}{% else %}по н.в.{% endif %}</div>
+                      </td>
+                      <td>
+                        {% if p.description %}
+                          <div class="text-dark">{{ p.description }}</div>
+                        {% else %}
+                          <div class="text-muted">—</div>
+                        {% endif %}
+                      </td>
+                      <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" href="{% url 'activity_period_edit' target_user.pk p.pk %}">
+                          <i class="fas fa-pen"></i>
+                        </a>
+                        <a class="btn btn-sm btn-outline-danger" href="{% url 'activity_period_delete' target_user.pk p.pk %}">
+                          <i class="fas fa-trash"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="alert alert-info mb-0">
+              Пока нет периодов активности. Добавьте первый период справа.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm" style="border-radius: 18px;">
+        <div class="card-header bg-white border-0 py-3 px-4">
+          <h5 class="mb-0 fw-bold"><i class="fas fa-plus-circle me-2 text-success"></i>Добавить период</h5>
+        </div>
+        <div class="card-body px-4">
+          <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Дата начала</label>
+              {{ form.start_date }}
+              {% for e in form.start_date.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Дата окончания (если период завершён)</label>
+              {{ form.end_date }}
+              {% for e in form.end_date.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              <div class="form-text">Если оставить пустым — будет «по настоящее время».</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Описание (необязательно)</label>
+              {{ form.description }}
+              {% for e in form.description.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            <button class="btn btn-success w-100">
+              <i class="fas fa-save me-1"></i> Сохранить период
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="alert alert-secondary mt-3 small mb-0">
+        Заполняют только: Руководитель направления и Работники/Руководитель отдела.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

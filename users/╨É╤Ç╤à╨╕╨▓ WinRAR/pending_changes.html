@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Запросы на изменение профиля{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4">Запросы на изменение профиля</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if users_with_changes %}
+        <p>Ниже приведен список волонтеров, которые предложили изменения в своих профилях. Вы можете одобрить или отклонить их.</p>
+        
+        <div class="accordion" id="changesAccordion">
+            {% for user in users_with_changes %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-{{ user.pk }}">
+                    <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ user.pk }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse-{{ user.pk }}">
+                        <strong>{{ user.get_full_name }}</strong> ({{ user.username }}) - 
+                        <span class="ms-2 text-primary fw-bold">{{ user.changes_list|length }} {% if user.changes_list|length == 1 %}изменение{% elif user.changes_list|length > 1 and user.changes_list|length < 5 %}изменения{% else %}изменений{% endif %}
+                        </span>
+                    </button>
+                </h2>
+                <div id="collapse-{{ user.pk }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading-{{ user.pk }}" data-bs-parent="#changesAccordion">
+                    <div class="accordion-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h5>Предложенные изменения:</h5>
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Поле</th>
+                                            <th>Старое значение</th>
+                                            <th>Новое значение</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for change in user.changes_list %}
+                                        <tr>
+                                            <td><strong>{{ change.field_name }}</strong></td>
+                                            <td class="text-muted">{{ change.old }}</td>
+                                            <td class="text-success fw-bold">{{ change.new }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-4 d-flex flex-column justify-content-center">
+                                <form action="{% url 'approve_changes' user.pk %}" method="post" class="d-grid gap-2 mb-2">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success">✅ Одобрить все изменения</button>
+                                </form>
+                                <button type="button" class="btn btn-danger d-grid gap-2" data-bs-toggle="modal" data-bs-target="#rejectChangesModal-{{ user.pk }}">
+                                    ❌ Отклонить изменения
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="rejectChangesModal-{{ user.pk }}" tabindex="-1" aria-labelledby="rejectModalLabel-{{ user.pk }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form action="{% url 'reject_changes' user.pk %}" method="post">
+                            {% csrf_token %}
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="rejectModalLabel-{{ user.pk }}">Отклонить изменения для {{ user.get_full_name }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="reason-{{ user.pk }}" class="form-label">Причина (обязательно):</label>
+                                    <textarea class="form-control" id="reason-{{ user.pk }}" name="reason" rows="3" placeholder="Укажите причину, волонтер получит ее в уведомлении." required></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                <button type="submit" class="btn btn-danger">Да, отклонить</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-success" role="alert">
+            <h4 class="alert-heading">Нет ожидающих изменений</h4>
+            <p>Все профили волонтеров актуальны. Новых запросов на изменение нет.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

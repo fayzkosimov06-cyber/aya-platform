@@ -37,6 +37,49 @@ class EventPhoto(models.Model):
     image = models.ImageField(upload_to='event_gallery/', verbose_name="Фото")
     caption = models.CharField(max_length=200, blank=True, verbose_name="Подпись")
 
+
+
+class EventEvaluation(models.Model):
+    """Оценка работы волонтёра на конкретном мероприятии от конкретного оценивающего."""
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='evaluations')
+    volunteer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_event_evaluations')
+    evaluator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='given_event_evaluations')
+
+    role_name = models.CharField(max_length=100, blank=True)
+    # Пример: [{"name": "Пунктуальность", "score": 5}, {"name": "Командная работа", "score": 4}]
+    criteria = models.JSONField(default=list, blank=True)
+
+    total_score = models.FloatField(default=0)
+    comment = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('event', 'volunteer', 'evaluator')
+        ordering = ['-updated_at']
+
+    def recalc_total(self):
+        scores = []
+        for item in self.criteria or []:
+            if not isinstance(item, dict):
+                continue
+            try:
+                score = float(item.get('score'))
+            except (TypeError, ValueError):
+                continue
+            scores.append(score)
+
+        self.total_score = round(sum(scores) / len(scores), 2) if scores else 0
+
+    def save(self, *args, **kwargs):
+        self.recalc_total()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.event.title}: {self.volunteer} <- {self.evaluator} ({self.total_score})"
+
+
 class EventVideo(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='videos')
     video_url = models.URLField(verbose_name="Ссылка на видео")

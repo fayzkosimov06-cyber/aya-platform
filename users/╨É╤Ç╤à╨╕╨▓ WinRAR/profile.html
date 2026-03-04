@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Профиль {{ profile_user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="profile-header"></div>
+<div class="container">
+    <div class="row">
+        <div class="col-lg-4 text-center">
+
+            <div class="glowing-border-container mb-3 
+                {% if profile_user.role == 'president' %}president
+                {% elif profile_user.role == 'leader' and profile_user.is_active_volunteer_title %}leader-active
+                {% elif profile_user.role == 'leader' %}leader
+                {% elif profile_user.school_leader_of.exists %}school
+                {% elif profile_user.is_active_volunteer_title %}active{% endif %}">
+                
+                {% if profile_user.photo and profile_user.photo.url %}
+                    <img src="{{ profile_user.photo.url }}" class="profile-photo" alt="Фото профиля">
+                {% else %}
+                    {% if profile_user.gender == 'F' %}
+                        <img src="{% static 'img/female_avatar.png' %}" class="profile-photo" alt="Аватар">
+                    {% else %}
+                        <img src="{% static 'img/male_avatar.png' %}" class="profile-photo" alt="Аватар">
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <h3 class="mt-3">{{ profile_user.get_full_name }}</h3>
+            
+            <p class="fs-5
+                {% if profile_user.role == 'president' %}status-text status-president
+                {% elif profile_user.role == 'leader' %}status-text status-leader
+                {% elif profile_user.school_leader_of.exists %}status-text status-school
+                {% else %}text-muted{% endif %}">
+                {% if profile_user.role == 'leader' and profile_user.led_direction %}
+                    Руководитель "{{ profile_user.led_direction.name }}"
+                {% else %}
+                    {{ profile_user.get_role_display_custom }}
+                {% endif %}
+            </p>
+            
+            <div class="mb-2">
+                {% if profile_user.is_active_volunteer_title %}
+                    <span class="badge bg-success"><i class="fas fa-star"></i> Активный волонтер</span>
+                {% endif %}
+                {% for school in profile_user.school_leader_of.all %}
+                     <span class="badge bg-warning text-dark"><i class="fas fa-chalkboard-teacher"></i> Руководитель школы "{{ school.name }}"</span>
+                {% endfor %}
+            </div>
+
+            {% if request.user == profile_user %}
+                <a href="{% url 'profile_edit' %}" class="btn btn-primary mt-2">Редактировать профиль</a>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-8 pt-4">
+
+            {% if not profile_user.is_approved and user.is_authenticated %}
+                {% if user.is_superuser or user.role == 'moderator' or user.role == 'president' or user.role == 'worker' or user.role == 'head_admin' %}
+                <div class="card border-warning shadow-sm mb-4">
+                    <div class="card-header bg-warning text-dark fw-bold">
+                        <i class="fas fa-exclamation-triangle"></i> Этот профиль ожидает одобрения
+                    </div>
+                    <div class="card-body text-center">
+                        <p>Вы просматриваете профиль, который еще не был одобрен. Что вы хотите сделать?</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <form action="{% url 'approve_user' profile_user.pk %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success">✅ Одобрить</button>
+                            </form>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                                ❌ Отклонить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}
+            <h4>Основная информация</h4>
+            <hr>
+            <p><strong>Email:</strong> {{ profile_user.email }}</p>
+            <p><strong>Факультет:</strong> {{ profile_user.faculty|default:"Не указан" }}</p>
+            <p><strong>Курс:</strong> {{ profile_user.course|default:"-" }}</p>
+
+            <h4 class="mt-5">История активности</h4>
+            <hr>
+            {% if activity_periods %}
+                <ul class="timeline">
+                    {% for period in activity_periods %}
+                    <li>
+                        <div class="timeline-badge success"><i class="fa fa-check"></i></div>
+                        <div class="timeline-panel">
+                            <div class="timeline-heading">
+                                <h5 class="timeline-title">
+                                    {{ period.start_date|date:"F Y" }} — {{ period.end_date|date:"F Y" }}
+                                </h5>
+                            </div>
+                            {% if period.description %}
+                            <div class="timeline-body"><p>{{ period.description }}</p></div>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">История активности еще не заполнена.</p>
+            {% endif %}
+        </div>
+    </div> 
+</div>
+
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectModalLabel">Отклонить регистрацию</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'reject_user' profile_user.pk %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Вы уверены, что хотите отклонить и удалить профиль <strong>{{ profile_user.get_full_name }}</strong>?</p>
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Причина (обязательно):</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="Укажите причину, волонтер получит ее в уведомлении." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-danger">Да, отклонить и удалить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

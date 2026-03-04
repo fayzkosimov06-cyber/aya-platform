@@ -22,16 +22,15 @@ class MultipleFileField(forms.FileField):
 class EventCreateForm(forms.ModelForm):
     class Meta:
         model = Event
-        fields = ['title', 'cover_image', 'description', 'start_time', 'end_time', 'location', 'max_participants', 'is_public_for_guests']
+        fields = ['title', 'cover_image', 'description', 'start_time', 'end_time', 'location', 'max_participants']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class':'form-control','list':'roleOptions','placeholder':'Напр.: Фотограф / Ведущий / Докладчик'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'start_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'end_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'class':'form-control','list':'roleOptions','placeholder':'Напр.: Фотограф / Ведущий / Докладчик'}),
             'max_participants': forms.NumberInput(attrs={'class': 'form-control'}),
             'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'is_public_for_guests': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
 class EventReportForm(forms.ModelForm):
@@ -57,10 +56,10 @@ class EventVideoForm(forms.ModelForm):
         }
 
 class EventHeroForm(forms.ModelForm):
-    user = forms.ModelChoiceField(queryset=User.objects.filter(is_approved=True), widget=forms.Select(attrs={'class': 'form-select'}))
+    user = forms.ModelChoiceField(queryset=User.objects.filter(is_approved=True), widget=forms.Select(attrs={'class': 'form-select use-select2', 'data-placeholder': 'Выберите волонтёра…'}))
     class Meta:
         model = EventHero
         fields = ['user', 'role_name']
         widgets = {
-            'role_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'role_name': forms.TextInput(attrs={'class':'form-control','list':'roleOptions','placeholder':'Напр.: Фотограф / Ведущий / Докладчик'}),
         }

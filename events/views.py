@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q
-from .models import Event, EventPhoto, EventVideo, EventHero
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+from .models import Event, EventPhoto, EventVideo, EventHero, EventEvaluation
 from .forms import EventCreateForm, EventReportForm, EventVideoForm, EventHeroForm
 from users.models import AuditLog
 
@@ -15,8 +16,15 @@ def log_event_action(user, action_text):
 def can_manage_event(user, event):
     if user.is_superuser: return True
     if user == event.organizer: return True
-    if user.role in ['moderator', 'president', 'worker', 'head_admin']: return True
+    if user.role in ['leader', 'head_admin', 'worker', 'moderator', 'president']: return True
     return False
+
+
+def can_evaluate_volunteers(user):
+    """Кто может оценивать волонтёров после мероприятия."""
+    if user.is_superuser:
+        return True
+    return user.role in ['worker', 'head_admin', 'leader', 'president']
 
 def can_create_instantly(user):
     return user.role in ['leader', 'president', 'worker', 'head_admin', 'moderator'] or user.is_superuser
@@ -24,58 +32,22 @@ def can_create_instantly(user):
 # events/views.py
 
 def event_list_view(request):
-    q = (request.GET.get('q') or '').strip()
-
-    # База: показываем только одобренные
-    upcoming_events = Event.objects.filter(is_approved=True, is_completed=False)
-    past_events = Event.objects.filter(is_approved=True, is_completed=True)
-
-    # Гости видят только публичные для гостей
-    if not request.user.is_authenticated:
-        upcoming_events = upcoming_events.filter(is_public_for_guests=True)
-        past_events = past_events.filter(is_public_for_guests=True)
-
-    # Поиск (название, описание, локация)
-    if q:
-        upcoming_events = upcoming_events.filter(
-            Q(title__icontains=q) | Q(description__icontains=q) | Q(location__icontains=q)
-        )
-        past_events = past_events.filter(
-            Q(title__icontains=q) | Q(description__icontains=q) | Q(location__icontains=q)
-        )
-
-    upcoming_events = upcoming_events.order_by('start_time')
-    past_events = past_events.order_by('-end_time')
-
+    upcoming_events = Event.objects.filter(is_approved=True, is_completed=False).order_by('start_time')
+    
+    # ИСПРАВЛЕНИЕ: Показываем ВСЕ завершенные мероприятия, даже если отчет не опубликован
+    # (фильтрацию "кто что видит" сделаем в шаблоне)
+    past_events = Event.objects.filter(is_completed=True).order_by('-end_time')
+    
     return render(request, 'events/event_list.html', {
         'upcoming_events': upcoming_events,
         'past_events': past_events
     })
+@login_required
 def event_detail_view(request, pk):
     event = get_object_or_404(Event, pk=pk)
-
-    # 1) Неодобренное мероприятие: показываем только тем, кто может управлять
-    if not event.is_approved:
-        if not (request.user.is_authenticated and can_manage_event(request.user, event)):
-            messages.error(request, "Мероприятие еще не опубликовано.")
-            return redirect('event_list')
-
-    # 2) Гости могут видеть только публичные для гостей
-    if not request.user.is_authenticated and not event.is_public_for_guests:
-        messages.info(request, "Войдите, чтобы просмотреть это мероприятие.")
-        return redirect('login')
-
-    is_participant = False
-    can_manage = False
-    if request.user.is_authenticated:
-        is_participant = event.participants.filter(pk=request.user.pk).exists()
-        can_manage = can_manage_event(request.user, event)
-
-    return render(request, 'events/event_detail.html', {
-        'event': event,
-        'is_participant': is_participant,
-        'can_manage': can_manage
-    })
+    is_participant = request.user in event.participants.all()
+    can_manage = can_manage_event(request.user, event)
+    return render(request, 'events/event_detail.html', {'event': event, 'is_participant': is_participant, 'can_manage': can_manage})
 
 @login_required
 def event_create_view(request):
@@ -130,130 +102,230 @@ def event_finish_view(request, pk):
 @login_required
 def event_report_edit_view(request, pk):
     event = get_object_or_404(Event, pk=pk)
-    if not can_manage_event(request.user, event):
-        return redirect('event_detail', pk=pk)
 
-    # Формы по умолчанию (GET)
+    if not can_manage_event(request.user, event):
+        messages.error(request, "У вас нет прав редактировать отчёт этого мероприятия.")
+        return redirect('event_detail', pk=event.pk)
+
+    User = get_user_model()
+    can_evaluate = can_evaluate_volunteers(request.user)
+
+    # Если открыли страницу через ссылку "Редактировать" конкретную оценку
+    editing_evaluation = None
+    eval_id = request.GET.get('eval')
+    if eval_id:
+        editing_evaluation = get_object_or_404(EventEvaluation, pk=eval_id, event=event)
+        # Редактировать можно: автор оценки, супер-админ, или "рабочие" админы
+        if not (
+            request.user.is_superuser
+            or request.user.role in ['leader', 'head_admin', 'worker']
+            or editing_evaluation.evaluator_id == request.user.id
+        ):
+            messages.error(request, "У вас нет прав редактировать эту оценку.")
+            editing_evaluation = None
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '').strip()
+
+        # --- 1) Сохранить отчёт ---
+        if action == 'save_report':
+            report_form = EventReportForm(request.POST, request.FILES, instance=event)
+            if report_form.is_valid():
+                report_form.save()
+                # Новые фото (хранение в MEDIA; если место ограничено — лучше перейти на внешнее хранилище)
+                for file in request.FILES.getlist('photos'):
+                    EventPhoto.objects.create(event=event, image=file)
+
+                log_event_action(request.user, f"Обновил отчёт мероприятия '{event.title}'")
+                messages.success(request, "Отчёт сохранён.")
+            else:
+                messages.error(request, "Ошибка сохранения отчёта. Проверьте поля.")
+            return redirect('event_report_edit', pk=event.pk)
+
+        # --- 2) Добавить видео (ссылка) ---
+        if action == 'add_video':
+            video_form = EventVideoForm(request.POST)
+            if video_form.is_valid():
+                EventVideo.objects.create(event=event, video_url=video_form.cleaned_data['video_url'])
+                log_event_action(request.user, f"Добавил видео в отчёт '{event.title}'")
+                messages.success(request, "Видео добавлено.")
+            else:
+                messages.error(request, "Введите корректную ссылку на видео.")
+            return redirect('event_report_edit', pk=event.pk)
+
+        # --- 3) Назначить роль участнику (бывш. 'герой') ---
+        if action == 'set_role':
+            hero_form = EventHeroForm(request.POST)
+            if hero_form.is_valid():
+                u = hero_form.cleaned_data['user']
+                role_name = (hero_form.cleaned_data['role_name'] or '').strip()
+                if role_name:
+                    # Чтобы можно было исправлять — обновляем роль для этого пользователя (а не создаём дубликаты)
+                    EventHero.objects.update_or_create(
+                        event=event,
+                        user=u,
+                        defaults={'role_name': role_name},
+                    )
+                    log_event_action(request.user, f"Назначил роль '{role_name}' для {u} в '{event.title}'")
+                    messages.success(request, "Роль сохранена (можно изменять сколько угодно).")
+                else:
+                    messages.error(request, "Роль не должна быть пустой.")
+            else:
+                messages.error(request, "Ошибка: выберите участника и укажите роль.")
+            return redirect('event_report_edit', pk=event.pk)
+
+        if action == 'delete_role':
+            hero_id = request.POST.get('hero_id')
+            hero = get_object_or_404(EventHero, pk=hero_id, event=event)
+            hero.delete()
+            log_event_action(request.user, f"Удалил роль '{hero.role_name}' у {hero.user} в '{event.title}'")
+            messages.success(request, "Роль удалена.")
+            return redirect('event_report_edit', pk=event.pk)
+
+        # --- 4) Оценка волонтёров ---
+        if action == 'save_evaluation':
+            if not can_evaluate:
+                messages.error(request, "У вас нет прав оценивать волонтёров.")
+                return redirect('event_report_edit', pk=event.pk)
+
+            evaluation_id = (request.POST.get('evaluation_id') or '').strip()
+            volunteer_id = (request.POST.get('volunteer_id') or '').strip()
+
+            if not volunteer_id:
+                messages.error(request, "Выберите волонтёра для оценки.")
+                return redirect('event_report_edit', pk=event.pk)
+
+            volunteer = get_object_or_404(User, pk=volunteer_id)
+            if volunteer not in event.participants.all():
+                messages.error(request, "Этот пользователь не является участником данного мероприятия.")
+                return redirect('event_report_edit', pk=event.pk)
+
+            role_name = (request.POST.get('eval_role_name') or '').strip()
+            if role_name == '__custom__':
+                role_name = (request.POST.get('eval_role_custom') or '').strip()
+
+            # Сбор критериев (можно выбирать/вводить вручную)
+            names = request.POST.getlist('criteria_name')
+            scores = request.POST.getlist('criteria_score')
+            criteria = []
+            for n, s in zip(names, scores):
+                n = (n or '').strip()
+                if not n:
+                    continue
+                try:
+                    score_int = int(s)
+                except (TypeError, ValueError):
+                    continue
+                # ограничим диапазон
+                score_int = max(1, min(5, score_int))
+                criteria.append({'name': n, 'score': score_int})
+
+            comment = (request.POST.get('eval_comment') or '').strip()
+
+            # Редактирование существующей оценки
+            if evaluation_id:
+                evaluation = get_object_or_404(EventEvaluation, pk=evaluation_id, event=event)
+                can_edit = (
+                    request.user.is_superuser
+                    or request.user.role in ['leader', 'head_admin', 'worker']
+                    or evaluation.evaluator_id == request.user.id
+                )
+                if not can_edit:
+                    messages.error(request, "У вас нет прав редактировать эту оценку.")
+                    return redirect('event_report_edit', pk=event.pk)
+
+                evaluation.volunteer = volunteer
+                evaluation.role_name = role_name
+                evaluation.criteria = criteria
+                evaluation.comment = comment
+                evaluation.save()
+                log_event_action(request.user, f"Обновил оценку {volunteer} в '{event.title}'")
+                messages.success(request, "Оценка обновлена.")
+            else:
+                evaluation, _created = EventEvaluation.objects.get_or_create(
+                    event=event,
+                    volunteer=volunteer,
+                    evaluator=request.user,
+                    defaults={'role_name': role_name},
+                )
+                evaluation.role_name = role_name
+                evaluation.criteria = criteria
+                evaluation.comment = comment
+                evaluation.save()
+                log_event_action(request.user, f"Поставил оценку {volunteer} в '{event.title}'")
+                messages.success(request, "Оценка сохранена.")
+
+            url = reverse('event_report_edit', kwargs={'pk': event.pk})
+            return redirect(f"{url}?eval={evaluation.id}#evaluation")
+
+        if action == 'delete_evaluation':
+            evaluation_id = (request.POST.get('evaluation_id') or '').strip()
+            evaluation = get_object_or_404(EventEvaluation, pk=evaluation_id, event=event)
+
+            can_delete = (
+                request.user.is_superuser
+                or request.user.role in ['leader', 'head_admin', 'worker']
+                or evaluation.evaluator_id == request.user.id
+            )
+            if not can_delete:
+                messages.error(request, "У вас нет прав удалить эту оценку.")
+                return redirect('event_report_edit', pk=event.pk)
+
+            evaluation.delete()
+            log_event_action(request.user, f"Удалил оценку {evaluation.volunteer} в '{event.title}'")
+            messages.success(request, "Оценка удалена.")
+            return redirect('event_report_edit', pk=event.pk)
+
+        # Если action неизвестен
+        messages.error(request, "Неизвестное действие.")
+        return redirect('event_report_edit', pk=event.pk)
+
+    # GET
     report_form = EventReportForm(instance=event)
     video_form = EventVideoForm()
     hero_form = EventHeroForm()
 
-    if request.method == 'POST':
-        action = (request.POST.get('action') or '').strip()
+    heroes = EventHero.objects.filter(event=event).select_related('user')
+    evaluations = EventEvaluation.objects.filter(event=event).select_related('volunteer', 'evaluator')
 
-        # 1) Сохранить основной отчёт + фото + публикация
-        if action == 'save_report':
-            report_form = EventReportForm(request.POST, instance=event)
-            if report_form.is_valid():
-                report_form.save()
+    # compute points for display (sum of criteria and max possible)
+    for ev in evaluations:
+        crit = ev.criteria or []
+        points_total = 0
+        for c in crit:
+            try:
+                points_total += int(c.get('score', 0))
+            except Exception:
+                pass
+        ev.points_total = points_total
+        ev.points_max = 5 * len(crit)
 
-                photos = request.FILES.getlist('photos')
-                if photos:
-                    for photo in photos:
-                        EventPhoto.objects.create(event=event, image=photo)
-                    log_event_action(request.user, f"Добавил {len(photos)} фото в отчет '{event.title}'")
-
-                log_event_action(request.user, f"Обновил основной контент отчета '{event.title}'")
-                messages.success(request, "Отчет сохранен.")
-                return redirect('event_report_edit', pk=pk)
-
-        # 2) Добавить видео
-        elif action == 'add_video':
-            video_form = EventVideoForm(request.POST)
-            if video_form.is_valid() and video_form.cleaned_data.get('video_url'):
-                v = video_form.save(commit=False)
-                v.event = event
-                v.save()
-                log_event_action(request.user, f"Добавил видео в отчет '{event.title}'")
-                messages.success(request, "Видео добавлено.")
-                return redirect('event_report_edit', pk=pk)
-
-        # 3) Добавить героя (если уже был — обновим роль)
-        elif action == 'add_hero':
-            hero_form = EventHeroForm(request.POST)
-            if hero_form.is_valid() and hero_form.cleaned_data.get('user'):
-                user = hero_form.cleaned_data['user']
-                role_name = (hero_form.cleaned_data.get('role_name') or '').strip()
-
-                hero_obj, created = EventHero.objects.update_or_create(
-                    event=event,
-                    user=user,
-                    defaults={'role_name': role_name}
-                )
-
-                if created:
-                    log_event_action(request.user, f"Отметил героя {user.get_full_name()} в '{event.title}'")
-                    messages.success(request, "Герой отмечен.")
-                else:
-                    log_event_action(request.user, f"Обновил роль героя {user.get_full_name()} в '{event.title}'")
-                    messages.success(request, "Роль героя обновлена.")
-                return redirect('event_report_edit', pk=pk)
-
-        # 4) Редактировать роль героя
-        elif action == 'update_hero':
-            hero_id = request.POST.get('hero_id')
-            role_name = (request.POST.get('role_name') or '').strip()
-
-            hero_obj = get_object_or_404(EventHero, pk=hero_id, event=event)
-            hero_obj.role_name = role_name
-            hero_obj.save(update_fields=['role_name'])
-
-            log_event_action(request.user, f"Изменил роль героя {hero_obj.user.get_full_name()} в '{event.title}'")
-            messages.success(request, "Роль обновлена.")
-            return redirect('event_report_edit', pk=pk)
-
-        # 5) Удалить героя
-        elif action == 'delete_hero':
-            hero_id = request.POST.get('hero_id')
-            hero_obj = get_object_or_404(EventHero, pk=hero_id, event=event)
-
-            full_name = hero_obj.user.get_full_name()
-            hero_obj.delete()
-
-            log_event_action(request.user, f"Удалил отметку героя {full_name} в '{event.title}'")
-            messages.success(request, "Отметка героя удалена.")
-            return redirect('event_report_edit', pk=pk)
-
-        else:
-            messages.error(request, "Неизвестное действие формы.")
 
     return render(request, 'events/event_report_edit.html', {
         'event': event,
         'report_form': report_form,
         'video_form': video_form,
-        'hero_form': hero_form
+        'hero_form': hero_form,
+        'participants': event.participants.all(),
+        'roles': heroes,
+        'heroes': heroes,
+        'can_evaluate': can_evaluate,
+        'evaluations': evaluations,
+        'editing_evaluation': editing_evaluation,
     })
+
+
 
 @login_required
 def event_join_view(request, pk):
     event = get_object_or_404(Event, pk=pk)
-
-    if not request.user.is_approved:
-        messages.error(request, "Ваш профиль еще не одобрен. Запись на мероприятия будет доступна после одобрения.")
-        return redirect('event_detail', pk=pk)
-
-    if not event.is_approved:
-        messages.error(request, "Это мероприятие еще не опубликовано.")
-        return redirect('event_detail', pk=pk)
-
-    if event.is_completed:
-        messages.info(request, "Мероприятие уже завершено.")
-        return redirect('event_detail', pk=pk)
-
-    if event.participants.filter(pk=request.user.pk).exists():
-        event.participants.remove(request.user)
-        messages.info(request, "Вы отменили запись.")
-        return redirect('event_detail', pk=pk)
-
-    # Проверка лимита участников
-    if event.max_participants is not None:
-        current_count = event.participants.count()
-        if current_count >= event.max_participants:
-            messages.error(request, "Достигнут лимит участников для этого мероприятия.")
-            return redirect('event_detail', pk=pk)
-
-    event.participants.add(request.user)
-    messages.success(request, "Вы записаны!")
+    if not event.is_completed:
+        if request.user in event.participants.all():
+            event.participants.remove(request.user)
+            messages.info(request, "Вы отменили запись.")
+        else:
+            event.participants.add(request.user)
+            messages.success(request, "Вы записаны!")
     return redirect('event_detail', pk=pk)
 
 # --- УДАЛЕНИЕ ФОТО ---

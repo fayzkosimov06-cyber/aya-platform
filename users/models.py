@@ -101,10 +101,12 @@ class User(AbstractUser):
 class ActivityPeriod(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_periods')
     start_date = models.DateField(verbose_name="Дата начала периода")
-    end_date = models.DateField(verbose_name="Дата окончания периода")
+    end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания периода")
     description = models.CharField(max_length=255, blank=True, verbose_name="Описание")
     class Meta: ordering = ['-start_date']
-    def __str__(self): return f"{self.user}: {self.start_date} - {self.end_date}"
+    def __str__(self):
+        end = self.end_date if self.end_date else 'по н.в.'
+        return f"{self.user}: {self.start_date} - {end}"
 
 class Notification(models.Model):
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')

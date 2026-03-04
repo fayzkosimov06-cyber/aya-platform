@@ -22,6 +22,10 @@ urlpatterns = [
     path('profile/<int:pk>/', views.public_profile_view, name='public_profile'),
     # Вставьте эту строку
     path('profile/<int:pk>/admin-edit/', views.admin_edit_user_view, name='admin_edit_user'),
+    path('profile/<int:pk>/activity/', views.activity_periods_manage_view, name='activity_periods_manage'),
+    path('profile/<int:pk>/activity/<int:period_id>/edit/', views.activity_period_edit_view, name='activity_period_edit'),
+    path('profile/<int:pk>/activity/<int:period_id>/delete/', views.activity_period_delete_view, name='activity_period_delete'),
+
 
     # Панель Модератора
     path('moderation/', views.moderator_dashboard_view, name='moderator_dashboard'),

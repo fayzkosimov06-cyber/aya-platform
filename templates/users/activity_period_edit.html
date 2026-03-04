@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Редактировать период — {{ target_user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="mb-1 fw-bold">Редактировать период</h3>
+      <div class="text-muted">Волонтёр: <a href="{% url 'public_profile' target_user.pk %}">{{ target_user.get_full_name }}</a></div>
+    </div>
+    <a class="btn btn-outline-secondary" href="{% url 'activity_periods_manage' target_user.pk %}">
+      <i class="fas fa-arrow-left me-1"></i> Назад
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm" style="border-radius: 18px;">
+    <div class="card-body p-4">
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Дата начала</label>
+            {{ form.start_date }}
+            {% for e in form.start_date.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Дата окончания</label>
+            {{ form.end_date }}
+            {% for e in form.end_date.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            <div class="form-text">Пусто = «по настоящее время».</div>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label fw-semibold">Описание</label>
+            {{ form.description }}
+            {% for e in form.description.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger mt-3">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <div class="d-flex gap-2 mt-4">
+          <button class="btn btn-primary">
+            <i class="fas fa-save me-1"></i> Сохранить
+          </button>
+          <a class="btn btn-outline-secondary" href="{% url 'activity_periods_manage' target_user.pk %}">Отмена</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

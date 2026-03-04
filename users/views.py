@@ -1,6 +1,7 @@
 # users/views.py
 
 import json
+from collections import defaultdict
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
@@ -10,9 +11,9 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
-from .forms import UserRegisterForm, UserUpdateForm, AdminUpdateForm, AboutPageForm
+from .forms import UserRegisterForm, UserUpdateForm, AdminUpdateForm, AboutPageForm, ActivityPeriodForm
 from .models import User, Direction, School, ActivityPeriod, Notification, AboutPage, AuditLog
-from events.models import Event
+from events.models import Event, EventEvaluation
 
 
 # --- HELPER: ЗАПИСЬ В ЖУРНАЛ (С РЕЖИМОМ ПРИЗРАКА) ---
@@ -29,12 +30,12 @@ def log_action(user, action, target=None):
 def is_privileged_viewer(user):
     """
     Возвращает True, если пользователь - "Начальство" 
-    (Супер-админ, Руководитель отдела, Работник, Президент, Модератор).
+    (Супер-админ, Руководитель направления, Руководитель отдела, Работник, Президент, Модератор).
     Они видят всё, игнорируя настройки приватности.
     """
     if not user.is_authenticated:
         return False
-    return user.is_superuser or user.role in ['head_admin', 'worker', 'president', 'moderator']
+    return user.is_superuser or user.role in ['leader', 'head_admin', 'worker', 'president', 'moderator']
 
 
 def can_view_field(viewer, target_user, privacy_setting):
@@ -67,24 +68,108 @@ def can_view_field(viewer, target_user, privacy_setting):
 # --- Проверка прав доступа к админ-функциям ---
 def is_moderator_or_higher(user):
     return user.is_authenticated and (
-        user.role in ['moderator', 'president', 'worker', 'head_admin'] or user.is_superuser
+        user.role in ['leader', 'moderator', 'president', 'worker', 'head_admin'] or user.is_superuser
     )
 
 def is_admin_or_higher(user):
     return user.is_authenticated and (
-        user.role in ['president', 'worker', 'head_admin'] or user.is_superuser
+        user.role in ['leader', 'president', 'worker', 'head_admin'] or user.is_superuser
     )
 
+def can_edit_activity_periods(user):
+    """Кто может заполнять/редактировать историю активности волонтёров."""
+    return user.is_authenticated and (user.is_superuser or user.role in ['leader', 'worker', 'head_admin'])
+
+
+
 def get_user_power_level(user):
-    if user.is_superuser: return 100
+    """Числовой уровень прав/иерархии (для сравнения доступа).
+
+    ВАЖНО: Руководитель направления (leader) выше всех; работники/админы выше президента.
+    """
+    if not user or not getattr(user, 'is_authenticated', False):
+        return 0
+    if getattr(user, 'is_superuser', False):
+        return 1000
+
     levels = {
-        'head_admin': 90, 'worker': 80, 'president': 70, 
-        'moderator': 50, 'leader': 30, 'volunteer': 0
+        'leader': 90,
+        'head_admin': 80,
+        'worker': 70,
+        'president': 60,
+        'moderator': 50,
+        'volunteer': 10,
     }
-    base_level = levels.get(user.role, 0)
-    if user.is_active_volunteer_title and user.role == 'volunteer':
-        base_level = 20 
+    base_level = levels.get(getattr(user, 'role', None), 0)
+
+    # Небольшой бонус для 'Активного волонтёра', но только если он обычный volunteer.
+    if getattr(user, 'is_active_volunteer_title', False) and getattr(user, 'role', None) == 'volunteer':
+        base_level += 15
+
     return base_level
+
+def build_evaluation_stats(volunteer: User):
+    """Сводка оценок волонтёра по всем мероприятиям."""
+    qs = EventEvaluation.objects.filter(volunteer=volunteer)
+    agg = qs.aggregate(
+        avg=models.Avg('total_score'),
+        count=models.Count('id'),
+        event_count=models.Count('event', distinct=True),
+    )
+    count = agg.get('count') or 0
+    avg = float(agg.get('avg') or 0)
+
+    def badge_class(val, has_any):
+        if not has_any:
+            return "bg-secondary"
+        if val >= 4.5:
+            return "bg-success"
+        if val >= 3.5:
+            return "bg-primary"
+        if val >= 2.5:
+            return "bg-warning text-dark"
+        return "bg-danger"
+
+    # Статистика по критериям
+    crit_scores = defaultdict(list)
+    for ev in qs.only('criteria', 'total_score'):
+        for item in (ev.criteria or []):
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get('name') or '').strip()
+            if not name:
+                continue
+            try:
+                score = float(item.get('score'))
+            except (TypeError, ValueError):
+                continue
+            crit_scores[name].append(score)
+
+    criteria_stats = []
+    for name, scores in crit_scores.items():
+        criteria_stats.append({
+            'name': name,
+            'avg': round(sum(scores) / len(scores), 2),
+            'count': len(scores),
+        })
+    criteria_stats.sort(key=lambda x: (x['avg'], x['count']), reverse=True)
+
+    latest = list(
+        qs.select_related('event', 'evaluator')
+          .order_by('-updated_at')[:8]
+          .values('event__title', 'total_score', 'updated_at', 'evaluator__first_name', 'evaluator__last_name')
+    )
+
+    return {
+        'count': count,
+        'event_count': agg.get('event_count') or 0,
+        'avg': round(avg, 2) if count else None,
+        'badge_class': badge_class(avg, count > 0),
+        'top_criteria': criteria_stats[:3],
+        'all_criteria': criteria_stats,
+        'latest': latest,
+    }
+
 
 
 # --- VIEWS (Представления) ---
@@ -112,15 +197,14 @@ def home_view(request):
 
 
 def about_view(request):
-    about_content, _ = AboutPage.objects.get_or_create(pk=1)
-    return render(request, 'users/about.html', {'about_content': about_content})
+    return render(request, 'users/about.html', {'about_content': AboutPage.objects.first()})
 
 
 def volunteer_list_view(request):
     # Показываем одобренных, НО ИСКЛЮЧАЕМ (exclude) работников, админов и президента
     queryset = User.objects.filter(is_approved=True).exclude(
         role__in=['worker', 'head_admin']
-    ).prefetch_related('directions', 'school_leader_of').order_by('last_name')
+    ).order_by('last_name')
     
     # Списки для фильтров
     faculties = User.objects.filter(is_approved=True).exclude(faculty='').values_list('faculty', flat=True).distinct().order_by('faculty')
@@ -172,7 +256,7 @@ def signup_view(request):
             user.save()
             
             # Уведомления
-            staff = User.objects.filter(Q(role__in=['moderator', 'worker', 'head_admin', 'president']) | Q(is_superuser=True)).distinct()
+            staff = User.objects.filter(Q(role__in=['leader','moderator', 'worker', 'head_admin', 'president']) | Q(is_superuser=True)).distinct()
             for s in staff:
                 Notification.objects.create(
                     recipient=s, 
@@ -210,6 +294,9 @@ def my_profile_view(request):
         'profile_user': request.user, 
         'activity_periods': activity_periods,
         'can_admin_edit': False,
+        'can_edit_activity': can_edit_activity_periods(request.user),
+        'show_evaluations': True,
+        'evaluation': build_evaluation_stats(request.user),
         'show': show_fields # Показываем всё хозяину
     }
     return render(request, 'users/profile.html', context)
@@ -256,13 +343,106 @@ def public_profile_view(request, pk):
         'about_me': can_view_field(request.user, profile_user, profile_user.about_me_privacy),
     }
 
+    
+    # --- ОЦЕНКИ ВОЛОНТЁРА (сводка) ---
+    show_evaluations = False
+    if request.user == profile_user:
+        show_evaluations = True
+    elif is_privileged_viewer(request.user):
+        show_evaluations = True
+    elif request.user.is_authenticated and getattr(request.user, 'is_approved', False):
+        show_evaluations = True
+
+    evaluation_stats = build_evaluation_stats(profile_user) if show_evaluations else None
+
+    # --- ИСТОРИЯ АКТИВНОСТИ: кто может заполнять ---
+    can_edit_activity = can_edit_activity_periods(request.user)
     context = {
         'profile_user': profile_user, 
         'activity_periods': activity_periods,
         'can_admin_edit': can_admin_edit,
+        'can_edit_activity': can_edit_activity,
+        'show_evaluations': show_evaluations,
+        'evaluation': evaluation_stats,
         'show': show_fields, # Передаем результаты проверки
     }
     return render(request, 'users/profile.html', context)
+
+
+
+
+@login_required
+def activity_periods_manage_view(request, pk):
+    """Управление периодами активности волонтёра (только Руководитель направления и Работники/Руководитель отдела)."""
+    target = get_object_or_404(User, pk=pk)
+    if not can_edit_activity_periods(request.user):
+        messages.error(request, "Недостаточно прав для редактирования истории активности.")
+        return redirect('public_profile', pk=pk)
+
+    if request.method == 'POST':
+        form = ActivityPeriodForm(request.POST)
+        if form.is_valid():
+            period = form.save(commit=False)
+            period.user = target
+            period.save()
+            log_action(request.user, f"Добавил период активности для {target}", target=target)
+            messages.success(request, "Период активности добавлен.")
+            return redirect('activity_periods_manage', pk=pk)
+    else:
+        form = ActivityPeriodForm()
+
+    periods = target.activity_periods.all()
+    return render(request, 'users/activity_periods_manage.html', {
+        'target_user': target,
+        'periods': periods,
+        'form': form,
+    })
+
+
+@login_required
+def activity_period_edit_view(request, pk, period_id):
+    target = get_object_or_404(User, pk=pk)
+    period = get_object_or_404(ActivityPeriod, pk=period_id, user=target)
+    if not can_edit_activity_periods(request.user):
+        messages.error(request, "Недостаточно прав для редактирования истории активности.")
+        return redirect('public_profile', pk=pk)
+
+    if request.method == 'POST':
+        form = ActivityPeriodForm(request.POST, instance=period)
+        if form.is_valid():
+            form.save()
+            log_action(request.user, f"Изменил период активности для {target}", target=target)
+            messages.success(request, "Период активности обновлён.")
+            return redirect('activity_periods_manage', pk=pk)
+    else:
+        form = ActivityPeriodForm(instance=period)
+
+    return render(request, 'users/activity_period_edit.html', {
+        'target_user': target,
+        'period': period,
+        'form': form,
+    })
+
+
+@login_required
+def activity_period_delete_view(request, pk, period_id):
+    target = get_object_or_404(User, pk=pk)
+    period = get_object_or_404(ActivityPeriod, pk=period_id, user=target)
+    if not can_edit_activity_periods(request.user):
+        messages.error(request, "Недостаточно прав.")
+        return redirect('public_profile', pk=pk)
+
+    if request.method == 'POST':
+        period.delete()
+        log_action(request.user, f"Удалил период активности для {target}", target=target)
+        messages.success(request, "Период активности удалён.")
+        return redirect('activity_periods_manage', pk=pk)
+
+    return render(request, 'users/activity_period_delete_confirm.html', {
+        'target_user': target,
+        'period': period,
+    })
+
 
 
 # --- АДМИН ПАНЕЛИ (Модератор, Админ) ---
@@ -311,7 +491,7 @@ def admin_dashboard_view(request):
 @login_required
 def user_management_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
-    users_list = User.objects.exclude(is_superuser=True).prefetch_related('directions', 'school_leader_of').order_by('last_name')
+    users_list = User.objects.exclude(is_superuser=True).order_by('last_name')
     
     search_query = request.GET.get('search')
     if search_query:

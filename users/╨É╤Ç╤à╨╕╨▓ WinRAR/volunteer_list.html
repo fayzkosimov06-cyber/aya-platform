@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}База данных волонтеров{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4">База данных волонтеров</h2>
+
+    <div class="card shadow-sm mb-4 filter-panel">
+        <div class="card-body">
+            <form method="GET" action="{% url 'volunteer_list' %}">
+                <div class="row g-3">
+                    <div class="col-lg-12">
+                        <input type="text" name="query" class="form-control" placeholder="Поиск по имени, фамилии или отчеству..." value="{{ form_values.query|default:'' }}">
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <select name="status" class="form-select">
+                            <option value="">Все статусы</option>
+                            <option value="president" {% if form_values.status == 'president' %}selected{% endif %}>Президент</option>
+                            <option value="leader" {% if form_values.status == 'leader' %}selected{% endif %}>Руководитель направления</option>
+                            <option value="school_leader" {% if form_values.status == 'school_leader' %}selected{% endif %}>Руководитель школы</option>
+                            <option value="active" {% if form_values.status == 'active' %}selected{% endif %}>Активный волонтер</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <select name="direction" class="form-select">
+                            <option value="">Все направления</option>
+                            {% for dir in directions %}
+                                <option value="{{ dir.id }}" {% if form_values.direction == dir.id|stringformat:"s" %}selected{% endif %}>{{ dir.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <select name="faculty" class="form-select">
+                            <option value="">Все факультеты</option>
+                            {% for faculty in faculties %}
+                                <option value="{{ faculty }}" {% if form_values.faculty == faculty %}selected{% endif %}>{{ faculty }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <select name="course" class="form-select">
+                            <option value="">Все курсы</option>
+                            {% for course in courses %}
+                                <option value="{{ course }}" {% if form_values.course == course|stringformat:"s" %}selected{% endif %}>{{ course }} курс</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <select name="city" class="form-select">
+                            <option value="">Все города</option>
+                            {% for city in cities %}
+                                <option value="{{ city }}" {% if form_values.city == city %}selected{% endif %}>{{ city }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <select name="gender" class="form-select">
+                            <option value="">Любой пол</option>
+                            <option value="M" {% if form_values.gender == 'M' %}selected{% endif %}>Мужской</option>
+                            <option value="F" {% if form_values.gender == 'F' %}selected{% endif %}>Женский</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-6 col-md-12 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2 w-100">
+                            <i class="fas fa-filter"></i> Применить фильтр
+                        </button>
+                        <a href="{% url 'volunteer_list' %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-times"></i> Сбросить
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row g-4">
+        {% for volunteer in volunteers %}
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                {% include 'users/partials/volunteer_card.html' with volunteer=volunteer %}
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-warning" role="alert">
+                    <h4 class="alert-heading">Волонтеры не найдены</h4>
+                    <p>По вашему запросу никого не найдено. Попробуйте изменить параметры фильтра.</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    </div>
+{% endblock %}
