@@ -1,38 +1,51 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Регистрация - AYA{% endblock %}
+{% block title %}Регистрация{% endblock %}
 
 {% block content %}
 <style>
-    /* NOTE: Этот CSS был в вашем signup.html; я просто вернул корректную структуру шаблона,
-       чтобы убрать TemplateSyntaxError (лишний {% endblock %} после </style>). */
+    /* ===== Auth page background ===== */
+    body {
+        background: linear-gradient(135deg, #0E3644 0%, #0a2a33 100%);
+        min-height: 100vh;
+    }
+
+    .auth-wrapper{
+        min-height: calc(100vh - 120px);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding: 40px 12px;
+    }
 
     .auth-card {
         background: #ffffff;
         width: 100%;
-        max-width: 500px; /* Чуть шире для удобства */
+        max-width: 520px;
         padding: 40px;
         border-radius: 30px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.25);
         position: relative;
         z-index: 2;
-        margin: 0 auto;
-        animation: fadeUp 0.8s ease-out;
+        animation: fadeUp 0.6s ease-out;
     }
 
     .brand-logo { color: #0E3644; font-weight: 800; font-size: 2rem; margin-bottom: 5px; }
 
-    .form-control {
-        border-radius: 50px;
-        padding: 12px 20px;
-        border: 1px solid #e0e0e0;
-        background: #f8f9fa;
+    .form-control, select, textarea {
+        border-radius: 50px !important;
+        padding: 12px 20px !important;
+        border: 1px solid #e0e0e0 !important;
+        background: #f8f9fa !important;
     }
-    .form-control:focus {
-        background: #fff;
-        border-color: #00C4CC;
-        box-shadow: 0 0 0 4px rgba(0, 196, 204, 0.1);
+    textarea.form-control { border-radius: 18px !important; }
+
+    .form-control:focus, select:focus, textarea:focus {
+        background: #fff !important;
+        border-color: #00C4CC !important;
+        box-shadow: 0 0 0 4px rgba(0, 196, 204, 0.12) !important;
+        outline: none !important;
     }
 
     .btn-primary {
@@ -40,8 +53,8 @@
         border: none;
         border-radius: 50px;
         padding: 12px;
-        font-weight: bold;
-        transition: transform 0.2s;
+        font-weight: 700;
+        transition: transform 0.2s, background 0.2s;
     }
     .btn-primary:hover { background: #00b0b8; transform: translateY(-2px); }
 
@@ -51,10 +64,10 @@
     .helptext { font-size: 0.75rem; color: #999; margin-left: 10px; margin-top: 2px; }
     ul.errorlist { list-style: none; padding: 0; color: #dc3545; font-size: 0.85rem; margin-bottom: 10px; }
 
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
-<div class="container my-5">
+<div class="auth-wrapper">
     <div class="auth-card">
         <div class="text-center mb-4">
             <h1 class="brand-logo">AYA</h1>
@@ -62,7 +75,7 @@
             <p class="text-muted small">Присоединяйся к команде лучших</p>
         </div>
 
-        <form method="post">
+        <form method="post" novalidate>
             {% csrf_token %}
 
             {% if form.non_field_errors %}
@@ -100,4 +113,4 @@
         </form>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}

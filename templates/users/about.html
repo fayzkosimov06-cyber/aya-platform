@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ about_content.title|default:'О нас' }}{% endblock %}
+{% block title %}{{ about_content.title }}{% endblock %}
 
 {% block content %}
 
@@ -13,7 +13,7 @@
     <div class="container text-center position-relative z-2">
         <span class="badge bg-warning text-dark mb-3 px-3 py-2 rounded-pill text-uppercase fw-bold ls-1">Наша Миссия</span>
         <h1 class="display-3 fw-bold mb-4 text-white">{{ about_content.title }}</h1>
-        <p class="lead mx-auto text-white-50" style="max-width: 800px; font-size: 1.25rem; overflow-wrap: anywhere; word-break: break-word;">
+        <p class="lead mx-auto text-white-50" style="max-width: 800px; font-size: 1.25rem; overflow-wrap:anywhere; word-break:break-word;">
             {{ about_content.description|linebreaksbr }}
         </p>
     </div>
@@ -25,7 +25,7 @@
         <div class="col-lg-6 mb-4 mb-lg-0">
             {% if about_content.video_url %}
                 <div class="ratio ratio-16x9 rounded-4 shadow-lg overflow-hidden border border-4 border-white">
-                    <iframe src="{{ about_content.video_url }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                    <iframe src="{{ about_content.video_url }}" allowfullscreen></iframe>
                 </div>
             {% else %}
                 <div class="bg-light rounded-4 shadow-sm d-flex align-items-center justify-content-center text-center p-5" style="min-height: 350px; border: 1px solid #eee;">
@@ -41,7 +41,7 @@
             <h2 class="fw-bold mb-3" style="color: #0E3644;">{{ about_content.mission_title }}</h2>
             <div style="width: 50px; height: 4px; background: #00C4CC; margin-bottom: 25px;"></div>
             
-            <p class="fs-5 text-muted lh-lg mb-4">{{ about_content.mission_text|linebreaks }}</p>
+            <p class="fs-5 text-muted lh-lg mb-4" style="max-width: 100%; white-space: normal; overflow-wrap: anywhere; word-break: break-word;">{{ about_content.mission_text|linebreaksbr }}</p>
             
             <div class="row g-3">
                 <div class="col-sm-6">
