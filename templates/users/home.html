@@ -3,38 +3,54 @@
 
 {% block title %}Главная - AYA{% endblock %}
 
-{% block content %}
-</div>
+{% block extra_css %}
+<style>
+  /* Prevent quote carousel from "jumping" when slides have different text length */
+  #quotesCarousel { overflow: hidden; }
+  #quotesCarousel .carousel-inner { transition: height .2s ease; }
 
-<div class="position-relative overflow-hidden" 
+  /* Make long strings wrap nicely */
+  #quotesCarousel blockquote,
+  #quotesCarousel .blockquote,
+  #quotesCarousel figcaption {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="position-relative overflow-hidden"
      style="background: linear-gradient(135deg, #0E3644 0%, #104e63 100%); min-height: 85vh; padding-top: 80px;">
-    
-    <div style="position: absolute; top: -10%; left: -10%; width: 500px; height: 500px; 
-                background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); 
+
+    <div style="position: absolute; top: -10%; left: -10%; width: 500px; height: 500px;
+                background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
                 border-radius: 50%; pointer-events: none;"></div>
-    
-    <div style="position: absolute; bottom: 10%; right: -5%; width: 400px; height: 400px; 
-                background: radial-gradient(circle, rgba(0, 196, 204, 0.1) 0%, transparent 70%); 
+
+    <div style="position: absolute; bottom: 10%; right: -5%; width: 400px; height: 400px;
+                background: radial-gradient(circle, rgba(0, 196, 204, 0.1) 0%, transparent 70%);
                 border-radius: 50%; pointer-events: none;"></div>
 
     <div class="container position-relative z-2">
         <div class="row align-items-center" style="min-height: 80vh;">
-            
+
             <div class="col-lg-5 py-5 text-white order-2 order-lg-1 fade-in-up">
+                <!-- Removed New Year theme (snow/holiday label) -->
                 <div class="d-inline-flex align-items-center bg-white bg-opacity-10 border border-white border-opacity-25 px-3 py-1 mb-4 rounded-pill backdrop-blur">
-                    <span class="badge bg-danger rounded-circle p-1 me-2">❄️</span>
-                    <span class="fw-bold small text-uppercase ls-1">Новый Год с AYA 2025</span>
+                    <span class="fw-bold small text-uppercase ls-1">Официальное волонтёрское движение ТГМУ</span>
                 </div>
-                
+
                 <h1 class="display-3 fw-bolder mb-3 lh-1 text-white">
                     Энергия <br>
                     <span style="color: #00C4CC;">Твоего Успеха.</span>
                 </h1>
-                
+
                 <p class="lead text-white-50 mb-5">
-                    Официальное волонтерское движение ТГМУ. Присоединяйся к команде лидеров, развивайся и меняй мир вместе с нами.
+                    Присоединяйся к команде лидеров, развивайся и меняй мир вместе с нами.
                 </p>
-                
+
                 <div class="d-flex flex-wrap gap-3">
                     {% if not user.is_authenticated %}
                         <a href="{% url 'signup' %}" class="btn btn-primary btn-lg px-5 shadow-lg rounded-pill fw-bold hover-lift">Стать волонтёром</a>
@@ -48,19 +64,19 @@
             <div class="col-lg-6 offset-lg-1 order-1 order-lg-2 mb-5 mb-lg-0 fade-in-up" style="animation-delay: 0.2s;">
                 <div class="position-relative">
                     <div style="position: absolute; top: 20px; left: 20px; width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.2); border-radius: 25px; z-index: 0;"></div>
-                    
+
                     <div id="heroCarousel" class="carousel slide carousel-fade shadow-2xl rounded-4 overflow-hidden position-relative z-1" data-bs-ride="carousel" data-bs-interval="3000">
                         <div class="carousel-inner" style="border-radius: 25px;">
                             <div class="carousel-item active">
-                                <img src="{% static 'img/collage_1.jpg' %}" class="d-block w-100 object-fit-cover" style="height: 500px;" 
+                                <img src="{% static 'img/collage_1.jpg' %}" class="d-block w-100 object-fit-cover" style="height: 500px;"
                                      alt="Команда" onerror="this.src='https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800'">
                             </div>
                             <div class="carousel-item">
-                                <img src="{% static 'img/collage_2.jpg' %}" class="d-block w-100 object-fit-cover" style="height: 500px;" 
+                                <img src="{% static 'img/collage_2.jpg' %}" class="d-block w-100 object-fit-cover" style="height: 500px;"
                                      alt="Собрание" onerror="this.src='https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800'">
                             </div>
                             <div class="carousel-item">
-                                <img src="{% static 'img/collage_3.jpg' %}" class="d-block w-100 object-fit-cover" style="height: 500px;" 
+                                <img src="{% static 'img/collage_3.jpg' %}" class="d-block w-100 object-fit-cover" style="height: 500px;"
                                      alt="Учеба" onerror="this.src='https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800'">
                             </div>
                         </div>
@@ -70,7 +86,7 @@
 
         </div>
     </div>
-    
+
     <div style="position: absolute; bottom: 0; left: 0; width: 100%; overflow: hidden; line-height: 0;">
         <svg viewBox="0 0 1200 120" preserveAspectRatio="none" style="width: 100%; height: 60px; fill: #f8f9fa;">
             <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
@@ -111,25 +127,29 @@
 </div>
 
 <section class="py-5 position-relative text-white" style="background: linear-gradient(180deg, #0a2731 0%, #0E3644 100%);">
-    
-    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('{% static 'img/pattern.png' %}') repeat; opacity: 0.05;"></div>
+
+    <!-- Removed pattern.png overlay to avoid 404 on hosting -->
+    <div style="position: absolute; inset: 0; background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06), transparent 45%),
+        radial-gradient(circle at 80% 70%, rgba(0,196,204,0.10), transparent 50%);
+        opacity: 0.8;"></div>
 
     <div class="container position-relative z-2 py-4">
-        
+
         <div id="quotesCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="12000">
             <div class="carousel-inner">
-                
+
                 <div class="carousel-item active">
                     <div class="row justify-content-center align-items-center">
                         <div class="col-lg-8 text-center">
                             <div class="d-inline-block p-2 bg-white bg-opacity-10 rounded-circle mb-4" style="backdrop-filter: blur(5px);">
-                                <img src="{% static 'img/president.jpg' %}" 
-                                     alt="Эмомали Рахмон" 
+                                <img src="{% static 'img/president.jpg' %}"
+                                     alt="Эмомали Рахмон"
                                      class="rounded-circle shadow-lg"
                                      style="width: 200px; height: 200px; object-fit: cover; border: 4px solid #fff;"
                                      onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/7/7b/Emomali_Rahmon_2023.jpg'">
                             </div>
-                            
+
                             <figure>
                                 <blockquote class="blockquote display-6 fst-italic mb-4">
                                     «Студенты нуждаются не только в книгах и тетрадях. Им нужны знания, интеллект, профессиональные навыки и языковая подготовка.»
@@ -142,18 +162,18 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="carousel-item">
                     <div class="row justify-content-center align-items-center">
                         <div class="col-lg-8 text-center">
                             <div class="d-inline-block p-2 bg-white bg-opacity-10 rounded-circle mb-4" style="backdrop-filter: blur(5px);">
-                                <img src="{% static 'img/sino.jpg' %}" 
-                                     alt="Абуали ибни Сино" 
+                                <img src="{% static 'img/sino.jpg' %}"
+                                     alt="Абуали ибни Сино"
                                      class="rounded-circle shadow-lg"
                                      style="width: 200px; height: 200px; object-fit: cover; border: 4px solid #fff;"
                                      onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/2/22/Avicenna_Portrait_on_Silver_Vase_-_Museum_at_BuAli_Sina_Mausoleum.jpg'">
                             </div>
-                            
+
                             <figure>
                                 <blockquote class="blockquote display-6 fst-italic mb-4">
                                     «Врач должен обладать глазом сокола, руками девушки, мудростью змеи и сердцем льва.»
@@ -168,7 +188,7 @@
                 </div>
 
             </div>
-            
+
             <button class="carousel-control-prev" type="button" data-bs-target="#quotesCarousel" data-bs-slide="prev">
                 <span class="carousel-control-prev-icon bg-dark rounded-circle p-3 bg-opacity-25" aria-hidden="true"></span>
             </button>
@@ -188,7 +208,7 @@
             </div>
             <a href="{% url 'event_list' %}" class="btn btn-outline-primary rounded-pill px-4 fw-bold">Вся афиша</a>
         </div>
-        
+
         <div class="row g-4">
             {% for event in upcoming_events %}
             <div class="col-lg-4 col-md-6 fade-in-up">
@@ -223,12 +243,57 @@
 <style>
     .backdrop-blur { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
     .ls-1 { letter-spacing: 1px; }
-    
+    .ls-2 { letter-spacing: 2px; }
+
     .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
     .hover-lift:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important; }
-    
+
     .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
     @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
 </style>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  function lockQuotesCarouselHeight() {
+    const carousel = document.getElementById('quotesCarousel');
+    if (!carousel) return;
+
+    const inner = carousel.querySelector('.carousel-inner');
+    const items = carousel.querySelectorAll('.carousel-item');
+    if (!inner || !items.length) return;
+
+    let maxH = 0;
+
+    items.forEach(it => {
+      const wasActive = it.classList.contains('active');
+      it.classList.add('active');
+      maxH = Math.max(maxH, it.scrollHeight);
+      if (!wasActive) it.classList.remove('active');
+    });
+
+    if (maxH > 0) inner.style.height = maxH + 'px';
+  }
+
+  function run() {
+    lockQuotesCarouselHeight();
+
+    // On hosting, fonts/images often load later -> re-measure
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(lockQuotesCarouselHeight).catch(() => {});
+    }
+    setTimeout(lockQuotesCarouselHeight, 250);
+    setTimeout(lockQuotesCarouselHeight, 800);
+  }
+
+  window.addEventListener('load', run);
+  window.addEventListener('resize', lockQuotesCarouselHeight);
+
+  document.addEventListener('slid.bs.carousel', function (e) {
+    if (e.target && e.target.id === 'quotesCarousel') lockQuotesCarouselHeight();
+  });
+})();
+</script>
 {% endblock %}
