@@ -4,296 +4,247 @@
 {% block title %}Главная - AYA{% endblock %}
 
 {% block extra_css %}
-<style>
-  /* Prevent quote carousel from "jumping" when slides have different text length */
-  #quotesCarousel { overflow: hidden; }
-  #quotesCarousel .carousel-inner { transition: height .2s ease; }
-
-  /* Make long strings wrap nicely */
-  #quotesCarousel blockquote,
-  #quotesCarousel .blockquote,
-  #quotesCarousel figcaption {
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    white-space: normal;
-  }
-</style>
+<link rel="stylesheet" href="{% static 'css/home_v2.css' %}?v=1">
 {% endblock %}
 
 {% block content %}
 
-<div class="position-relative overflow-hidden"
-     style="background: linear-gradient(135deg, #0E3644 0%, #104e63 100%); min-height: 85vh; padding-top: 80px;">
+<section class="hp-hero">
+  <div class="hp-hero__bg">
+    <div class="hp-hero__grid"></div>
+    <div class="hp-hero__glow hp-hero__glow--a"></div>
+    <div class="hp-hero__glow hp-hero__glow--b"></div>
+  </div>
 
-    <div style="position: absolute; top: -10%; left: -10%; width: 500px; height: 500px;
-                background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-                border-radius: 50%; pointer-events: none;"></div>
-
-    <div style="position: absolute; bottom: 10%; right: -5%; width: 400px; height: 400px;
-                background: radial-gradient(circle, rgba(0, 196, 204, 0.1) 0%, transparent 70%);
-                border-radius: 50%; pointer-events: none;"></div>
-
-    <div class="container position-relative z-2">
-        <div class="row align-items-center" style="min-height: 80vh;">
-
-            <div class="col-lg-5 py-5 text-white order-2 order-lg-1 fade-in-up">
-                <!-- Removed New Year theme (snow/holiday label) -->
-                <div class="d-inline-flex align-items-center bg-white bg-opacity-10 border border-white border-opacity-25 px-3 py-1 mb-4 rounded-pill backdrop-blur">
-                    <span class="fw-bold small text-uppercase ls-1">Официальное волонтёрское движение ТГМУ</span>
-                </div>
-
-                <h1 class="display-3 fw-bolder mb-3 lh-1 text-white">
-                    Энергия <br>
-                    <span style="color: #00C4CC;">Твоего Успеха.</span>
-                </h1>
-
-                <p class="lead text-white-50 mb-5">
-                    Присоединяйся к команде лидеров, развивайся и меняй мир вместе с нами.
-                </p>
-
-                <div class="d-flex flex-wrap gap-3">
-                    {% if not user.is_authenticated %}
-                        <a href="{% url 'signup' %}" class="btn btn-primary btn-lg px-5 shadow-lg rounded-pill fw-bold hover-lift">Стать волонтёром</a>
-                    {% else %}
-                        <a href="{% url 'event_list' %}" class="btn btn-primary btn-lg px-5 shadow-lg rounded-pill fw-bold hover-lift">Афиша событий</a>
-                    {% endif %}
-                    <a href="{% url 'about_page' %}" class="btn btn-outline-light btn-lg px-4 rounded-pill fw-bold hover-lift">О нас</a>
-                </div>
-            </div>
-
-            <div class="col-lg-6 offset-lg-1 order-1 order-lg-2 mb-5 mb-lg-0 fade-in-up" style="animation-delay: 0.2s;">
-                <div class="position-relative">
-                    <div style="position: absolute; top: 20px; left: 20px; width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.2); border-radius: 25px; z-index: 0;"></div>
-
-                    <div id="heroCarousel" class="carousel slide carousel-fade shadow-2xl rounded-4 overflow-hidden position-relative z-1" data-bs-ride="carousel" data-bs-interval="3000">
-                        <div class="carousel-inner" style="border-radius: 25px;">
-                            <div class="carousel-item active">
-                                <img src="{% static 'img/collage_1.jpg' %}" class="d-block w-100 object-fit-cover" style="height: 500px;"
-                                     alt="Команда" onerror="this.src='https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800'">
-                            </div>
-                            <div class="carousel-item">
-                                <img src="{% static 'img/collage_2.jpg' %}" class="d-block w-100 object-fit-cover" style="height: 500px;"
-                                     alt="Собрание" onerror="this.src='https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800'">
-                            </div>
-                            <div class="carousel-item">
-                                <img src="{% static 'img/collage_3.jpg' %}" class="d-block w-100 object-fit-cover" style="height: 500px;"
-                                     alt="Учеба" onerror="this.src='https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800'">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <div style="position: absolute; bottom: 0; left: 0; width: 100%; overflow: hidden; line-height: 0;">
-        <svg viewBox="0 0 1200 120" preserveAspectRatio="none" style="width: 100%; height: 60px; fill: #f8f9fa;">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
-        </svg>
-    </div>
-</div>
-
-<div class="py-5 bg-light position-relative">
-    <div class="container position-relative z-2">
-        <div class="text-center mb-5 fade-in-up">
-            <h6 class="text-primary fw-bold text-uppercase ls-2">Наши направления</h6>
-            <h2 class="fw-bold text-dark">Где ты можешь помочь</h2>
+  <div class="container hp-hero__wrap">
+    <div class="row align-items-center gy-5">
+      <div class="col-lg-6 order-2 order-lg-1">
+        <div class="hp-pill">
+          <span class="hp-pill__dot"></span>
+          <span>Официальное волонтёрское движение ТГМУ</span>
         </div>
 
-        <div class="row g-4 justify-content-center">
-            {% for direction in directions %}
-            <div class="col-lg-3 col-md-4 col-sm-6 fade-in-up" style="animation-delay: 0.{{ forloop.counter }}s;">
-                <a href="{% url 'volunteer_list' %}?direction={{ direction.id }}" class="text-decoration-none">
-                    <div class="card h-100 border-0 shadow-sm hover-lift p-4 text-center" style="border-radius: 20px;">
-                        <div class="mb-3">
-                            {% if 'Спорт' in direction.name %} <div class="bg-warning bg-opacity-10 text-warning d-inline-block p-3 rounded-circle"><i class="fas fa-running fa-2x"></i></div>
-                            {% elif 'Эколог' in direction.name %} <div class="bg-success bg-opacity-10 text-success d-inline-block p-3 rounded-circle"><i class="fas fa-leaf fa-2x"></i></div>
-                            {% elif 'IT' in direction.name %} <div class="bg-info bg-opacity-10 text-info d-inline-block p-3 rounded-circle"><i class="fas fa-laptop-code fa-2x"></i></div>
-                            {% elif 'Наука' in direction.name %} <div class="bg-primary bg-opacity-10 text-primary d-inline-block p-3 rounded-circle"><i class="fas fa-microscope fa-2x"></i></div>
-                            {% else %} <div class="bg-secondary bg-opacity-10 text-secondary d-inline-block p-3 rounded-circle"><i class="fas fa-star fa-2x"></i></div>
-                            {% endif %}
-                        </div>
-                        <h5 class="fw-bold text-dark mb-2">{{ direction.name }}</h5>
-                        <p class="text-muted small mb-0">Подробнее &rarr;</p>
-                    </div>
-                </a>
-            </div>
-            {% empty %}
-                <div class="col-12 text-center text-muted">Направления скоро появятся.</div>
-            {% endfor %}
+        <h1 class="hp-title">
+          Энергия<br>
+          <span class="hp-title__accent">Твоего Успеха.</span>
+        </h1>
+
+        <p class="hp-subtitle">
+          Присоединяйся к команде лидеров, развивайся и меняй мир вместе с нами.
+        </p>
+
+        <div class="hp-actions">
+          {% if not user.is_authenticated %}
+            <a class="btn hp-btn hp-btn--primary" href="{% url 'signup' %}">Стать волонтёром</a>
+            <a class="btn hp-btn hp-btn--ghost" href="{% url 'event_list' %}">Смотреть мероприятия</a>
+          {% else %}
+            <a class="btn hp-btn hp-btn--primary" href="{% url 'event_list' %}">Смотреть мероприятия</a>
+            <a class="btn hp-btn hp-btn--ghost" href="{% url 'about_page' %}">О нас</a>
+          {% endif %}
         </div>
-    </div>
-</div>
+      </div>
 
-<section class="py-5 position-relative text-white" style="background: linear-gradient(180deg, #0a2731 0%, #0E3644 100%);">
+      <div class="col-lg-6 order-1 order-lg-2">
+        <div class="hp-media">
+          <div class="hp-media__card">
+            <img
+              src="{% static 'img/collage_2.jpg' %}"
+              alt="AYA"
+              loading="lazy"
+              onerror="this.src='https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1600&auto=format&fit=crop';">
+          </div>
 
-    <!-- Removed pattern.png overlay to avoid 404 on hosting -->
-    <div style="position: absolute; inset: 0; background:
-        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06), transparent 45%),
-        radial-gradient(circle at 80% 70%, rgba(0,196,204,0.10), transparent 50%);
-        opacity: 0.8;"></div>
-
-    <div class="container position-relative z-2 py-4">
-
-        <div id="quotesCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="12000">
-            <div class="carousel-inner">
-
-                <div class="carousel-item active">
-                    <div class="row justify-content-center align-items-center">
-                        <div class="col-lg-8 text-center">
-                            <div class="d-inline-block p-2 bg-white bg-opacity-10 rounded-circle mb-4" style="backdrop-filter: blur(5px);">
-                                <img src="{% static 'img/president.jpg' %}"
-                                     alt="Эмомали Рахмон"
-                                     class="rounded-circle shadow-lg"
-                                     style="width: 200px; height: 200px; object-fit: cover; border: 4px solid #fff;"
-                                     onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/7/7b/Emomali_Rahmon_2023.jpg'">
-                            </div>
-
-                            <figure>
-                                <blockquote class="blockquote display-6 fst-italic mb-4">
-                                    «Студенты нуждаются не только в книгах и тетрадях. Им нужны знания, интеллект, профессиональные навыки и языковая подготовка.»
-                                </blockquote>
-                                <figcaption class="blockquote-footer text-white-50 fs-5">
-                                    <strong class="text-white">Эмомали Рахмон</strong> <br>
-                                    <span class="small">Президент Республики Таджикистан, Лидер Нации</span>
-                                </figcaption>
-                            </figure>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="carousel-item">
-                    <div class="row justify-content-center align-items-center">
-                        <div class="col-lg-8 text-center">
-                            <div class="d-inline-block p-2 bg-white bg-opacity-10 rounded-circle mb-4" style="backdrop-filter: blur(5px);">
-                                <img src="{% static 'img/sino.jpg' %}"
-                                     alt="Абуали ибни Сино"
-                                     class="rounded-circle shadow-lg"
-                                     style="width: 200px; height: 200px; object-fit: cover; border: 4px solid #fff;"
-                                     onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/2/22/Avicenna_Portrait_on_Silver_Vase_-_Museum_at_BuAli_Sina_Mausoleum.jpg'">
-                            </div>
-
-                            <figure>
-                                <blockquote class="blockquote display-6 fst-italic mb-4">
-                                    «Врач должен обладать глазом сокола, руками девушки, мудростью змеи и сердцем льва.»
-                                </blockquote>
-                                <figcaption class="blockquote-footer text-white-50 fs-5">
-                                    <strong class="text-white">Абуали ибни Сино</strong> <br>
-                                    <span class="small">Великий ученый, философ и врач</span>
-                                </figcaption>
-                            </figure>
-                        </div>
-                    </div>
-                </div>
-
+          <div class="hp-stats">
+            <div class="hp-stat">
+              <div class="hp-stat__num">{{ site_stats.volunteers|default:"135+" }}</div>
+              <div class="hp-stat__label">Волонтёров</div>
             </div>
+            <div class="hp-stat__sep"></div>
+            <div class="hp-stat">
+              <div class="hp-stat__num">{{ site_stats.events|default:"280+" }}</div>
+              <div class="hp-stat__label">Мероприятий</div>
+            </div>
+            <div class="hp-stat__sep"></div>
+            <div class="hp-stat">
+              <div class="hp-stat__num">{{ site_stats.years|default:"10" }}</div>
+              <div class="hp-stat__label">Лет опыта</div>
+            </div>
+          </div>
 
-            <button class="carousel-control-prev" type="button" data-bs-target="#quotesCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon bg-dark rounded-circle p-3 bg-opacity-25" aria-hidden="true"></span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#quotesCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon bg-dark rounded-circle p-3 bg-opacity-25" aria-hidden="true"></span>
-            </button>
         </div>
+      </div>
+
     </div>
+  </div>
+
+  <svg class="hp-wave" viewBox="0 0 1440 140" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0,90 C180,140 360,140 540,110 C720,80 900,20 1080,30 C1260,40 1350,80 1440,98 L1440,140 L0,140 Z"></path>
+  </svg>
 </section>
 
-<div class="py-5 bg-white">
-    <div class="container mb-5">
-        <div class="d-flex justify-content-between align-items-end mb-5 border-bottom pb-3 fade-in-up">
-            <div>
-                <h6 class="text-muted fw-bold text-uppercase small">Афиша</h6>
-                <h2 class="fw-bold mb-0 text-dark">Ближайшие события</h2>
-            </div>
-            <a href="{% url 'event_list' %}" class="btn btn-outline-primary rounded-pill px-4 fw-bold">Вся афиша</a>
-        </div>
 
-        <div class="row g-4">
-            {% for event in upcoming_events %}
-            <div class="col-lg-4 col-md-6 fade-in-up">
-                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-card">
-                    <div class="position-relative" style="height: 220px;">
-                        {% if event.cover_image %}
-                            <img src="{{ event.cover_image.url }}" class="w-100 h-100 object-fit-cover" alt="Event">
-                        {% else %}
-                            <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-white"><i class="fas fa-image fa-2x"></i></div>
-                        {% endif %}
-                        <div class="position-absolute top-0 start-0 m-3 bg-white px-3 py-1 rounded-3 fw-bold shadow-sm text-center">
-                            <span class="d-block text-danger small text-uppercase">{{ event.start_time|date:"M" }}</span>
-                            <span class="fs-4 lh-1">{{ event.start_time|date:"d" }}</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <h5 class="fw-bold text-dark">{{ event.title|truncatechars:35 }}</h5>
-                        <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-primary me-1"></i> {{ event.location }}</p>
-                        <a href="{% url 'event_detail' event.pk %}" class="btn btn-light w-100 rounded-pill fw-bold text-primary">Участвовать</a>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <div class="col-12 py-5 text-center text-muted">
-                <p>Мероприятий пока нет.</p>
-            </div>
-            {% endfor %}
-        </div>
+<section class="hp-section hp-section--light">
+  <div class="container">
+    <div class="hp-head">
+      <div>
+        <div class="hp-kicker">АФИША</div>
+        <h2 class="hp-h2">Ближайшие мероприятия</h2>
+      </div>
+      <a class="btn hp-btn hp-btn--outline" href="{% url 'event_list' %}">Полное расписание</a>
     </div>
-</div>
 
-<style>
-    .backdrop-blur { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-    .ls-1 { letter-spacing: 1px; }
-    .ls-2 { letter-spacing: 2px; }
+    <div class="row g-4">
+      {% for event in upcoming_events %}
+      <div class="col-lg-4 col-md-6">
+        <article class="hp-card">
+          <a class="hp-card__media" href="{% url 'event_detail' event.pk %}">
+            {% if event.cover_image %}
+              <img src="{{ event.cover_image.url }}" alt="{{ event.title }}">
+            {% else %}
+              <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1400&auto=format&fit=crop" alt="{{ event.title }}">
+            {% endif %}
+            <div class="hp-date">
+              <div class="hp-date__day">{{ event.start_time|date:"d" }}</div>
+              <div class="hp-date__mon">{{ event.start_time|date:"M" }}</div>
+            </div>
+          </a>
 
-    .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-    .hover-lift:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important; }
+          <div class="hp-card__body">
+            <h3 class="hp-card__title">
+              <a href="{% url 'event_detail' event.pk %}">{{ event.title|truncatechars:44 }}</a>
+            </h3>
 
-    .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
-    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
-</style>
+            <div class="hp-card__meta">
+              <span><i class="fas fa-map-marker-alt"></i> {{ event.location|default:"Место уточняется" }}</span>
+              <span><i class="far fa-clock"></i> {{ event.start_time|date:"H:i" }}</span>
+            </div>
 
-{% endblock %}
+            <div class="hp-card__actions">
+              <a class="btn hp-btn hp-btn--soft" href="{% url 'event_detail' event.pk %}">Подробнее</a>
+              {% if user.is_authenticated %}
+                <a class="btn hp-btn hp-btn--primary hp-btn--sm" href="{% url 'event_detail' event.pk %}">Участвовать</a>
+              {% else %}
+                <a class="btn hp-btn hp-btn--primary hp-btn--sm" href="{% url 'signup' %}">Стать волонтёром</a>
+              {% endif %}
+            </div>
+          </div>
+        </article>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="hp-empty">
+          <div class="hp-empty__title">Пока нет ближайших мероприятий</div>
+          <div class="hp-empty__text">Посмотри полный список событий или загляни позже.</div>
+          <a class="btn hp-btn hp-btn--outline" href="{% url 'event_list' %}">Перейти к афише</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
 
-{% block extra_js %}
-<script>
-(function () {
-  function lockQuotesCarouselHeight() {
-    const carousel = document.getElementById('quotesCarousel');
-    if (!carousel) return;
 
-    const inner = carousel.querySelector('.carousel-inner');
-    const items = carousel.querySelectorAll('.carousel-item');
-    if (!inner || !items.length) return;
+<section class="hp-section hp-section--dark">
+  <svg class="hp-wave hp-wave--top" viewBox="0 0 1440 140" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0,50 C180,0 360,0 540,30 C720,60 900,120 1080,110 C1260,100 1350,70 1440,55 L1440,0 L0,0 Z"></path>
+  </svg>
 
-    let maxH = 0;
+  <div class="container">
+    <div class="text-center mb-4">
+      <div class="hp-kicker hp-kicker--white">НАШИ НАПРАВЛЕНИЯ</div>
+      <h2 class="hp-h2 hp-h2--white">Где ты можешь помочь</h2>
+      <p class="hp-muted">Выбери направление и присоединяйся к команде.</p>
+    </div>
 
-    items.forEach(it => {
-      const wasActive = it.classList.contains('active');
-      it.classList.add('active');
-      maxH = Math.max(maxH, it.scrollHeight);
-      if (!wasActive) it.classList.remove('active');
-    });
+    <div class="row g-4">
+      {% for direction in directions|slice:":4" %}
+      <div class="col-lg-3 col-md-6">
+        <a class="hp-dir" href="{% url 'volunteer_list' %}?direction={{ direction.id }}">
+          <div class="hp-dir__icon">
+            {% if 'Мед' in direction.name or 'Здоров' in direction.name %}
+              <i class="fas fa-briefcase-medical"></i>
+            {% elif 'Эко' in direction.name %}
+              <i class="fas fa-leaf"></i>
+            {% elif 'Спорт' in direction.name %}
+              <i class="fas fa-running"></i>
+            {% elif 'Соц' in direction.name %}
+              <i class="fas fa-users"></i>
+            {% elif 'Наук' in direction.name %}
+              <i class="fas fa-microscope"></i>
+            {% elif 'IT' in direction.name or 'Айти' in direction.name %}
+              <i class="fas fa-laptop-code"></i>
+            {% else %}
+              <i class="fas fa-star"></i>
+            {% endif %}
+          </div>
+          <div class="hp-dir__title">{{ direction.name }}</div>
+          <div class="hp-dir__btn">Подробнее</div>
+        </a>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="hp-empty hp-empty--dark">
+          <div class="hp-empty__title">Направления скоро появятся</div>
+          <div class="hp-empty__text">Администрация добавит их в ближайшее время.</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
 
-    if (maxH > 0) inner.style.height = maxH + 'px';
-  }
+  <svg class="hp-wave hp-wave--bottom" viewBox="0 0 1440 140" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0,90 C180,140 360,140 540,110 C720,80 900,20 1080,30 C1260,40 1350,80 1440,98 L1440,140 L0,140 Z"></path>
+  </svg>
+</section>
 
-  function run() {
-    lockQuotesCarouselHeight();
 
-    // On hosting, fonts/images often load later -> re-measure
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(lockQuotesCarouselHeight).catch(() => {});
-    }
-    setTimeout(lockQuotesCarouselHeight, 250);
-    setTimeout(lockQuotesCarouselHeight, 800);
-  }
+<section class="hp-section hp-section--light">
+  <div class="container">
+    <div class="text-center mb-4">
+      <div class="hp-kicker">КАК СТАТЬ ВОЛОНТЁРОМ?</div>
+      <h2 class="hp-h2">Три простых шага</h2>
+    </div>
 
-  window.addEventListener('load', run);
-  window.addEventListener('resize', lockQuotesCarouselHeight);
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="hp-step">
+          <div class="hp-step__icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="hp-step__title">Заполни анкету</div>
+          <div class="hp-step__text">Регистрация займёт пару минут. Мы увидим твою заявку и свяжемся.</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="hp-step">
+          <div class="hp-step__icon"><i class="fas fa-comments"></i></div>
+          <div class="hp-step__title">Пройди знакомство</div>
+          <div class="hp-step__text">Короткое общение с руководителем направления и выбор твоей роли.</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="hp-step">
+          <div class="hp-step__icon"><i class="fas fa-hand-holding-heart"></i></div>
+          <div class="hp-step__title">Начни менять мир</div>
+          <div class="hp-step__text">Выбирай мероприятия, получай опыт, бейджи и рост в команде.</div>
+        </div>
+      </div>
+    </div>
 
-  document.addEventListener('slid.bs.carousel', function (e) {
-    if (e.target && e.target.id === 'quotesCarousel') lockQuotesCarouselHeight();
-  });
-})();
-</script>
+    <div class="hp-cta mt-4">
+      <div class="hp-cta__text">
+        Готов присоединиться к AYA?
+        <small>Стань частью команды уже сегодня.</small>
+      </div>
+      <div class="hp-cta__actions">
+        {% if not user.is_authenticated %}
+          <a class="btn hp-btn hp-btn--primary" href="{% url 'signup' %}">Присоединиться к AYA</a>
+        {% else %}
+          <a class="btn hp-btn hp-btn--primary" href="{% url 'event_list' %}">Открыть афишу</a>
+        {% endif %}
+        <a class="btn hp-btn hp-btn--outline" href="{% url 'volunteer_list' %}">Смотреть волонтёров</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
 {% endblock %}
