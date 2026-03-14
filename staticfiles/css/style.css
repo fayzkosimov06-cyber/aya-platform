@@ -165,84 +165,7 @@ img.profile-photo-round,
 }
 
 
-/* 2. НОВОГОДНИЕ УКРАШЕНИЯ */
-
-/* Снег на фоне */
-.snow-container {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    pointer-events: none; /* Чтобы можно было кликать сквозь снег */
-    z-index: 9999;
-}
-/* Простая CSS анимация снега (без JS) */
-.snow {
-    position: absolute;
-    width: 10px; height: 10px;
-    background: white;
-    border-radius: 50%;
-    opacity: 0.8;
-    animation: snowfall 10s linear infinite;
-}
-.snow:nth-child(1) { left: 10%; animation-duration: 8s; animation-delay: 0s; width: 8px; height: 8px; }
-.snow:nth-child(2) { left: 30%; animation-duration: 12s; animation-delay: 2s; width: 12px; height: 12px; }
-.snow:nth-child(3) { left: 70%; animation-duration: 7s; animation-delay: 1s; width: 6px; height: 6px; }
-.snow:nth-child(4) { left: 90%; animation-duration: 11s; animation-delay: 4s; }
-
-@keyframes snowfall {
-    0% { transform: translateY(-10vh); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translateY(110vh); opacity: 0.2; }
-}
-
-/* =========================================
-   НОВОГОДНЯЯ 3D ШАПКА (ТОЛЬКО ДЛЯ ВОЛОНТЕРОВ)
-   ========================================= */
-
-/* Класс для контейнера аватарки */
-.vol-hat-container {
-    position: relative;
-    display: inline-block;
-}
-
-/* Сама шапка (Псевдо-элемент) */
-.vol-hat-container::after {
-    content: '';
-    position: absolute;
-    /* Позиция шапки - подгоните под размер ваших аватарок */
-    top: -15px;      
-    left: -10px;     
-    width: 60%;      /* Шапка занимает 60% от ширины аватарки */
-    height: 60%;
-    
-    /* Ссылка на качественную 3D шапку */
-    background: url('https://cdn-icons-png.flaticon.com/512/744/744546.png') no-repeat center center;
-    background-size: contain;
-    
-    /* Эффект 3D (Наклон и глубокая тень) */
-    transform: rotate(-20deg);
-    filter: drop-shadow(3px 5px 2px rgba(0,0,0,0.3)); 
-    
-    z-index: 100;
-    pointer-events: none; /* Чтобы клик проходил сквозь шапку */
-}
-
-/* Корректировка для маленькой аватарки в меню (Navbar) */
-.nav-avatar-hat::after {
-    width: 30px;
-    height: 30px;
-    top: -12px;
-    left: -8px;
-}
-
-/* Новогодняя иконка на карточке */
-.holiday-icon {
-    position: absolute;
-    top: -10px; right: -10px;
-    font-size: 1.5rem;
-    transform: rotate(15deg);
-}
-
-.bg-brand-red { background-color: #d32f2f; color: white; }
+bg-brand-red { background-color: #d32f2f; color: white; }
 
 /* Общие стили (если вдруг пропали) */
 .text-brand { color: #0E3644; }
@@ -302,76 +225,20 @@ img.profile-photo-round,
 /* --- НОВОГОДНИЕ ШАПКИ (ЛОКАЛЬНЫЕ) --- */
 
 /* 1. Шапка для больших фото (Профиль, Админка) */
-.vol-hat-profile {
-    position: absolute;
-    top: -45px;
-    left: -50px;
-    width: 120px;
-    height: 10px;
-    /* Указываем путь от CSS файла к папке img. 
-       Если css лежит в static/css/, а картинка в static/img/, то путь такой: */
-    background: url('../img/hat.png') no-repeat center center; 
-    background-size: contain;
-    transform: rotate(-30deg);
-    z-index: 20;
-    pointer-events: none;
-    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3));
-}
-
 /* 2. Шапка для маленькой иконки в меню (справа сверху) */
-.nav-hat {
-    position: absolute;
-    top: -12px;
-    left: -1px;
-    width: 25px;
-    height: 25px;
-    background: url('../img/hat.png') no-repeat center center;
-    background-size: contain;
-    transform: rotate(-15deg);
-    z-index: 100;
-    pointer-events: none;
-}
-
 /* 3. Шапка для карточек в списке волонтеров (если нужно) */
-.vol-hat-corner {
-    position: absolute;
-    top: -5spx;
-    left: -45px;
-    width: 100px;
-    height: 80px;
-    background: url('../img/hat.png') no-repeat center center;
-    background-size: contain;
-    transform: rotate(-30deg);
-    z-index: 20;
-    pointer-events: none;
-}
-
 /* ОСТАЛЬНОЕ БЕЗ ИЗМЕНЕНИЙ (на всякий случай дублирую) */
 .main-navbar { background-color: #0E3644 !important; padding: 12px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-.snow-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
-.snow { position: absolute; width: 10px; height: 10px; background: white; border-radius: 50%; opacity: 0.8; animation: snowfall 10s linear infinite; }
-.snow:nth-child(1) { left: 10%; animation-duration: 8s; }
-.snow:nth-child(2) { left: 50%; animation-duration: 12s; animation-delay: 2s; }
-.snow:nth-child(3) { left: 80%; animation-duration: 9s; animation-delay: 1s; }
-@keyframes snowfall {
-    0% { transform: translateY(-10vh); opacity: 0; }
-    10% { opacity: 1; }
+10% { opacity: 1; }
     100% { transform: translateY(110vh); opacity: 0.2; }
-}und: url('https://cdn-icons-png.flaticon.com/512/744/744546.png') no-repeat center center;
+}
     background-size: contain;
     transform: rotate(10deg); /* Легкий наклон в другую сторону */
     z-index: 10;
 
 /* 3. ОСТАЛЬНОЕ (Без изменений, просто чтобы не потерялось) */
 .main-navbar { background-color: #0E3644 !important; padding: 12px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-.snow-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
-.snow { position: absolute; width: 10px; height: 10px; background: white; border-radius: 50%; opacity: 0.8; animation: snowfall 10s linear infinite; }
-.snow:nth-child(1) { left: 10%; animation-duration: 8s; }
-.snow:nth-child(2) { left: 50%; animation-duration: 12s; animation-delay: 2s; }
-.snow:nth-child(3) { left: 80%; animation-duration: 9s; animation-delay: 1s; }
-@keyframes snowfall {
-    0% { transform: translateY(-10vh); opacity: 0; }
-    10% { opacity: 1; }
+10% { opacity: 1; }
     100% { transform: translateY(110vh); opacity: 0.2; }
 }
 
@@ -383,19 +250,6 @@ img.profile-photo-round,
 }
 
 /* 4. СНЕГ */
-.snow-container {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    pointer-events: none; z-index: 9999;
-}
-.snow {
-    position: absolute; width: 10px; height: 10px; background: white;
-    border-radius: 50%; opacity: 0.8; animation: snowfall 10s linear infinite;
-}
-.snow:nth-child(1) { left: 10%; animation-duration: 8s; }
-.snow:nth-child(2) { left: 50%; animation-duration: 12s; animation-delay: 2s; }
-.snow:nth-child(3) { left: 80%; animation-duration: 9s; animation-delay: 1s; }
-@keyframes snowfall {
-    0% { transform: translateY(-10vh); opacity: 0; }
-    10% { opacity: 1; }
+10% { opacity: 1; }
     100% { transform: translateY(110vh); opacity: 0.2; }
 }

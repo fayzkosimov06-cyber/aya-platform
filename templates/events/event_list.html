@@ -4,6 +4,9 @@
 {% block title %}Мероприятия - AYA{% endblock %}
 
 {% block content %}
+
+<div class="snow-container">
+    <div class="snow"></div><div class="snow"></div><div class="snow"></div>
 </div>
 
 <div class="container py-5" style="padding-top: 60px;">
@@ -13,7 +16,7 @@
             <h1 class="display-5 fw-bolder mb-1 text-dark">Афиша событий</h1>
             <p class="text-muted mb-0 lead">Присоединяйся, развивайся, действуй.</p>
         </div>
-        {% if user.is_authenticated %}
+        {% if user.is_authenticated and not catalog_locked %}
             <a href="{% url 'event_create' %}" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm hover-lift fw-bold">
                 <i class="fas fa-plus me-2"></i> Создать событие
             </a>
@@ -31,6 +34,14 @@
             </form>
         </div>
     </div>
+
+
+    {% if catalog_locked %}
+        <div class="alert alert-warning border-0 shadow-sm rounded-4 mb-4 fade-in-up" style="animation-delay: 0.15s;">
+            <div class="fw-bold mb-1">Доступ вам закрыт</div>
+            <div class="text-muted">Пока вы кандидат, раздел мероприятий для вас закрыт. Подробности можно смотреть только через афишу на главной странице.</div>
+        </div>
+    {% endif %}
 
     <ul class="nav nav-pills mb-4 gap-3 justify-content-center justify-content-md-start fade-in-up" id="eventsTab" role="tablist" style="animation-delay: 0.2s;">
         <li class="nav-item" role="presentation">
@@ -57,9 +68,7 @@
                             {% if event.cover_image %}
                                 <img src="{{ event.cover_image.url }}" class="w-100 h-100 object-fit-cover" alt="Обложка">
                             {% else %}
-                                <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-secondary">
-                                    <i class="fas fa-calendar-alt fa-4x opacity-25"></i>
-                                </div>
+                                <img src="{% static 'img/event-placeholder.svg' %}" class="w-100 h-100 object-fit-cover" alt="Обложка">
                             {% endif %}
                             
                             <div class="position-absolute top-0 end-0 m-3 bg-white shadow text-center d-flex flex-column justify-content-center" 
@@ -107,11 +116,9 @@
                     <div class="card h-100 border-0 shadow-sm hover-lift overflow-hidden grayscale-hover" style="border-radius: 30px;">
                         <div class="position-relative" style="height: 240px;">
                             {% if event.cover_image %}
-                                <img src="{{ event.cover_image.url }}" class="w-100 h-100 object-fit-cover transition-img" alt="Обложка">
+                                <img src="{{ event.cover_image.url }}" class="w-100 h-100 object-fit-cover" alt="Обложка">
                             {% else %}
-                                <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-muted">
-                                    <i class="fas fa-history fa-3x opacity-25"></i>
-                                </div>
+                                <img src="{% static 'img/event-placeholder.svg' %}" class="w-100 h-100 object-fit-cover" alt="Обложка">
                             {% endif %}
                             
                             <div class="position-absolute top-0 start-0 m-3">

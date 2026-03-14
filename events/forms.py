@@ -24,12 +24,12 @@ class EventCreateForm(forms.ModelForm):
         model = Event
         fields = ['title', 'cover_image', 'description', 'start_time', 'end_time', 'location', 'max_participants']
         widgets = {
-            'title': forms.TextInput(attrs={'class':'form-control','list':'roleOptions','placeholder':'Напр.: Фотограф / Ведущий / Докладчик'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Напр.: Навруз, Экосубботник, Лекция'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'start_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'end_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'location': forms.TextInput(attrs={'class':'form-control','list':'roleOptions','placeholder':'Напр.: Фотограф / Ведущий / Докладчик'}),
-            'max_participants': forms.NumberInput(attrs={'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Напр.: ТГМУ, корпус 1, аудитория 203 / Душанбе'}),
+            'max_participants': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Напр.: 50'}),
             'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
@@ -56,10 +56,18 @@ class EventVideoForm(forms.ModelForm):
         }
 
 class EventHeroForm(forms.ModelForm):
-    user = forms.ModelChoiceField(queryset=User.objects.filter(is_approved=True), widget=forms.Select(attrs={'class': 'form-select use-select2', 'data-placeholder': 'Выберите волонтёра…'}))
+    user = forms.ModelChoiceField(queryset=User.objects.none(), widget=forms.Select(attrs={'class': 'form-select use-select2'}))
+
     class Meta:
         model = EventHero
         fields = ['user', 'role_name']
         widgets = {
-            'role_name': forms.TextInput(attrs={'class':'form-control','list':'roleOptions','placeholder':'Напр.: Фотограф / Ведущий / Докладчик'}),
+            'role_name': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, event=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if event is not None:
+            self.fields['user'].queryset = event.participants.exclude(is_superuser=True).order_by('last_name', 'first_name')
+        else:
+            self.fields['user'].queryset = User.objects.filter(is_approved=True).exclude(is_superuser=True).order_by('last_name', 'first_name')

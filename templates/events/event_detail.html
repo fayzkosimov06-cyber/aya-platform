@@ -13,7 +13,7 @@
                     background-size: cover; opacity: 0.6;"></div>
     {% else %}
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-                    background: linear-gradient(135deg, #0E3644, #2a5298);"></div>
+                    background: url('{% static 'img/event-placeholder.svg' %}') no-repeat center center; background-size: cover;"></div>
     {% endif %}
     
     <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 80%; 
@@ -149,14 +149,20 @@
                     {% if not event.is_completed %}
                         <div class="mb-4">
                             {% if user.is_authenticated %}
-                                {% if is_participant %}
-                                    <a href="{% url 'event_join' event.pk %}" class="btn btn-outline-danger w-100 rounded-pill py-2 fw-bold">
-                                        <i class="fas fa-times me-1"></i> Отменить запись
-                                    </a>
+                                {% if can_register %}
+                                    {% if is_participant %}
+                                        <a href="{% url 'event_join' event.pk %}" class="btn btn-outline-danger w-100 rounded-pill py-2 fw-bold">
+                                            <i class="fas fa-times me-1"></i> Отменить запись
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'event_join' event.pk %}" class="btn btn-success w-100 rounded-pill py-3 fw-bold shadow-sm hover-lift">
+                                            <i class="fas fa-check me-2"></i> Я пойду!
+                                        </a>
+                                    {% endif %}
                                 {% else %}
-                                    <a href="{% url 'event_join' event.pk %}" class="btn btn-success w-100 rounded-pill py-3 fw-bold shadow-sm hover-lift">
-                                        <i class="fas fa-check me-2"></i> Я пойду!
-                                    </a>
+                                    <div class="alert alert-warning border-0 rounded-4 mb-0 text-center fw-semibold">
+                                        Доступ вам закрыт
+                                    </div>
                                 {% endif %}
                             {% else %}
                                 <a href="{% url 'login' %}" class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-sm">
@@ -166,6 +172,7 @@
                         </div>
                     {% endif %}
 
+                    {% if can_view_participants %}
                     <div class="accordion accordion-flush" id="participantsAccordion">
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="flush-headingOne">
@@ -183,12 +190,19 @@
                                                     {{ participant.get_full_name }}
                                                 </a>
                                             </li>
+                                        {% empty %}
+                                            <li class="list-group-item px-3 py-2 border-light text-muted">Пока никто не зарегистрировался.</li>
                                         {% endfor %}
                                     </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    {% else %}
+                    <div class="rounded-4 bg-light p-3 text-muted small">
+                        Список участников доступен только волонтёрам с полным доступом.
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

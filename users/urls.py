@@ -2,6 +2,8 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from . import about_views
+
 
 urlpatterns = [
     # Главная страница и "О нас"
@@ -31,7 +33,12 @@ urlpatterns = [
     path('moderation/', views.moderator_dashboard_view, name='moderator_dashboard'),
     path('moderation/approve/<int:pk>/', views.approve_user_view, name='approve_user'),
     path('moderation/reject/<int:pk>/', views.reject_user_view, name='reject_user'),
-    
+
+    # NEW: отметки "пришёл" и доступ сразу
+    path('moderation/visit/<int:pk>/', views.mark_candidate_visit_view, name='mark_candidate_visit'),
+    path('moderation/grant-access/<int:pk>/', views.grant_volunteer_access_view, name='grant_volunteer_access'),
+    path('moderation/visit-delete/<int:visit_id>/', views.delete_candidate_visit_view, name='delete_candidate_visit'),
+
 
     # Панель Администратора
     path('administration/', views.admin_dashboard_view, name='admin_dashboard'),
@@ -57,4 +64,6 @@ urlpatterns = [
     # NEW: Mark all as read
     path('notifications/read-all/', views.mark_all_notifications_as_read_view, name='mark_all_notifications_as_read'),
     path('profile/<int:pk>/admin-password-change/', views.admin_password_change_view, name='admin_password_change'),
+    path('administration/about/', about_views.about_manage_view, name='admin_about_manage'),
+    path('about/manage/', about_views.about_manage_view, name='about_manage'),
 ]

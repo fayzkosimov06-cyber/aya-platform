@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Панель администратора — Редактор «О нас»{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin_v2.css' %}?v=1">
+<link rel="stylesheet" href="{% static 'css/about_v2.css' %}?v=1">
+<style>
+  .manage-wrap{ padding-top: 90px; padding-bottom: 40px; }
+  .manage-card{ background: rgba(255,255,255,.82); border:1px solid rgba(10,39,49,.08); border-radius: 18px; box-shadow: 0 14px 36px rgba(14,54,68,.10); backdrop-filter: blur(10px); }
+  .manage-card .form-control, .manage-card .form-select{ border-radius: 12px; }
+  .manage-table td{ vertical-align: top; }
+  .mini{ font-size:.9rem; color: rgba(11,31,38,.70); }
+  .fa-preview{ font-size: 1.1rem; opacity: .85; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="about-page about-manage">
+  <section class="about-hero about-hero--manage">
+    <div class="about-hero__bg" aria-hidden="true"></div>
+    <div class="container manage-wrap">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <div class="about-pill"><i class="fa-solid fa-gear"></i><span>Редактор контента</span></div>
+          <h1 class="about-hero__title" style="margin-bottom:.2rem;">Редактор «О нас»</h1>
+          <div class="mini">Здесь можно менять блоки, цифры и контакты. Изменения сразу появятся на странице «О нас».</div>
+        </div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-outline-light rounded-pill px-4 fw-bold" href="{% url 'admin_dashboard' %}"><i class="fa-solid fa-arrow-left me-2"></i>В панель</a>
+          <a class="btn btn-light rounded-pill px-4 fw-bold" href="{% url 'about_page' %}"><i class="fa-solid fa-eye me-2"></i>Открыть страницу</a>
+        </div>
+      </div>
+
+      <div class="manage-card mt-4 p-3 p-lg-4">
+        <ul class="nav nav-pills gap-2" id="aboutManageTabs" role="tablist">
+          <li class="nav-item" role="presentation"><button class="nav-link active rounded-pill" data-bs-toggle="pill" data-bs-target="#tabMain" type="button">Основное</button></li>
+          <li class="nav-item" role="presentation"><button class="nav-link rounded-pill" data-bs-toggle="pill" data-bs-target="#tabValues" type="button">Ценности</button></li>
+          <li class="nav-item" role="presentation"><button class="nav-link rounded-pill" data-bs-toggle="pill" data-bs-target="#tabStats" type="button">Цифры</button></li>
+          <li class="nav-item" role="presentation"><button class="nav-link rounded-pill" data-bs-toggle="pill" data-bs-target="#tabContacts" type="button">Контакты</button></li>
+          <li class="nav-item" role="presentation"><button class="nav-link rounded-pill" data-bs-toggle="pill" data-bs-target="#tabFuture" type="button">Будущие блоки</button></li>
+        </ul>
+
+        <div class="tab-content pt-4">
+
+          <!-- MAIN -->
+          <div class="tab-pane fade show active" id="tabMain">
+            <form method="post" class="row g-3">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_main">
+              <div class="col-lg-6">
+                <label class="form-label fw-bold">Заголовок</label>
+                <input class="form-control" name="title" value="{{ about.title }}">
+              </div>
+              <div class="col-lg-6">
+                <label class="form-label fw-bold">Видео (URL для iframe)</label>
+                <input class="form-control" name="video_url" value="{{ about.video_url }}" placeholder="https://www.youtube.com/embed/...">
+                <div class="mini mt-1">Совет: лучше вставлять embed-ссылку (YouTube / Instagram oEmbed через сервис).</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-bold">Описание (под заголовком)</label>
+                <textarea class="form-control" name="description" rows="3">{{ about.description }}</textarea>
+              </div>
+              <div class="col-lg-6">
+                <label class="form-label fw-bold">Заголовок миссии</label>
+                <input class="form-control" name="mission_title" value="{{ about.mission_title }}">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-bold">Текст миссии</label>
+                <textarea class="form-control" name="mission_text" rows="5">{{ about.mission_text }}</textarea>
+              </div>
+              <div class="col-12 d-flex justify-content-end">
+                <button class="btn btn-primary rounded-pill px-4 fw-bold">Сохранить</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- VALUES -->
+          <div class="tab-pane fade" id="tabValues">
+            <div class="mini mb-2">Карточки справа от миссии.</div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle manage-table">
+                <thead>
+                  <tr>
+                    <th style="width:70px;">#</th>
+                    <th>Заголовок / Текст</th>
+                    <th style="width:160px;">Иконка</th>
+                    <th style="width:120px;">Порядок</th>
+                    <th style="width:120px;">Показ</th>
+                    <th style="width:140px;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for b in value_blocks %}
+                  <tr>
+                    <td>{{ b.id }}</td>
+                    <td>
+                      <form method="post" class="row g-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_value">
+                        <input type="hidden" name="id" value="{{ b.id }}">
+                        <div class="col-12"><input class="form-control form-control-sm" name="title" value="{{ b.title }}"></div>
+                        <div class="col-12"><input class="form-control form-control-sm" name="text" value="{{ b.text }}"></div>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2 align-items-center">
+                          <i class="{{ b.icon }}" title="{{ b.icon }}"></i>
+                          <input class="form-control form-control-sm" name="icon" value="{{ b.icon }}">
+                        </div>
+                    </td>
+                    <td><input class="form-control form-control-sm" name="order" value="{{ b.order }}"></td>
+                    <td class="text-center">
+                      <input class="form-check-input" type="checkbox" name="is_active" {% if b.is_active %}checked{% endif %}>
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-primary rounded-pill">Сохранить</button>
+                      </form>
+                      <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_value">
+                        <input type="hidden" name="id" value="{{ b.id }}">
+                        <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="return confirm('Удалить блок?')">Удалить</button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="6" class="text-muted">Пока нет блоков. Добавьте ниже.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <hr>
+            <h6 class="fw-bold">Добавить новый блок</h6>
+            <form method="post" class="row g-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="add_value">
+              <div class="col-lg-3"><input class="form-control" name="title" placeholder="Заголовок"></div>
+              <div class="col-lg-4"><input class="form-control" name="text" placeholder="Короткое описание"></div>
+              <div class="col-lg-3"><input class="form-control" name="icon" placeholder="fa-solid fa-star"></div>
+              <div class="col-lg-1"><input class="form-control" name="order" placeholder="0"></div>
+              <div class="col-lg-1 d-flex align-items-center gap-2">
+                <input class="form-check-input" type="checkbox" name="is_active" checked>
+                <button class="btn btn-primary rounded-pill fw-bold px-3">+</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- STATS -->
+          <div class="tab-pane fade" id="tabStats">
+            <div class="mini mb-2">Блок “Наши цифры”. Можно добавлять больше 3 — на странице покажутся все, а в герое — первые 3 по порядку.</div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle manage-table">
+                <thead>
+                  <tr>
+                    <th style="width:70px;">#</th>
+                    <th style="width:140px;">Число</th>
+                    <th>Подпись</th>
+                    <th style="width:190px;">Иконка</th>
+                    <th style="width:120px;">Порядок</th>
+                    <th style="width:120px;">Показ</th>
+                    <th style="width:140px;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in stat_items %}
+                  <tr>
+                    <td>{{ s.id }}</td>
+                    <td>
+                      <form method="post" class="row g-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_stat">
+                        <input type="hidden" name="id" value="{{ s.id }}">
+                        <input class="form-control form-control-sm" name="number" value="{{ s.number }}">
+                    </td>
+                    <td><input class="form-control form-control-sm" name="label" value="{{ s.label }}"></td>
+                    <td>
+                      <div class="d-flex gap-2 align-items-center">
+                        <i class="{{ s.icon }}"></i>
+                        <input class="form-control form-control-sm" name="icon" value="{{ s.icon }}">
+                      </div>
+                    </td>
+                    <td><input class="form-control form-control-sm" name="order" value="{{ s.order }}"></td>
+                    <td class="text-center">
+                      <input class="form-check-input" type="checkbox" name="is_active" {% if s.is_active %}checked{% endif %}>
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-primary rounded-pill">Сохранить</button>
+                      </form>
+                      <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_stat">
+                        <input type="hidden" name="id" value="{{ s.id }}">
+                        <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="return confirm('Удалить статистику?')">Удалить</button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="7" class="text-muted">Пока нет статистики. Добавьте ниже.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <hr>
+            <h6 class="fw-bold">Добавить</h6>
+            <form method="post" class="row g-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="add_stat">
+              <div class="col-lg-2"><input class="form-control" name="number" placeholder="135+"></div>
+              <div class="col-lg-4"><input class="form-control" name="label" placeholder="Волонтёров"></div>
+              <div class="col-lg-3"><input class="form-control" name="icon" placeholder="fa-solid fa-user-group"></div>
+              <div class="col-lg-1"><input class="form-control" name="order" placeholder="0"></div>
+              <div class="col-lg-2 d-flex align-items-center gap-2">
+                <input class="form-check-input" type="checkbox" name="is_active" checked>
+                <button class="btn btn-primary rounded-pill fw-bold px-3">+</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- CONTACTS -->
+          <div class="tab-pane fade" id="tabContacts">
+            <div class="mini mb-2">Контакты выводятся “чипами” на странице. Для Telegram/Instagram можно писать @username — ссылка соберётся автоматически.</div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle manage-table">
+                <thead>
+                  <tr>
+                    <th style="width:70px;">#</th>
+                    <th style="width:160px;">Платформа</th>
+                    <th>Текст</th>
+                    <th>Ссылка/контакт</th>
+                    <th style="width:190px;">Иконка</th>
+                    <th style="width:120px;">Порядок</th>
+                    <th style="width:120px;">Показ</th>
+                    <th style="width:140px;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for c in contact_links %}
+                  <tr>
+                    <td>{{ c.id }}</td>
+                    <td>
+                      <form method="post" class="row g-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_contact">
+                        <input type="hidden" name="id" value="{{ c.id }}">
+                        <select class="form-select form-select-sm" name="platform">
+                          {% for v,k in platform_choices %}
+                            <option value="{{ v }}" {% if c.platform == v %}selected{% endif %}>{{ k }}</option>
+                          {% endfor %}
+                        </select>
+                    </td>
+                    <td><input class="form-control form-control-sm" name="label" value="{{ c.label }}"></td>
+                    <td><input class="form-control form-control-sm" name="url" value="{{ c.url }}"></td>
+                    <td>
+                      <div class="d-flex gap-2 align-items-center">
+                        <i class="{{ c.get_icon }}"></i>
+                        <input class="form-control form-control-sm" name="icon" value="{{ c.icon }}">
+                      </div>
+                    </td>
+                    <td><input class="form-control form-control-sm" name="order" value="{{ c.order }}"></td>
+                    <td class="text-center">
+                      <input class="form-check-input" type="checkbox" name="is_active" {% if c.is_active %}checked{% endif %}>
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-primary rounded-pill">Сохранить</button>
+                      </form>
+                      <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_contact">
+                        <input type="hidden" name="id" value="{{ c.id }}">
+                        <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="return confirm('Удалить контакт?')">Удалить</button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="8" class="text-muted">Пока нет контактов. Добавьте ниже.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <hr>
+            <h6 class="fw-bold">Добавить</h6>
+            <form method="post" class="row g-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="add_contact">
+              <div class="col-lg-2">
+                <select class="form-select" name="platform">
+                  {% for v,k in platform_choices %}
+                    <option value="{{ v }}">{{ k }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-lg-3"><input class="form-control" name="label" placeholder="Например: @aya_volunteers"></div>
+              <div class="col-lg-3"><input class="form-control" name="url" placeholder="@aya_volunteers или https://..."></div>
+              <div class="col-lg-2"><input class="form-control" name="icon" placeholder="(опционально) fa-brands fa-telegram"></div>
+              <div class="col-lg-1"><input class="form-control" name="order" placeholder="0"></div>
+              <div class="col-lg-1 d-flex align-items-center gap-2">
+                <input class="form-check-input" type="checkbox" name="is_active" checked>
+                <button class="btn btn-primary rounded-pill fw-bold px-3">+</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- FUTURE -->
+          <div class="tab-pane fade" id="tabFuture">
+            <div class="mini mb-2">Это “пустое место” на странице. Можно оставить пустым или добавить карточки для будущих идей.</div>
+
+            <div class="table-responsive">
+              <table class="table table-sm align-middle manage-table">
+                <thead>
+                  <tr>
+                    <th style="width:70px;">#</th>
+                    <th>Заголовок</th>
+                    <th>Текст</th>
+                    <th style="width:190px;">Иконка</th>
+                    <th style="width:120px;">Порядок</th>
+                    <th style="width:120px;">Показ</th>
+                    <th style="width:140px;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for x in extra_blocks %}
+                  <tr>
+                    <td>{{ x.id }}</td>
+                    <td>
+                      <form method="post" class="row g-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_extra">
+                        <input type="hidden" name="id" value="{{ x.id }}">
+                        <input class="form-control form-control-sm" name="title" value="{{ x.title }}">
+                    </td>
+                    <td><textarea class="form-control form-control-sm" name="text" rows="2">{{ x.text }}</textarea></td>
+                    <td>
+                      <div class="d-flex gap-2 align-items-center">
+                        <i class="{{ x.icon }}"></i>
+                        <input class="form-control form-control-sm" name="icon" value="{{ x.icon }}">
+                      </div>
+                    </td>
+                    <td><input class="form-control form-control-sm" name="order" value="{{ x.order }}"></td>
+                    <td class="text-center">
+                      <input class="form-check-input" type="checkbox" name="is_active" {% if x.is_active %}checked{% endif %}>
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-primary rounded-pill">Сохранить</button>
+                      </form>
+                      <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_extra">
+                        <input type="hidden" name="id" value="{{ x.id }}">
+                        <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="return confirm('Удалить блок?')">Удалить</button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="7" class="text-muted">Пока блоков нет — на странице будет “пустое место”.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <hr>
+            <h6 class="fw-bold">Добавить карточку (по желанию)</h6>
+            <form method="post" class="row g-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="add_extra">
+              <div class="col-lg-3"><input class="form-control" name="title" placeholder="Заголовок (можно пусто)"></div>
+              <div class="col-lg-4"><input class="form-control" name="text" placeholder="Текст (можно пусто)"></div>
+              <div class="col-lg-2"><input class="form-control" name="icon" placeholder="fa-solid fa-lightbulb"></div>
+              <div class="col-lg-1"><input class="form-control" name="order" placeholder="0"></div>
+              <div class="col-lg-2 d-flex align-items-center gap-2">
+                <input class="form-check-input" type="checkbox" name="is_active" checked>
+                <button class="btn btn-primary rounded-pill fw-bold px-3">+</button>
+              </div>
+            </form>
+
+          </div>
+
+        </div>
+      </div>
+
+      <div class="mini mt-3">
+        <b>Важно:</b> после добавления моделей нужно выполнить <code>python manage.py makemigrations</code> и <code>python manage.py migrate</code>.
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

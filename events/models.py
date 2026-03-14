@@ -88,3 +88,10 @@ class EventHero(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='heroes')
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Волонтер")
     role_name = models.CharField(max_length=100, verbose_name="Роль")
+
+    class Meta:
+        unique_together = ('event', 'user')
+
+    def __str__(self):
+        return f"{self.event.title}: {self.user} — {self.role_name}"
+

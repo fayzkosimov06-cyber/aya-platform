@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from io import BytesIO
 from django.core.files import File
+from django.utils import timezone
 import qrcode
 
 class Direction(models.Model):
@@ -30,6 +31,16 @@ class User(AbstractUser):
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='volunteer', verbose_name="Роль в системе")
     is_approved = models.BooleanField(default=False, verbose_name="Профиль одобрен")
+    candidate_approved = models.BooleanField(
+        default=False,
+        verbose_name="Кандидат одобрен (договор подписан)",
+        help_text="Одобрен как кандидат: может заходить на сайт, но без волонтёрских прав.",
+    )
+    volunteer_access = models.BooleanField(
+        default=False,
+        verbose_name="Доступ волонтёра открыт (3 визита)",
+        help_text="Полный доступ волонтёра (открывается автоматически на 3-й отметке или вручную).",
+    )
     is_active_volunteer_title = models.BooleanField(default=False, verbose_name="Имеет звание 'Активный волонтер'")
     school_leader_of = models.ManyToManyField(School, blank=True, related_name="leaders", verbose_name="Руководит школами")
     
@@ -47,6 +58,7 @@ class User(AbstractUser):
     
     job_title = models.CharField(max_length=200, blank=True, verbose_name="Должность (для сотрудников)")
     office_location = models.CharField(max_length=100, blank=True, verbose_name="Кабинет/Местоположение")
+    is_old_volunteer = models.BooleanField(default=False, verbose_name="Старый волонтёр")
     
     faculty = models.CharField(max_length=200, blank=True, verbose_name="Факультет")
     course = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Курс")
@@ -116,6 +128,25 @@ class Notification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta: ordering = ['-created_at']
 
+
+
+class VolunteerVisit(models.Model):
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='volunteer_visits', verbose_name='Пользователь')
+    marked_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='marked_visits', verbose_name='Кто отметил')
+    visit_date = models.DateField(default=timezone.localdate, verbose_name='Дата визита')
+    comment = models.TextField(blank=True, default='', verbose_name='Комментарий модератора')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-visit_date', '-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'visit_date'], name='unique_user_visit_per_day')
+        ]
+
+    def __str__(self):
+        return f"{self.user} — {self.visit_date}"
+
+
 class AboutPage(models.Model):
     title = models.CharField(max_length=255, default="О нас")
     description = models.TextField(blank=True)
@@ -133,6 +164,114 @@ class AboutPage(models.Model):
     telegram = models.CharField(max_length=100, blank=True)
     address = models.CharField(max_length=255, blank=True)
     def __str__(self): return self.title
+
+
+class AboutValueBlock(models.Model):
+    about = models.ForeignKey(AboutPage, on_delete=models.CASCADE, related_name='value_blocks')
+    title = models.CharField(max_length=120)
+    text = models.TextField(blank=True)
+    icon = models.CharField(max_length=120, blank=True, default='fa-solid fa-star')
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    def __str__(self):
+        return self.title
+
+class AboutStatItem(models.Model):
+    about = models.ForeignKey(AboutPage, on_delete=models.CASCADE, related_name='stat_items')
+    number = models.CharField(max_length=30)
+    label = models.CharField(max_length=120)
+    icon = models.CharField(max_length=120, blank=True, default='fa-solid fa-chart-line')
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    def __str__(self):
+        return f"{self.number} {self.label}"
+
+class AboutContactLink(models.Model):
+    PLATFORM_CHOICES = [
+        ('instagram', 'Instagram'),
+        ('facebook', 'Facebook'),
+        ('telegram', 'Telegram'),
+        ('youtube', 'YouTube'),
+        ('tiktok', 'TikTok'),
+        ('whatsapp', 'WhatsApp'),
+        ('website', 'Сайт'),
+        ('email', 'Email'),
+        ('phone', 'Телефон'),
+        ('custom', 'Другое'),
+    ]
+    PLATFORM_ICONS = {
+        'instagram': 'fa-brands fa-instagram',
+        'facebook': 'fa-brands fa-facebook-f',
+        'telegram': 'fa-brands fa-telegram',
+        'youtube': 'fa-brands fa-youtube',
+        'tiktok': 'fa-brands fa-tiktok',
+        'whatsapp': 'fa-brands fa-whatsapp',
+        'website': 'fa-solid fa-globe',
+        'email': 'fa-solid fa-envelope',
+        'phone': 'fa-solid fa-phone',
+        'custom': 'fa-solid fa-link',
+    }
+
+    about = models.ForeignKey(AboutPage, on_delete=models.CASCADE, related_name='contact_links')
+    platform = models.CharField(max_length=32, choices=PLATFORM_CHOICES, default='custom', verbose_name='Платформа')
+    label = models.CharField(max_length=120)
+    url = models.CharField(max_length=255)
+    icon = models.CharField(max_length=120, blank=True, default='')
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    requires_volunteer_access = models.BooleanField(default=False, verbose_name='Только для волонтёров')
+
+    def __str__(self):
+        return self.label
+
+    @property
+    def platform_label(self):
+        return dict(self.PLATFORM_CHOICES).get(self.platform, 'Другое')
+
+    @property
+    def resolved_icon(self):
+        raw = (self.icon or '').strip()
+        if raw:
+            return raw
+        return self.PLATFORM_ICONS.get(self.platform, 'fa-solid fa-link')
+
+    @property
+    def get_icon(self):
+        return self.resolved_icon
+
+    @property
+    def resolved_url(self):
+        raw = (self.url or '').strip()
+        if not raw:
+            return '#'
+        lower = raw.lower()
+        if raw.startswith('@'):
+            nick = raw[1:]
+            if self.platform == 'telegram':
+                return f'https://t.me/{nick}'
+            if self.platform == 'instagram':
+                return f'https://instagram.com/{nick}'
+            if self.platform == 'facebook':
+                return f'https://facebook.com/{nick}'
+        if lower.startswith(('http://', 'https://', 'mailto:', 'tel:')):
+            return raw
+        if self.platform == 'email' or ('@' in raw and ' ' not in raw and '.' in raw):
+            return f'mailto:{raw}'
+        normalized_digits = raw.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+        if self.platform == 'phone' or raw.startswith('+') or normalized_digits.isdigit():
+            return f'tel:{raw}'
+        return f'https://{raw}'
+
+class AboutExtraBlock(models.Model):
+    about = models.ForeignKey(AboutPage, on_delete=models.CASCADE, related_name='extra_blocks')
+    title = models.CharField(max_length=120)
+    text = models.TextField(blank=True)
+    icon = models.CharField(max_length=120, blank=True, default='fa-solid fa-lightbulb')
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    def __str__(self):
+        return self.title
+
 
 class AuditLog(models.Model):
     actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='actor_logs')

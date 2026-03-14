@@ -3,9 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.db import models
 from .models import Event, EventPhoto, EventVideo, EventHero, EventEvaluation
 from .forms import EventCreateForm, EventReportForm, EventVideoForm, EventHeroForm
 from users.models import AuditLog
+from users.access import can_register_for_events, can_see_event_catalog, has_full_volunteer_access, is_candidate_user
 
 # --- Логирование ("Призрак") ---
 def log_event_action(user, action_text):
@@ -32,25 +34,54 @@ def can_create_instantly(user):
 # events/views.py
 
 def event_list_view(request):
+    q = (request.GET.get('q') or '').strip()
+
+    if request.user.is_authenticated and not can_see_event_catalog(request.user):
+        return render(request, 'events/event_list.html', {
+            'upcoming_events': Event.objects.none(),
+            'past_events': Event.objects.none(),
+            'catalog_locked': True,
+        })
+
     upcoming_events = Event.objects.filter(is_approved=True, is_completed=False).order_by('start_time')
-    
-    # ИСПРАВЛЕНИЕ: Показываем ВСЕ завершенные мероприятия, даже если отчет не опубликован
-    # (фильтрацию "кто что видит" сделаем в шаблоне)
     past_events = Event.objects.filter(is_completed=True).order_by('-end_time')
-    
+
+    if not request.user.is_authenticated:
+        upcoming_events = upcoming_events.filter(is_public_for_guests=True)
+        past_events = past_events.filter(is_public_for_guests=True)
+
+    if q:
+        upcoming_events = upcoming_events.filter(models.Q(title__icontains=q) | models.Q(location__icontains=q))
+        past_events = past_events.filter(models.Q(title__icontains=q) | models.Q(location__icontains=q))
+
     return render(request, 'events/event_list.html', {
         'upcoming_events': upcoming_events,
-        'past_events': past_events
+        'past_events': past_events,
+        'catalog_locked': False,
     })
+
 @login_required
 def event_detail_view(request, pk):
     event = get_object_or_404(Event, pk=pk)
     is_participant = request.user in event.participants.all()
     can_manage = can_manage_event(request.user, event)
-    return render(request, 'events/event_detail.html', {'event': event, 'is_participant': is_participant, 'can_manage': can_manage})
+    can_register = can_register_for_events(request.user)
+    can_view_participants = has_full_volunteer_access(request.user) or can_manage
+    return render(request, 'events/event_detail.html', {
+        'event': event,
+        'is_participant': is_participant,
+        'can_manage': can_manage,
+        'can_register': can_register,
+        'can_view_participants': can_view_participants,
+        'catalog_locked': request.user.is_authenticated and is_candidate_user(request.user),
+    })
 
 @login_required
 def event_create_view(request):
+    if not has_full_volunteer_access(request.user):
+        messages.error(request, "Доступ вам закрыт. Сначала получите полный доступ волонтёра.")
+        return redirect('event_list')
+
     if request.method == 'POST':
         form = EventCreateForm(request.POST, request.FILES)
         if form.is_valid():
@@ -155,7 +186,7 @@ def event_report_edit_view(request, pk):
 
         # --- 3) Назначить роль участнику (бывш. 'герой') ---
         if action == 'set_role':
-            hero_form = EventHeroForm(request.POST)
+            hero_form = EventHeroForm(request.POST, event=event)
             if hero_form.is_valid():
                 u = hero_form.cleaned_data['user']
                 role_name = (hero_form.cleaned_data['role_name'] or '').strip()
@@ -283,7 +314,7 @@ def event_report_edit_view(request, pk):
     # GET
     report_form = EventReportForm(instance=event)
     video_form = EventVideoForm()
-    hero_form = EventHeroForm()
+    hero_form = EventHeroForm(event=event)
 
     heroes = EventHero.objects.filter(event=event).select_related('user')
     evaluations = EventEvaluation.objects.filter(event=event).select_related('volunteer', 'evaluator')
@@ -306,7 +337,7 @@ def event_report_edit_view(request, pk):
         'report_form': report_form,
         'video_form': video_form,
         'hero_form': hero_form,
-        'participants': event.participants.all(),
+        'participants': event.participants.exclude(is_superuser=True).order_by('last_name', 'first_name'),
         'roles': heroes,
         'heroes': heroes,
         'can_evaluate': can_evaluate,
@@ -319,6 +350,11 @@ def event_report_edit_view(request, pk):
 @login_required
 def event_join_view(request, pk):
     event = get_object_or_404(Event, pk=pk)
+
+    if not can_register_for_events(request.user):
+        messages.error(request, "Доступ вам закрыт. Участие откроется после полного допуска волонтёра.")
+        return redirect('event_detail', pk=pk)
+
     if not event.is_completed:
         if request.user in event.participants.all():
             event.participants.remove(request.user)

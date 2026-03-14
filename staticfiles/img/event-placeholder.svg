@@ -1,0 +1,41 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" rx="0" fill="#EAF3F7"/>
+  <rect x="48" y="48" width="1504" height="804" rx="36" fill="url(#g1)"/>
+  <path d="M0 690C189 640 313 663 469 714C643 771 819 829 1056 758C1260 696 1368 590 1600 617V900H0V690Z" fill="url(#g2)" fill-opacity="0.95"/>
+  <circle cx="1242" cy="224" r="166" fill="#2AC7D8" fill-opacity="0.18"/>
+  <circle cx="1348" cy="148" r="74" fill="#FDBB2D" fill-opacity="0.18"/>
+  <circle cx="249" cy="150" r="112" fill="#8E6BFF" fill-opacity="0.12"/>
+  <rect x="182" y="190" width="438" height="302" rx="32" fill="rgba(255,255,255,0.92)"/>
+  <rect x="182" y="190" width="438" height="302" rx="32" fill="#FFFFFF" fill-opacity="0.92"/>
+  <rect x="224" y="236" width="136" height="136" rx="28" fill="#0E3644" fill-opacity="0.08"/>
+  <path d="M262 287H322" stroke="#0E3644" stroke-width="18" stroke-linecap="round"/>
+  <path d="M292 257V317" stroke="#0E3644" stroke-width="18" stroke-linecap="round"/>
+  <path d="M404 260H565" stroke="#0E3644" stroke-width="22" stroke-linecap="round"/>
+  <path d="M404 314H546" stroke="#0E3644" stroke-width="16" stroke-linecap="round" opacity="0.7"/>
+  <path d="M404 356H510" stroke="#0E3644" stroke-width="16" stroke-linecap="round" opacity="0.55"/>
+  <rect x="224" y="410" width="340" height="18" rx="9" fill="#0E3644" fill-opacity="0.14"/>
+  <rect x="224" y="446" width="274" height="18" rx="9" fill="#0E3644" fill-opacity="0.1"/>
+  <g opacity="0.95">
+    <rect x="1018" y="248" width="270" height="270" rx="40" fill="#FFFFFF" fill-opacity="0.9"/>
+    <path d="M1144 310C1083 310 1034 359 1034 420C1034 481 1083 530 1144 530C1205 530 1254 481 1254 420C1254 359 1205 310 1144 310ZM1144 338C1189 338 1226 375 1226 420C1226 465 1189 502 1144 502C1099 502 1062 465 1062 420C1062 375 1099 338 1144 338Z" fill="#1A596D" fill-opacity="0.18"/>
+    <path d="M1144 366L1155 399H1190L1161 418L1172 452L1144 432L1116 452L1127 418L1098 399H1133L1144 366Z" fill="#FDBB2D"/>
+  </g>
+  <rect x="182" y="582" width="408" height="52" rx="26" fill="#FFFFFF" fill-opacity="0.92"/>
+  <path d="M242 608H328" stroke="#0E3644" stroke-width="12" stroke-linecap="round" opacity="0.6"/>
+  <path d="M362 608H470" stroke="#0E3644" stroke-width="12" stroke-linecap="round" opacity="0.35"/>
+  <path d="M521 608H535" stroke="#2AC7D8" stroke-width="12" stroke-linecap="round"/>
+  <path d="M1217 704H1347" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" opacity="0.7"/>
+  <path d="M1069 754H1347" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" opacity="0.4"/>
+  <text x="1064" y="196" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="700">AYA</text>
+  <text x="1064" y="238" fill="#D3E8EF" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="500">Универсальная обложка мероприятия</text>
+  <defs>
+    <linearGradient id="g1" x1="159" y1="111" x2="1401" y2="835" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0E3644"/>
+      <stop offset="1" stop-color="#18738B"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="269" y1="660" x2="1280" y2="907" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B2E3A"/>
+      <stop offset="1" stop-color="#127E98"/>
+    </linearGradient>
+  </defs>
+</svg>

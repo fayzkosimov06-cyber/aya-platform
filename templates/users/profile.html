@@ -115,8 +115,7 @@
 
         <div class="col-lg-8 fade-in-up" style="animation-delay: 0.1s;">
             
-            {% if not profile_user.is_approved and user.is_authenticated %}
-                {% if user.is_superuser or user.role in 'moderator,president,worker,head_admin' %}
+            {% if needs_initial_approval and can_review_candidate %}
                 <div class="card border-0 shadow-sm mb-4" style="border-left: 5px solid #ffc107 !important; border-radius: 15px;">
                     <div class="card-body p-4">
                         <div class="d-flex align-items-center mb-3">
@@ -125,12 +124,13 @@
                             </div>
                             <div>
                                 <h5 class="fw-bold mb-1">Ожидает проверки</h5>
-                                <p class="mb-0 text-muted">Этот профиль новый и требует одобрения.</p>
+                                <p class="mb-0 text-muted">Этот профиль новый и требует первичного одобрения. После этого появится режим посещений 0/3.</p>
                             </div>
                         </div>
-                        <div class="d-flex gap-3 ps-lg-5 ms-lg-4">
+                        <div class="d-flex flex-wrap gap-3 ps-lg-5 ms-lg-4">
                             <form action="{% url 'approve_user' profile_user.pk %}" method="post">
                                 {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.path }}">
                                 <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">✅ Одобрить</button>
                             </form>
                             <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#rejectModal">
@@ -139,7 +139,76 @@
                         </div>
                     </div>
                 </div>
-                {% endif %}
+            {% elif is_candidate_profile %}
+                <div class="card border-0 shadow-sm mb-4" style="border-left: 5px solid #17a2b8 !important; border-radius: 15px;">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info bg-opacity-25 p-3 rounded-circle text-info me-3">
+                                    <i class="fas fa-user-clock fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-1">Кандидат: {{ candidate_visit_count }}/3 визитов</h5>
+                                    <p class="mb-0 text-muted">После 3-го посещения полный доступ волонтёра откроется автоматически.</p>
+                                </div>
+                            </div>
+                            {% if candidate_visits %}
+                                <div class="text-muted small">
+                                    Последний визит: {{ candidate_visits.0.visit_date|date:"d.m.Y" }}{% if candidate_visits.0.created_at %} {{ candidate_visits.0.created_at|date:"H:i" }}{% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {% if can_mark_candidate_visit or can_manual_grant_access %}
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                {% if can_mark_candidate_visit %}
+                                    <form action="{% url 'mark_candidate_visit' profile_user.pk %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.path }}">
+                                        <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">+ Посещение</button>
+                                    </form>
+                                {% endif %}
+
+                                {% if can_manual_grant_access %}
+                                    <form action="{% url 'grant_volunteer_access' profile_user.pk %}" method="post" class="d-flex flex-wrap align-items-center gap-2">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.path }}">
+                                        <div class="form-check small text-muted">
+                                            <input class="form-check-input" type="checkbox" name="is_old_volunteer" id="old-volunteer-{{ profile_user.pk }}">
+                                            <label class="form-check-label" for="old-volunteer-{{ profile_user.pk }}">Это старый волонтёр</label>
+                                        </div>
+                                        <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">Дать доступ</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <div class="rounded-4 border bg-light p-3">
+                            <div class="fw-bold mb-2">История посещений</div>
+                            {% if candidate_visits %}
+                                <div class="d-flex flex-column gap-2">
+                                    {% for visit in candidate_visits %}
+                                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 border rounded-3 px-3 py-2 bg-white">
+                                            <div>
+                                                <span class="fw-semibold">{{ forloop.revcounter }}/3</span> · {{ visit.visit_date|date:"d.m.Y" }}{% if visit.created_at %} {{ visit.created_at|date:"H:i" }}{% endif %}
+                                                {% if visit.marked_by %}<span class="text-muted"> · отметил {{ visit.marked_by.get_full_name|default:visit.marked_by.username }}</span>{% endif %}
+                                            </div>
+                                            {% if can_mark_candidate_visit %}
+                                                <form method="post" action="{% url 'delete_candidate_visit' visit.pk %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="next" value="{{ request.path }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">Удалить</button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-muted">Пока посещений нет. После первичного одобрения здесь будет прогресс 1/3, 2/3, 3/3.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             {% endif %}
 
             <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px;">

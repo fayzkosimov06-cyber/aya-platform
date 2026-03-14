@@ -1,0 +1,84 @@
+/* static/css/admin_v2.css
+   Admin/Moderator pages — modern look, consistent with AYA palette. */
+
+:root{
+  --adm-bg:#0A2731;
+  --adm-bg2:#0E3644;
+  --adm-accent:#00C4CC;
+  --adm-ink:#0b1f26;
+  --adm-surface:#ffffff;
+  --adm-border:rgba(255,255,255,.14);
+}
+
+.adm-page{
+  padding-top: 96px; /* navbar */
+  padding-bottom: 56px;
+  min-height: 70vh;
+  background:
+    radial-gradient(1100px 520px at 18% 12%, rgba(255,255,255,.08), transparent 60%),
+    radial-gradient(900px 520px at 85% 60%, rgba(0,196,204,.16), transparent 62%),
+    linear-gradient(135deg, var(--adm-bg) 0%, #104e63 100%);
+}
+
+.adm-page--light{
+  background:
+    radial-gradient(1100px 520px at 18% 12%, rgba(255,255,255,.65), transparent 60%),
+    radial-gradient(900px 520px at 85% 60%, rgba(0,196,204,.12), transparent 62%),
+    linear-gradient(180deg, #f2f6fb 0%, #ffffff 100%);
+}
+
+.adm-title{
+  display:flex;
+  align-items:center;
+  gap: 14px;
+  color: rgba(255,255,255,.94);
+}
+
+.adm-title__icon{
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(10px);
+}
+
+.adm-title__h{
+  font-weight: 950;
+  margin: 0;
+}
+
+.adm-title__p{
+  margin: 0;
+  color: rgba(255,255,255,.72);
+  font-weight: 600;
+}
+
+.adm-card{
+  border-radius: 22px !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  background: rgba(255,255,255,.10) !important;
+  color: rgba(255,255,255,.92);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 22px 60px rgba(0,0,0,.22);
+}
+
+.adm-card .text-muted{ color: rgba(255,255,255,.70) !important; }
+
+.adm-linkcard{
+  border-radius: 22px !important;
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.adm-linkcard:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 18px 50px rgba(0,0,0,.18);
+}
+
+/* Existing classes used in templates */
+.hover-lift{ transition: transform .16s ease, box-shadow .16s ease; }
+.hover-lift:hover{ transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,.18); }
+.hover-card{ transition: transform .16s ease, box-shadow .16s ease; }
+.hover-card:hover{ transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,.16); }

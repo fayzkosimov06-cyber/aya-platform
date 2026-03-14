@@ -1,127 +1,256 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ about_content.title }}{% endblock %}
+{% block title %}{{ about_content.title|default:"О нас" }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/about_v2.css' %}?v=4">
+{% endblock %}
 
 {% block content %}
+<div class="about-page">
 
+  <section class="about-hero">
+    <div class="about-hero__bg"></div>
 
+    <div class="container about-hero__container position-relative z-2">
+      <div>
+        <div class="about-pill">
+          <i class="fa-solid fa-circle-info" style="color:var(--about-accent)"></i>
+          <span>О нас</span>
+        </div>
 
-<div class="position-relative py-5 overflow-hidden" style="background-color: #0E3644; min-height: 400px; display: flex; align-items: center;">
-    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('{% static 'img/bg_university.jpg' %}') no-repeat center center; background-size: cover; opacity: 0.2;"></div>
-    
-    <div class="container text-center position-relative z-2">
-        <span class="badge bg-warning text-dark mb-3 px-3 py-2 rounded-pill text-uppercase fw-bold ls-1">Наша Миссия</span>
-        <h1 class="display-3 fw-bold mb-4 text-white">{{ about_content.title }}</h1>
-        <p class="lead mx-auto text-white-50" style="max-width: 800px; font-size: 1.25rem; overflow-wrap:anywhere; word-break:break-word;">
-            {{ about_content.description|linebreaksbr }}
+        <h1 class="about-hero__title">{{ about_content.title|default:"Мы волонтёры" }}</h1>
+
+        <p class="about-hero__subtitle">
+          {{ about_content.description|default:"" | linebreaksbr }}
         </p>
-    </div>
-</div>
 
-<div class="container my-5 py-4">
-    
-    <div class="row align-items-center mb-5 fade-in-up">
-        <div class="col-lg-6 mb-4 mb-lg-0">
-            {% if about_content.video_url %}
-                <div class="ratio ratio-16x9 rounded-4 shadow-lg overflow-hidden border border-4 border-white">
-                    <iframe src="{{ about_content.video_url }}" allowfullscreen></iframe>
-                </div>
-            {% else %}
-                <div class="bg-light rounded-4 shadow-sm d-flex align-items-center justify-content-center text-center p-5" style="min-height: 350px; border: 1px solid #eee;">
-                    <div>
-                        <i class="fas fa-university fa-4x text-muted mb-3 opacity-25"></i>
-                        <p class="text-muted fw-bold">Здесь скоро появится видео о нас</p>
-                    </div>
-                </div>
+        <div class="about-hero__actions">
+          <a href="{% url 'event_list' %}" class="btn btn-primary rounded-pill px-4 fw-bold">Мероприятия</a>
+          <a href="{% url 'volunteer_list' %}" class="btn btn-outline-primary rounded-pill px-4 fw-bold">Волонтёры</a>
+
+          {% if user.is_authenticated %}
+            {% if user.is_superuser or user.role == 'leader' or user.role == 'worker' or user.role == 'head_admin' or user.role == 'president' %}
+              <a href="{% url 'about_manage' %}" class="btn btn-light rounded-pill px-4 fw-bold">
+                <i class="fa-solid fa-pen-to-square me-2"></i>Редактировать
+              </a>
             {% endif %}
+          {% endif %}
         </div>
-        
-        <div class="col-lg-6 ps-lg-5">
-            <h2 class="fw-bold mb-3" style="color: #0E3644;">{{ about_content.mission_title }}</h2>
-            <div style="width: 50px; height: 4px; background: #00C4CC; margin-bottom: 25px;"></div>
-            
-            <p class="fs-5 text-muted lh-lg mb-4" style="max-width: 100%; white-space: normal; overflow-wrap: anywhere; word-break: break-word;">{{ about_content.mission_text|linebreaksbr }}</p>
-            
-            <div class="row g-3">
-                <div class="col-sm-6">
-                    <div class="d-flex align-items-center p-3 rounded-3 bg-white shadow-sm border">
-                        <div class="feature-icon-small me-3 bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-0 fw-bold text-dark">Сильное<br>сообщество</h6>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="d-flex align-items-center p-3 rounded-3 bg-white shadow-sm border">
-                        <div class="feature-icon-small me-3 bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
-                            <i class="fas fa-heart"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-0 fw-bold text-dark">Реальная<br>помощь</h6>
-                        </div>
-                    </div>
-                </div>
+      </div>
+
+      <div class="about-media-card">
+        <div class="about-media-card__frame">
+          {% if about_content.video_url %}
+            <div class="ratio ratio-16x9">
+              <iframe src="{{ about_content.video_url }}" allowfullscreen></iframe>
             </div>
+          {% else %}
+            <div class="about-media-card__placeholder">
+              <div class="about-media-card__icon"><i class="fa-solid fa-play"></i></div>
+              <div class="about-media-card__text">Здесь можно добавить видео / фото</div>
+              <div style="font-size:.9rem; opacity:.8">Редактируется в панели “О нас”</div>
+            </div>
+          {% endif %}
         </div>
+
+        <div class="about-media-card__stats">
+          {% if stat_items %}
+            {# берём первые 3 активные #}
+            {% for s in stat_items %}
+              {% if s.is_active %}
+                <div class="stat-pill">
+                  <div class="stat-pill__num">{{ s.number }}</div>
+                  <div class="stat-pill__label">{{ s.label }}</div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            <div class="stat-pill">
+              <div class="stat-pill__num">{{ about_content.stat_1_num|default:"80+" }}</div>
+              <div class="stat-pill__label">{{ about_content.stat_1_text|default:"Волонтёров" }}</div>
+            </div>
+            <div class="stat-pill">
+              <div class="stat-pill__num">{{ about_content.stat_2_num|default:"100+" }}</div>
+              <div class="stat-pill__label">{{ about_content.stat_2_text|default:"Мероприятий" }}</div>
+            </div>
+            <div class="stat-pill">
+              <div class="stat-pill__num">{{ about_content.stat_3_num|default:"10" }}</div>
+              <div class="stat-pill__label">{{ about_content.stat_3_text|default:"Лет работы" }}</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
     </div>
 
-    <div class="row text-center g-4 py-5 bg-white rounded-4 shadow-sm mb-5 border fade-in-up" style="animation-delay: 0.2s;">
-        <div class="col-md-4">
-            <h2 class="display-4 fw-bold text-primary mb-0">{{ about_content.stat_1_num }}</h2>
-            <p class="text-uppercase text-muted fw-bold small ls-1 mt-2">{{ about_content.stat_1_text }}</p>
-        </div>
-        <div class="col-md-4 border-start border-end">
-            <h2 class="display-4 fw-bold text-primary mb-0">{{ about_content.stat_2_num }}</h2>
-            <p class="text-uppercase text-muted fw-bold small ls-1 mt-2">{{ about_content.stat_2_text }}</p>
-        </div>
-        <div class="col-md-4">
-            <h2 class="display-4 fw-bold text-primary mb-0">{{ about_content.stat_3_num }}</h2>
-            <p class="text-uppercase text-muted fw-bold small ls-1 mt-2">{{ about_content.stat_3_text }}</p>
-        </div>
+    <div class="about-hero__wave">
+      <svg viewBox="0 0 1440 140" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,90 C180,140 360,140 540,110 C720,80 900,20 1080,30 C1260,40 1350,80 1440,98 L1440,140 L0,140 Z"></path>
+      </svg>
     </div>
-    
-    <div class="row justify-content-center fade-in-up" style="animation-delay: 0.3s;">
-        <div class="col-lg-8 text-center">
-            <h3 class="mb-4 fw-bold text-dark">Свяжитесь с нами</h3>
-            
-            <div class="d-flex justify-content-center gap-3 flex-wrap mb-4">
-                {% if about_content.instagram %}
-                    <a href="{{ about_content.instagram }}" class="btn btn-outline-danger btn-lg rounded-pill px-4 hover-lift">
-                        <i class="fab fa-instagram me-2"></i> Instagram
-                    </a>
-                {% endif %}
-                {% if about_content.telegram %}
-                    <a href="{{ about_content.telegram }}" class="btn btn-outline-info btn-lg rounded-pill px-4 hover-lift">
-                        <i class="fab fa-telegram me-2"></i> Telegram
-                    </a>
-                {% endif %}
-                {% if about_content.email %}
-                    <a href="mailto:{{ about_content.email }}" class="btn btn-outline-dark btn-lg rounded-pill px-4 hover-lift">
-                        <i class="fas fa-envelope me-2"></i> Email
-                    </a>
-                {% endif %}
-            </div>
-            
-            {% if about_content.address %}
-                <div class="d-inline-block bg-light px-4 py-2 rounded-pill text-muted small">
-                    <i class="fas fa-map-marker-alt me-2 text-danger"></i> {{ about_content.address }}
+  </section>
+
+
+  <section class="about-section">
+    <div class="container">
+      <div class="about-section__head">
+        <div class="about-section__kicker">{{ about_content.mission_title|default:"Наша миссия" }}</div>
+        <h2 class="about-section__title">Миссия</h2>
+        <div class="about-section__hint">{{ about_content.mission_text|default:"" | linebreaksbr }}</div>
+      </div>
+
+      {% if value_blocks %}
+        <div class="row g-4">
+          {% for b in value_blocks %}
+            {% if b.is_active %}
+            <div class="col-md-6 col-lg-4">
+              <div class="value-card">
+                <div class="value-card__icon"><i class="{{ b.icon }}"></i></div>
+                <div>
+                  <div class="value-card__title">{{ b.title }}</div>
+                  <div class="value-card__text">{{ b.text|linebreaksbr }}</div>
                 </div>
+              </div>
+            </div>
             {% endif %}
+          {% endfor %}
         </div>
+      {% else %}
+        <div class="glass-panel">
+          <div class="about-text">
+            Здесь появятся блоки “Ценности / Направления / Что мы делаем”, которые можно добавлять и удалять в редакторе.
+          </div>
+        </div>
+      {% endif %}
     </div>
-</div>
+  </section>
 
-<style>
-    /* Анимация и эффекты */
-    .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
-    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
-    
-    .hover-lift { transition: transform 0.2s; }
-    .hover-lift:hover { transform: translateY(-3px); }
-    
-    .ls-1 { letter-spacing: 1px; }
-</style>
+
+  <section class="about-section about-section--stats">
+    <div class="container">
+      <div class="about-section__head">
+        <div class="about-section__kicker">Цифры</div>
+        <h2 class="about-section__title">Мы в цифрах</h2>
+      </div>
+
+      <div class="row g-4">
+        {% if stat_items %}
+          {% for s in stat_items %}
+            {% if s.is_active %}
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="stat-card__icon"><i class="{{ s.icon }}"></i></div>
+                <div class="stat-card__num">{{ s.number }}</div>
+                <div class="stat-card__label">{{ s.label }}</div>
+              </div>
+            </div>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <div class="col-md-4">
+            <div class="stat-card">
+              <div class="stat-card__num">{{ about_content.stat_1_num|default:"80+" }}</div>
+              <div class="stat-card__label">{{ about_content.stat_1_text|default:"Волонтёров" }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card">
+              <div class="stat-card__num">{{ about_content.stat_2_num|default:"100+" }}</div>
+              <div class="stat-card__label">{{ about_content.stat_2_text|default:"Мероприятий" }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card">
+              <div class="stat-card__num">{{ about_content.stat_3_num|default:"10" }}</div>
+              <div class="stat-card__label">{{ about_content.stat_3_text|default:"Лет работы" }}</div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+
+  <section class="about-section">
+    <div class="container">
+      <div class="about-section__head">
+        <div class="about-section__kicker">Контакты</div>
+        <h2 class="about-section__title">Свяжитесь с нами</h2>
+      </div>
+
+      {% if contact_links %}
+        <div class="contacts-grid">
+          {% for c in contact_links %}
+            {% if not c.requires_volunteer_access or can_see_private_about_links %}
+            <a class="contact-chip" href="{{ c.resolved_url }}" target="_blank" rel="noopener">
+              <span class="contact-chip__icon"><i class="{{ c.resolved_icon }}"></i></span>
+              <span class="contact-chip__text">{{ c.label }}</span>
+            </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="contacts-grid">
+          {% if about_content.telegram and can_see_private_about_links %}
+            <a class="contact-chip" href="{{ about_content.telegram }}" target="_blank" rel="noopener">
+              <span class="contact-chip__icon"><i class="fa-brands fa-telegram"></i></span>
+              <span class="contact-chip__text">Telegram</span>
+            </a>
+          {% endif %}
+          {% if about_content.instagram %}
+            <a class="contact-chip" href="{{ about_content.instagram }}" target="_blank" rel="noopener">
+              <span class="contact-chip__icon"><i class="fa-brands fa-instagram"></i></span>
+              <span class="contact-chip__text">Instagram</span>
+            </a>
+          {% endif %}
+          {% if about_content.email %}
+            <a class="contact-chip" href="mailto:{{ about_content.email }}">
+              <span class="contact-chip__icon"><i class="fa-solid fa-envelope"></i></span>
+              <span class="contact-chip__text">{{ about_content.email }}</span>
+            </a>
+          {% endif %}
+          {% if about_content.address %}
+            <span class="contact-chip contact-chip--no-link">
+              <span class="contact-chip__icon"><i class="fa-solid fa-location-dot"></i></span>
+              <span class="contact-chip__text">{{ about_content.address }}</span>
+            </span>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+
+  <section class="about-section about-section--future">
+    <div class="container">
+      <div class="about-section__head">
+        <div class="about-section__kicker">Будущее</div>
+        <h2 class="about-section__title">Пространство для новых идей</h2>
+        <div class="about-section__hint">Пусть пока остаётся пустым — позже сюда можно добавлять блоки через редактор.</div>
+      </div>
+
+      {% if extra_blocks %}
+        <div class="row g-4">
+          {% for x in extra_blocks %}
+            {% if x.is_active %}
+            <div class="col-md-6 col-lg-4">
+              <div class="value-card">
+                <div class="value-card__icon"><i class="{{ x.icon }}"></i></div>
+                <div>
+                  <div class="value-card__title">{{ x.title }}</div>
+                  <div class="value-card__text">{{ x.text|linebreaksbr }}</div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="future-blank"></div>
+      {% endif %}
+    </div>
+  </section>
+
+</div>
 {% endblock %}

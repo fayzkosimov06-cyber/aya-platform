@@ -393,3 +393,12 @@
   .hp-stats{ flex-wrap: wrap; gap: 10px; }
   .hp-stat__sep{ display:none; }
 }
+
+
+/* --- FIX: stats overlay flicker on carousel (ensure always above slides) --- */
+.hp-media__card { position: relative; }
+.hp-media__card .carousel,
+.hp-media__card .carousel-inner,
+.hp-media__card .carousel-item { position: relative; z-index: 1; }
+.hp-stats { z-index: 5; }
+
