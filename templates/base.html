@@ -9,12 +9,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=17">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=18">
     
     <style>
         @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
         @keyframes spin { to { --angle: 360deg; } }
     </style>
+    <link rel="stylesheet" href="{% static 'css/aya-shell.css' %}?v=3">
     {% block extra_css %}{% endblock %}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
@@ -22,31 +23,34 @@
         .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
     </style>
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 {% get_site_stats as site_stats %}
 
     
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top main-navbar">
+    <nav class="navbar navbar-expand-xl navbar-light fixed-top main-navbar">
         <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">
-                <img src="{% static 'img/logo_aya.png' %}" alt="Логотип" style="height: 40px; margin-right: 10px;"> AYA
+                <img src="{% static 'img/aya-logo-2026.png' %}" alt="AYA" width="76" height="64"><span class="aya-brand-text">ASSOCIATION OF<br>YOUTH ATSMU</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Меню сайта">
+                <span class="navbar-toggler-icon"></span><span class="visually-hidden">Открыть меню</span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Главная</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'event_list' %}">Мероприятия</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'volunteer_list' %}">Волонтёры</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'administration_page' %}">Администрация</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'about_page' %}">О нас</a></li>
+                    <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'home' %} active{% endif %}" href="{% url 'home' %}"{% if request.resolver_match.url_name == 'home' %} aria-current="page"{% endif %}>Главная</a></li>
+                    <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'event_list' %} active{% endif %}" href="{% url 'event_list' %}"{% if request.resolver_match.url_name == 'event_list' %} aria-current="page"{% endif %}>Мероприятия</a></li>
+                    <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'volunteer_list' %} active{% endif %}" href="{% url 'volunteer_list' %}"{% if request.resolver_match.url_name == 'volunteer_list' %} aria-current="page"{% endif %}>Волонтёры</a></li>
+                    <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'volunteer_rating' %} active{% endif %}" href="{% url 'volunteer_rating' %}"{% if request.resolver_match.url_name == 'volunteer_rating' %} aria-current="page"{% endif %}>Рейтинг</a></li>
+{% if can_award_points %}<li class="nav-item"><a class="nav-link" href="{% url 'points_works' %}">Баллы</a></li>{% endif %}
+                    <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'administration_page' %} active{% endif %}" href="{% url 'administration_page' %}"{% if request.resolver_match.url_name == 'administration_page' %} aria-current="page"{% endif %}>Администрация</a></li>
+                    <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'about_page' %} active{% endif %}" href="{% url 'about_page' %}"{% if request.resolver_match.url_name == 'about_page' %} aria-current="page"{% endif %}>О нас</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'home' %}#contacts">Контакты</a></li>
                 </ul>
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
                     <li class="nav-item me-3 d-flex align-items-center">
                         <a class="nav-link" href="{% url 'notifications' %}">
-                            <i class="fas fa-bell fa-lg"></i>
+                            <i class="fas fa-bell fa-lg" aria-hidden="true"></i><span class="visually-hidden">Уведомления</span>
                             {% if unread_notifications_count %}
                                 <span class="badge bg-danger rounded-pill">{{ unread_notifications_count }}</span>
                             {% endif %}
@@ -64,12 +68,13 @@
                             <li><a class="dropdown-item" href="{% url 'my_profile' %}">Мой профиль</a></li>
                             <li><a class="dropdown-item" href="{% url 'profile_edit' %}">Редактировать</a></li>
                             
-                            {% if user.is_superuser or user.role in 'head_admin,worker,president' %}
+                            {% if can_award_points %}<a class="dropdown-item" href="{% url 'points_works' %}">Центр баллов</a>{% endif %}
+{% if can_open_admin %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{% url 'admin_dashboard' %}">👑 Панель Администратора</a></li>
                             {% endif %}
                             
-                            {% if user.is_superuser or user.role in 'moderator,head_admin,worker,president' %}
+                            {% if can_open_moderation %}
                                 <li><a class="dropdown-item" href="{% url 'moderator_dashboard' %}">🛠️ Панель Модератора</a></li>
                             {% endif %}
 
@@ -88,7 +93,7 @@
                     </li>
                     {% else %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Войти</a></li>
-                    <li class="nav-item"><a class="btn btn-outline-light ms-2 rounded-pill px-4" href="{% url 'signup' %}">Регистрация</a></li>
+                    <li class="nav-item"><a class="btn btn-primary ms-2 px-4" href="{% url 'signup' %}">Регистрация</a></li>
                     {% endif %}
                 </ul>
             </div>
@@ -110,9 +115,11 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="footer mt-auto py-4 text-center bg-dark text-white">
-        <div class="container">
-            <span>&copy; {% now "Y" %} AYA. Все права защищены.</span>
+    <footer class="aya-footer">
+        <div class="container aya-footer-inner">
+            <a class="aya-footer-brand" href="{% url 'home' %}"><img src="{% static 'img/aya-logo-2026.png' %}" alt="AYA" width="64" height="58"><span>ASSOCIATION OF<br>YOUTH ATSMU</span></a>
+            <nav aria-label="Меню внизу страницы"><a href="{% url 'about_page' %}">О нас</a><a href="{% url 'volunteer_list' %}">Волонтёры</a><a href="{% url 'event_list' %}">Мероприятия</a><a href="{% url 'administration_page' %}">Администрация</a><a href="{% url 'home' %}#contacts">Контакты</a></nav>
+            <small>© {% now "Y" %} AYA</small>
         </div>
     </footer>
 

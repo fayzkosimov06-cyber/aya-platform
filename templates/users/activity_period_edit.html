@@ -3,6 +3,8 @@
 
 {% block title %}Редактировать период — {{ target_user.get_full_name }}{% endblock %}
 
+{% block body_class %}aya-profile{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/profile-clean.css' %}?v=6">{% endblock %}
 {% block content %}
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">

@@ -91,6 +91,8 @@ class EventHero(models.Model):
 
     class Meta:
         unique_together = ('event', 'user')
+        ordering = ['user__last_name', 'user__first_name', 'id']
+        constraints = [models.UniqueConstraint(fields=('event', 'user'), name='unique_event_hero_per_user')]
 
     def __str__(self):
         return f"{self.event.title}: {self.user} — {self.role_name}"

@@ -228,7 +228,7 @@ bg-brand-red { background-color: #d32f2f; color: white; }
 /* 2. Шапка для маленькой иконки в меню (справа сверху) */
 /* 3. Шапка для карточек в списке волонтеров (если нужно) */
 /* ОСТАЛЬНОЕ БЕЗ ИЗМЕНЕНИЙ (на всякий случай дублирую) */
-.main-navbar { background-color: #0E3644 !important; padding: 12px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+.main-navbar { background-color: #fff; padding: 12px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
 10% { opacity: 1; }
     100% { transform: translateY(110vh); opacity: 0.2; }
 }
@@ -237,14 +237,14 @@ bg-brand-red { background-color: #d32f2f; color: white; }
     z-index: 10;
 
 /* 3. ОСТАЛЬНОЕ (Без изменений, просто чтобы не потерялось) */
-.main-navbar { background-color: #0E3644 !important; padding: 12px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+.main-navbar { background-color: #fff; padding: 12px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
 10% { opacity: 1; }
     100% { transform: translateY(110vh); opacity: 0.2; }
 }
 
 /* 3. МЕНЮ (ТЕМНОЕ) */
 .main-navbar {
-    background-color: #0E3644 !important;
+    background-color: #fff;
     padding: 12px 0;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }

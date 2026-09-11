@@ -16,7 +16,7 @@
             <h1 class="display-5 fw-bolder mb-1 text-dark">Афиша событий</h1>
             <p class="text-muted mb-0 lead">Присоединяйся, развивайся, действуй.</p>
         </div>
-        {% if user.is_authenticated and not catalog_locked %}
+        {% if can_create_event %}
             <a href="{% url 'event_create' %}" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm hover-lift fw-bold">
                 <i class="fas fa-plus me-2"></i> Создать событие
             </a>

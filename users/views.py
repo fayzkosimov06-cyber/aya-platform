@@ -7,7 +7,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.contrib import messages
 from django.urls import reverse
-from django.db import models
+from django.db import models, transaction
+from datetime import timedelta
+from django.http import HttpResponseForbidden
+from django.utils.http import url_has_allowed_host_and_scheme
+from .services import grant_access
 from django.db.models import Q
 from django.utils import timezone
 
@@ -15,6 +19,8 @@ from .forms import UserRegisterForm, UserUpdateForm, AdminUpdateForm, AboutPageF
 from .models import User, Direction, School, ActivityPeriod, Notification, AboutPage, AuditLog
 from .access import (
     can_register_for_events,
+    can_record_visits,
+    can_manage_members,
     can_see_event_catalog,
     has_full_volunteer_access,
     is_candidate_user,
@@ -44,24 +50,16 @@ def log_action(user, action, target=None):
 
 # --- HELPER: КТО МОЖЕТ УПРАВЛЯТЬ КАНДИДАТАМИ (отмечать визиты / давать доступ) ---
 def can_manage_candidates(user):
-    if not getattr(user, 'is_authenticated', False):
-        return False
-    if getattr(user, 'is_superuser', False):
-        return True
-    return getattr(user, 'role', None) in ['leader', 'worker', 'head_admin', 'president', 'moderator']
+    return can_record_visits(user)
 
 
 def can_grant_candidate_access(user):
-    if not getattr(user, 'is_authenticated', False):
-        return False
-    if getattr(user, 'is_superuser', False):
-        return True
-    return getattr(user, 'role', None) in ['leader', 'worker', 'head_admin', 'president']
+    return can_manage_members(user)
 
 
 def _back_redirect(request, fallback_name='moderator_dashboard', **kwargs):
     next_url = request.POST.get('next') or request.GET.get('next') or request.META.get('HTTP_REFERER')
-    if next_url:
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
         return redirect(next_url)
     return redirect(fallback_name, **kwargs)
 
@@ -153,7 +151,8 @@ def get_user_power_level(user):
 
 def build_evaluation_stats(volunteer: User):
     """Сводка оценок волонтёра по всем мероприятиям."""
-    qs = EventEvaluation.objects.filter(volunteer=volunteer)
+    from .rating import eligible_evaluations, rounded_score
+    qs = eligible_evaluations().filter(volunteer=volunteer)
     agg = qs.aggregate(
         avg=models.Avg('total_score'),
         count=models.Count('id'),
@@ -206,7 +205,7 @@ def build_evaluation_stats(volunteer: User):
     return {
         'count': count,
         'event_count': agg.get('event_count') or 0,
-        'avg': round(avg, 2) if count else None,
+        'avg': rounded_score(avg) if count else None,
         'badge_class': badge_class(avg, count > 0),
         'top_criteria': criteria_stats[:3],
         'all_criteria': criteria_stats,
@@ -218,38 +217,45 @@ def build_evaluation_stats(volunteer: User):
 # --- VIEWS (Представления) ---
 
 def home_view(request):
-    # 1. Получаем Президента (для цитат)
-    president = User.objects.filter(role='president', is_approved=True).first()
-    
-    # 2. Получаем Направления (для блока иконок)
-    directions = Direction.objects.all() 
-    
-    # 3. Получаем Мероприятия (для афиши)
-    # Гости видят только публичные, свои видят все
-    if request.user.is_authenticated:
-        upcoming_events = Event.objects.filter(is_approved=True, is_completed=False).order_by('start_time')[:3]
-    else:
-        upcoming_events = Event.objects.filter(is_approved=True, is_completed=False, is_public_for_guests=True).order_by('start_time')[:3]
-        
-    context = {
-        'president': president, 
-        'upcoming_events': upcoming_events,
-        'directions': directions  # <-- Важно: передаем направления в шаблон
-    }
-    return render(request, 'users/home.html', context)
+    from .models import HomePage
+    from .access import STAFF_ONLY_ROLES
+    about = AboutPage.objects.filter(pk=1).first()
+    home_page = HomePage.objects.filter(pk=1).first()
+    directions = list(Direction.objects.all())
+    icons = [('эко', 'leaf'), ('мед', 'briefcase-medical'), ('здоров', 'heart'), ('спорт', 'running'), ('наук', 'microscope'), ('образ', 'graduation-cap'), ('культур', 'palette'), ('междун', 'globe'), ('it', 'laptop-code')]
+    for direction in directions:
+        direction.home_icon = next((icon for word, icon in icons if word in direction.name.lower()), 'users')
+    events = Event.objects.filter(is_approved=True, is_completed=False, end_time__gte=timezone.now()).order_by('start_time')
+    if not request.user.is_authenticated:
+        events = events.filter(is_public_for_guests=True)
+    from .about_content import public_stats, public_contacts
+    stats = public_stats(about)
+    contacts = public_contacts(about, request.user)
+    return render(request, 'users/home.html', {
+        'directions': directions, 'upcoming_events': events[:3], 'home_stats': stats,
+        'home_page': home_page, 'about_content': about,
+        'home_slides': list(home_page.slides.filter(is_active=True)) if home_page else [],
+        'home_quotes': list(home_page.quotes.filter(is_active=True).select_related('member').exclude(member__is_superuser=True).exclude(member__is_approved=False)) if home_page else [],
+        'home_contacts': contacts, 'can_edit_home': can_manage_members(request.user),
+        'home_full_access': has_full_volunteer_access(request.user),
+        'home_catalog_access': can_see_event_catalog(request.user),
+    })
 
 
 def about_view(request):
-    about_content, _ = AboutPage.objects.get_or_create(pk=1)
-    context = {
-        'about_content': about_content,
-        'value_blocks': about_content.value_blocks.filter(is_active=True).order_by('order', 'id'),
-        'stat_items': about_content.stat_items.filter(is_active=True).order_by('order', 'id'),
-        'extra_blocks': about_content.extra_blocks.filter(is_active=True).order_by('order', 'id'),
-        'contact_links': about_content.contact_links.filter(is_active=True).order_by('order', 'id'),
-        'can_see_private_about_links': has_full_volunteer_access(request.user),
-    }
-    return render(request, 'users/about.html', context)
+    from .about_content import public_stats, public_contacts, video_embed_url
+    from urllib.parse import urlsplit
+    about = AboutPage.objects.filter(pk=1).first()
+    return render(request, 'users/about.html', {
+        'about_content': about,
+        'value_blocks': about.value_blocks.filter(is_active=True).order_by('order', 'id') if about else [],
+        'extra_blocks': about.extra_blocks.filter(is_active=True).order_by('order', 'id') if about else [],
+        'stat_items': public_stats(about),
+        'contact_links': public_contacts(about, request.user),
+        'can_edit_about': can_manage_members(request.user),
+        'about_video_embed': video_embed_url(about.video_url) if about else '',
+        'about_video_url': about.video_url if about and urlsplit(about.video_url).scheme in ['http','https'] else '',
+    })
 
 
 def volunteer_list_view(request):
@@ -347,14 +353,21 @@ def my_profile_view(request):
     }
     
     context = {
-        'profile_user': request.user, 
+        'profile_user': request.user,
+        'is_candidate_profile': is_candidate_user(request.user),
+        'needs_initial_approval': not request.user.is_approved and not request.user.candidate_approved,
+        'candidate_visits': _candidate_visits_qs(request.user),
+        'candidate_visit_count': request.user.volunteer_visits.count(), 
         'activity_periods': activity_periods,
         'can_admin_edit': False,
         'can_edit_activity': can_edit_activity_periods(request.user),
         'show_evaluations': True,
-        'evaluation': build_evaluation_stats(request.user),
+        'evaluation': None,
         'show': show_fields # Показываем всё хозяину
     }
+    if context['show_evaluations']:
+        from .points import point_profile
+        context.update(point_profile(request, context['profile_user']))
     return render(request, 'users/profile.html', context)
 
 
@@ -388,7 +401,7 @@ def public_profile_view(request, pk):
 
     # Право на админское редактирование
     can_admin_edit = False
-    if request.user.is_authenticated and request.user != profile_user:
+    if can_manage_members(request.user) and request.user != profile_user:
         if get_user_power_level(request.user) > get_user_power_level(profile_user):
             can_admin_edit = True
 
@@ -410,11 +423,11 @@ def public_profile_view(request, pk):
     elif request.user.is_authenticated and getattr(request.user, 'is_approved', False):
         show_evaluations = True
 
-    evaluation_stats = build_evaluation_stats(profile_user) if show_evaluations else None
+    evaluation_stats = None
 
     candidate_visits = _candidate_visits_qs(profile_user)
     candidate_visit_count = len(candidate_visits)
-    can_review_candidate = bool(request.user.is_authenticated and request.user != profile_user and is_moderator_or_higher(request.user))
+    can_review_candidate = bool(request.user.is_authenticated and request.user != profile_user and can_manage_members(request.user))
     can_mark_candidate_visit = bool(request.user.is_authenticated and request.user != profile_user and can_manage_candidates(request.user))
     can_manual_grant_access = bool(request.user.is_authenticated and request.user != profile_user and can_grant_candidate_access(request.user))
 
@@ -436,6 +449,9 @@ def public_profile_view(request, pk):
         'can_mark_candidate_visit': can_mark_candidate_visit,
         'can_manual_grant_access': can_manual_grant_access,
     }
+    if context['show_evaluations']:
+        from .points import point_profile
+        context.update(point_profile(request, context['profile_user']))
     return render(request, 'users/profile.html', context)
 
 
@@ -532,6 +548,9 @@ def moderator_dashboard_view(request):
         is_approved=False,
     ).exclude(is_superuser=True).order_by('-date_joined')
 
+    if not can_manage_members(request.user):
+        pending_users = User.objects.none()
+
     candidate_cards = []
     for candidate in candidates_qs:
         visits = _candidate_visits_qs(candidate)
@@ -547,13 +566,16 @@ def moderator_dashboard_view(request):
         'candidate_cards': candidate_cards,
         'candidates': candidates_qs,
         'can_manual_grant_access': can_grant_candidate_access(request.user),
+        'can_review_candidates': can_manage_members(request.user),
+        'recently_approved': User.objects.filter(is_approved=True, is_superuser=False, volunteer_access_granted_at__gte=timezone.now() - timedelta(days=14)).exclude(role__in=['leader', 'worker', 'head_admin']).select_related('volunteer_access_granted_by').order_by('-volunteer_access_granted_at'),
     })
 
 @login_required
+@transaction.atomic
 def approve_user_view(request, pk):
-    if not is_moderator_or_higher(request.user):
-        return redirect('home')
-    user_to_approve = get_object_or_404(User, pk=pk)
+    if not can_manage_members(request.user):
+        return HttpResponseForbidden('Недостаточно прав.')
+    user_to_approve = get_object_or_404(User.objects.select_for_update(), pk=pk, is_superuser=False, role='volunteer')
 
     if request.method == 'POST':
         if getattr(user_to_approve, 'is_approved', False):
@@ -580,8 +602,8 @@ def approve_user_view(request, pk):
 
 @login_required
 def reject_user_view(request, pk):
-    if not is_moderator_or_higher(request.user): return redirect('home')
-    user_to_reject = get_object_or_404(User, pk=pk)
+    if not can_manage_members(request.user): return HttpResponseForbidden('Недостаточно прав.')
+    user_to_reject = get_object_or_404(User, pk=pk, is_approved=False, candidate_approved=False, is_superuser=False, role='volunteer')
     if request.method == 'POST':
         reason = request.POST.get('reason', 'Причина не указана.')
         Notification.objects.create(recipient=user_to_reject, message=f'Ваша регистрация отклонена: {reason}')
@@ -635,6 +657,9 @@ def update_user_role_view(request, pk):
             return redirect('user_management')
             
         new_role = request.POST.get('role')
+        from types import SimpleNamespace
+        if new_role not in dict(User.ROLE_CHOICES) or (not request.user.is_superuser and get_user_power_level(SimpleNamespace(is_authenticated=True, is_superuser=False, role=new_role)) >= get_user_power_level(request.user)):
+            return HttpResponseForbidden('Недостаточно прав для назначения этой роли.')
         if new_role == 'head_admin':
              # Логика снятия старого админа
              old = User.objects.filter(role='head_admin').first()
@@ -736,19 +761,8 @@ def assign_school_leader_view(request, pk):
 
 @login_required
 def about_page_edit_view(request):
-    if not is_admin_or_higher(request.user): return redirect('home')
-    obj, _ = AboutPage.objects.get_or_create(pk=1)
-    if request.method == 'POST':
-        form = AboutPageForm(request.POST, instance=obj)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Сохранено.")
-            return redirect('about_page_edit')
-    else:
-        form = AboutPageForm(instance=obj)
-    return render(request, 'users/about_page_edit.html', {'form': form})
+    return redirect('about_manage')
 
-# --- Уведомления ---
 @login_required
 def notification_list_view(request):
     return render(request, 'users/notifications.html', {'notifications': request.user.notifications.all()})
@@ -762,12 +776,12 @@ def mark_notification_as_read_view(request, pk):
 @login_required
 def admin_edit_user_view(request, pk):
     target = get_object_or_404(User, pk=pk)
-    if get_user_power_level(request.user) <= get_user_power_level(target):
+    if not can_manage_members(request.user) or get_user_power_level(request.user) <= get_user_power_level(target):
         messages.error(request, "Недостаточно прав.")
         return redirect('public_profile', pk=pk)
         
     if request.method == 'POST':
-        form = AdminUpdateForm(request.POST, request.FILES, instance=target)
+        form = AdminUpdateForm(request.POST, request.FILES, instance=target, actor=request.user)
         if form.is_valid():
             form.save()
             log_action(request.user, f"Отредактировал профиль {target}", target=target)
@@ -776,7 +790,7 @@ def admin_edit_user_view(request, pk):
             messages.success(request, "Профиль обновлен.")
             return redirect('public_profile', pk=pk)
     else:
-        form = AdminUpdateForm(instance=target)
+        form = AdminUpdateForm(instance=target, actor=request.user)
     return render(request, 'users/profile_edit.html', {'form': form, 'user_to_edit': target})
 
 @login_required
@@ -827,12 +841,13 @@ def admin_password_change_view(request, pk):
     })
 
 @login_required
+@transaction.atomic
 def mark_candidate_visit_view(request, pk):
     """Отметить 'пришёл' кандидату. Не больше 1 раза в день. После 3 отметок -> волонтёр."""
     if not can_manage_candidates(request.user):
         return redirect('home')
 
-    candidate = get_object_or_404(User, pk=pk)
+    candidate = get_object_or_404(User.objects.select_for_update(), pk=pk, is_superuser=False, role__in=['volunteer', 'president', 'moderator'])
 
     if request.method != 'POST':
         return _back_redirect(request, 'public_profile', pk=pk)
@@ -854,14 +869,12 @@ def mark_candidate_visit_view(request, pk):
         messages.warning(request, "Сегодня посещение уже отмечено (1 визит в день).")
         return _back_redirect(request, 'public_profile', pk=pk)
 
-    VolunteerVisit.objects.create(user=candidate, marked_by=request.user, visit_date=today, comment='')
+    VolunteerVisit.objects.create(user=candidate, marked_by=request.user, visit_date=today, comment=(request.POST.get('comment') or '').strip())
     log_action(request.user, f"Отметил визит кандидата: {candidate.get_full_name()} ({today})", target=candidate)
 
     cnt = VolunteerVisit.objects.filter(user=candidate).count()
     if cnt >= 3:
-        candidate.volunteer_access = True
-        candidate.is_approved = True
-        candidate.save(update_fields=['volunteer_access', 'is_approved'])
+        grant_access(candidate, request.user)
         Notification.objects.create(
             recipient=candidate,
             message="Поздравляем! Вы стали волонтёром. Вам открыт полный доступ и ссылка на Telegram-группу.",
@@ -875,13 +888,14 @@ def mark_candidate_visit_view(request, pk):
 
 
 @login_required
+@transaction.atomic
 def grant_volunteer_access_view(request, pk):
     """Выдать полный доступ сразу (для волонтёров, которые давно с вами)."""
     if not can_grant_candidate_access(request.user):
         messages.error(request, 'Модератор может только отмечать посещения. Полный доступ выдают роли выше модератора.')
         return redirect('home')
 
-    target = get_object_or_404(User, pk=pk)
+    target = get_object_or_404(User.objects.select_for_update(), pk=pk, is_superuser=False, role__in=['volunteer', 'president', 'moderator'])
 
     if request.method != 'POST':
         return _back_redirect(request, 'public_profile', pk=pk)
@@ -890,11 +904,7 @@ def grant_volunteer_access_view(request, pk):
         messages.info(request, "У пользователя уже есть доступ волонтёра.")
         return _back_redirect(request, 'public_profile', pk=pk)
 
-    target.candidate_approved = True
-    target.volunteer_access = True
-    target.is_approved = True
-    target.is_old_volunteer = bool(request.POST.get('is_old_volunteer'))
-    target.save(update_fields=['candidate_approved', 'volunteer_access', 'is_approved', 'is_old_volunteer'])
+    grant_access(target, request.user, old=request.POST.get('is_old_volunteer') in ['on', '1', 'true'])
 
     log_action(request.user, f"Выдал доступ волонтёра сразу: {target.get_full_name()}", target=target)
     Notification.objects.create(
@@ -907,6 +917,7 @@ def grant_volunteer_access_view(request, pk):
 
 
 @login_required
+@transaction.atomic
 def delete_candidate_visit_view(request, visit_id):
     """Удалить ошибочную отметку визита."""
     if not can_manage_candidates(request.user):
@@ -917,6 +928,9 @@ def delete_candidate_visit_view(request, visit_id):
 
     visit = get_object_or_404(VolunteerVisit, pk=visit_id)
     user_pk = visit.user.pk
+    if visit.user.is_approved:
+        messages.error(request, 'История визитов после выдачи доступа сохранена. Удалять можно отметки действующего кандидата.')
+        return _back_redirect(request, 'public_profile', pk=user_pk)
 
     if request.method == 'POST':
         log_action(request.user, f"Удалил отметку визита {visit.visit_date} у {visit.user}", target=visit.user)

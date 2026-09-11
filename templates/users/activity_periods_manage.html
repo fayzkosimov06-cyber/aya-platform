@@ -1,13 +1,15 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}История активности — {{ target_user.get_full_name }}{% endblock %}
+{% block title %}Периоды деятельности — {{ target_user.get_full_name }}{% endblock %}
 
+{% block body_class %}aya-profile{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/profile-clean.css' %}?v=6">{% endblock %}
 {% block content %}
 <div class="container py-4">
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
     <div>
-      <h3 class="mb-1 fw-bold">История активности</h3>
+      <h3 class="mb-1 fw-bold">Периоды деятельности</h3>
       <div class="text-muted">Волонтёр: <a href="{% url 'public_profile' target_user.pk %}">{{ target_user.get_full_name }}</a></div>
     </div>
     <div class="d-flex gap-2">
@@ -49,10 +51,10 @@
                       </td>
                       <td class="text-end">
                         <a class="btn btn-sm btn-outline-primary" href="{% url 'activity_period_edit' target_user.pk p.pk %}">
-                          <i class="fas fa-pen"></i>
+                          <i class="fas fa-pen" aria-hidden="true"></i> Изменить
                         </a>
                         <a class="btn btn-sm btn-outline-danger" href="{% url 'activity_period_delete' target_user.pk p.pk %}">
-                          <i class="fas fa-trash"></i>
+                          <i class="fas fa-trash" aria-hidden="true"></i> Удалить
                         </a>
                       </td>
                     </tr>
@@ -62,7 +64,7 @@
             </div>
           {% else %}
             <div class="alert alert-info mb-0">
-              Пока нет периодов активности. Добавьте первый период справа.
+              Пока нет периодов активности. Добавьте первый период в форме на этой странице.
             </div>
           {% endif %}
         </div>

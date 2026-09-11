@@ -1,0 +1,23 @@
+/* Shared navigation. Page-specific forms and role styling remain intact. */
+body{padding-top:80px}
+.main-navbar.navbar{min-height:80px;background:#fff!important;box-shadow:0 1px 0 #e5eff8;padding:4px 0}
+.main-navbar .navbar-brand{display:flex;align-items:center;gap:10px;margin-right:22px;color:#101b44;flex-shrink:0}
+.main-navbar .navbar-brand img{height:66px;width:76px;object-fit:contain;margin:0}
+.aya-brand-text{border-left:1px solid #d4e2f0;padding-left:12px;font-size:11px;line-height:1.4;font-weight:750;letter-spacing:.02em}
+.main-navbar .nav-link{color:#455577!important;font-size:14px;font-weight:500;white-space:nowrap;padding:10px 9px!important}
+.main-navbar .nav-link:hover,.main-navbar .nav-link.active{color:#007eee!important;transform:none}
+.main-navbar .navbar-toggler{border:1px solid #d3e4f5;color:#007eee}
+.main-navbar .btn-primary{background:#0087ed;border-color:#0087ed;border-radius:8px;font-size:14px;font-weight:600}
+.main-navbar .dropdown-menu{border:1px solid #e2ecf5;border-radius:12px;max-width:calc(100vw - 32px)}
+.main-navbar .dropdown-item{font-size:14px;white-space:normal;padding:9px 16px}
+.aya-footer{background:white;border-top:1px solid #e9eff7;color:#5e6f8c;padding:16px 0;margin-top:auto}
+.aya-footer-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.aya-footer-brand{display:flex;align-items:center;gap:6px;text-decoration:none;color:#101b44;font-size:10px;font-weight:700;line-height:1.4}
+.aya-footer-brand img{object-fit:contain}
+.aya-footer nav{display:flex;flex-wrap:wrap;gap:18px}
+.aya-footer nav a{color:#536380;font-size:14px;text-decoration:none}
+.aya-footer nav a:hover{color:#007eee}
+.aya-footer small{font-size:12px}
+a:focus-visible,button:focus-visible{outline:3px solid #0287ef;outline-offset:4px}
+@media(max-width:1199px){.main-navbar .navbar-collapse{max-height:calc(100dvh - 80px);overflow-y:auto;padding:12px 0 20px}.main-navbar .navbar-nav:last-child{align-items:flex-start;gap:8px}.main-navbar .navbar-nav:last-child .btn{margin-left:0!important}.main-navbar .dropdown-menu{box-shadow:none}}
+@media(max-width:575px){.aya-footer-inner{gap:12px}.aya-footer nav{gap:12px}.aya-brand-text{font-size:10px}.main-navbar .navbar-brand{margin-right:8px}}

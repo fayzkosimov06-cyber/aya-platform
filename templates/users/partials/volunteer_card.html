@@ -41,6 +41,7 @@
                 </div>
             </div>
             
+            {% if volunteer.is_new_volunteer %}<span class="badge bg-info text-dark mb-2">Новый волонтёр</span>{% endif %}
             <h5 class="fw-bold mt-2 text-truncate px-1" style="font-size: 1.1rem;">
                 {{ volunteer.first_name }} {{ volunteer.last_name }}
             </h5>

@@ -14,6 +14,7 @@
         <h2 class="fw-bold mb-0">Панель Модератора</h2>
     </div>
 
+    {% if can_review_candidates %}
     <div class="card border-0 shadow-lg mb-4 fade-in-up" style="border-radius: 25px; animation-delay: 0.05s;">
         <div class="card-header bg-white border-0 py-4 px-4">
             <h5 class="fw-bold mb-0 text-dark">
@@ -60,6 +61,7 @@
         </div>
     </div>
 
+    {% endif %}
     <div class="card border-0 shadow-lg mb-4 fade-in-up" style="border-radius: 25px; animation-delay: 0.1s;">
         <div class="card-header bg-info text-white py-3 px-4" style="border-top-left-radius: 25px; border-top-right-radius: 25px;">
             <h5 class="mb-0 fw-bold">
@@ -114,6 +116,19 @@
             {% endif %}
         </div>
     </div>
+    <div class="card border-0 shadow-sm p-4 mb-4">
+        <h5>Недавно одобренные · последние 14 дней</h5>
+        {% for member in recently_approved %}
+            <div class="border-bottom py-3">
+                <a href="{% url 'public_profile' member.pk %}">{{ member.get_full_name|default:member.username }}</a>
+                {% if member.is_new_volunteer %}<span class="badge bg-info text-dark">Новый волонтёр</span>{% endif %}
+                <div class="small text-muted">{{ member.volunteer_access_granted_at|date:"d.m.Y H:i" }}
+                    {% if member.volunteer_access_granted_by %} · доступ выдал {{ member.volunteer_access_granted_by.get_full_name|default:member.volunteer_access_granted_by.username }}{% endif %}
+                </div>
+            </div>
+        {% empty %}<p class="text-muted mb-0">За последние 14 дней доступ никому не выдавался.</p>{% endfor %}
+    </div>
+
 </div>
 
 <style>

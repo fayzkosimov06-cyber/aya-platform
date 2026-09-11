@@ -3,9 +3,19 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 from . import about_views
+from .home_views import home_manage_view
+from .points import points_rating as rating_view
+from . import points
 
 
 urlpatterns = [
+    path('points/new/', points.quick_award, name='points_quick'),
+    path('points/works/', points.work_list, name='points_works'),
+    path('points/works/<int:pk>/', points.work_detail, name='points_work'),
+    path('points/awards/<int:pk>/correct/', points.correct_award, name='points_correct'),
+    path('points/kinds/', points.kinds, name='points_kinds'),
+    path('rating/', rating_view, name='volunteer_rating'),
+    path('administration/home/', home_manage_view, name='home_manage'),
     # Главная страница и "О нас"
     path('', views.home_view, name='home'),
     path('about/', views.about_view, name='about_page'),

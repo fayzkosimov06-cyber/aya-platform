@@ -70,4 +70,4 @@ class EventHeroForm(forms.ModelForm):
         if event is not None:
             self.fields['user'].queryset = event.participants.exclude(is_superuser=True).order_by('last_name', 'first_name')
         else:
-            self.fields['user'].queryset = User.objects.filter(is_approved=True).exclude(is_superuser=True).order_by('last_name', 'first_name')
+            self.fields['user'].queryset = User.objects.none()

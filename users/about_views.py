@@ -1,10 +1,14 @@
+from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.db.models import Max
+from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
-
+from django.urls import reverse
+from urllib.parse import urlsplit
+from .access import can_manage_members
 from .models import AboutContactLink, AboutExtraBlock, AboutPage, AboutStatItem, AboutValueBlock
-
-
 ICON_CHOICES = [
     ('fa-solid fa-star', 'Звезда'),
     ('fa-solid fa-heart', 'Сердце'),
@@ -25,214 +29,126 @@ ICON_CHOICES = [
 ]
 
 
-CONTACT_LABEL_DEFAULTS = {
-    'instagram': 'Instagram',
-    'facebook': 'Facebook',
-    'telegram': 'Telegram',
-    'youtube': 'YouTube',
-    'tiktok': 'TikTok',
-    'whatsapp': 'WhatsApp',
-    'website': 'Сайт',
-    'email': 'Email',
-    'phone': 'Телефон',
-    'custom': 'Ссылка',
+def can_edit_about(user):return can_manage_members(user)
+
+
+class AboutForm(forms.ModelForm):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        for name,field in self.fields.items():
+            field.widget.attrs['class']='form-check-input' if isinstance(field,forms.BooleanField) else 'form-control'
+        if 'icon' in self.fields:
+            choices=list(ICON_CHOICES)
+            current=getattr(self.instance,'icon','')
+            if current and current not in dict(choices):choices.append((current,'Текущая иконка'))
+            self.fields['icon']=forms.ChoiceField(choices=choices,label='Иконка',initial=current or choices[0][0],widget=forms.RadioSelect)
+
+
+class MainForm(AboutForm):
+    class Meta:
+        model=AboutPage
+        fields=['title','description','mission_title','mission_text','video_url','email','address']
+        labels={'title':'Заголовок страницы','description':'Об ассоциации','mission_title':'Заголовок миссии','mission_text':'Текст миссии','video_url':'Ссылка на видео','email':'Электронная почта','address':'Адрес'}
+        widgets={'description':forms.Textarea(attrs={'rows':4}),'mission_text':forms.Textarea(attrs={'rows':5})}
+    def clean_video_url(self):
+        value=self.cleaned_data['video_url']
+        if value and urlsplit(value).scheme not in ['https','http']:raise forms.ValidationError('Укажите ссылку http:// или https://.')
+        return value
+
+
+class ValueForm(AboutForm):
+    class Meta:
+        model=AboutValueBlock
+        fields=['title','text','icon']
+        labels={'title':'Название блока','text':'Текст'}
+        widgets={'text':forms.Textarea(attrs={'rows':5})}
+
+
+class ExtraForm(ValueForm):
+    class Meta(ValueForm.Meta):model=AboutExtraBlock
+
+
+class StatForm(AboutForm):
+    number=forms.CharField(max_length=30,required=False,label='Значение вручную',help_text='Например: 125 или 100+. При автоматическом подсчёте это поле не используется.')
+    class Meta:
+        model=AboutStatItem
+        fields=['source','number','label','icon']
+        labels={'label':'Подпись под числом'}
+    def clean(self):
+        data=super().clean()
+        if data.get('source')=='manual' and not data.get('number'):self.add_error('number','Введите значение.')
+        if data.get('source')!='manual':data['number']=data.get('number') or '0'
+        return data
+
+
+class ContactForm(AboutForm):
+    class Meta:
+        model=AboutContactLink
+        fields=['platform','label','url','requires_volunteer_access']
+        labels={'label':'Название','url':'Ссылка или контакт','requires_volunteer_access':'Только после полного доступа'}
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.fields['label'].required=False
+        self.fields['url'].help_text='Ссылка, @имя, email или телефон. Иконка выбирается автоматически.'
+    def clean(self):
+        data=super().clean();platform=data.get('platform','custom');raw=(data.get('url') or '').strip()
+        if not data.get('label'):data['label']=dict(AboutContactLink.PLATFORM_CHOICES).get(platform,'Контакт')
+        if raw and ':' in raw and not raw.lower().startswith(('http://','https://','mailto:','tel:')):
+            self.add_error('url','Укажите обычную ссылку, email, @имя или телефон.')
+        data['requires_volunteer_access']=True if platform=='telegram' else False if platform in ['instagram','facebook'] else data.get('requires_volunteer_access',False)
+        return data
+    def save(self,commit=True):
+        item=super().save(commit=False)
+        item.icon=AboutContactLink.PLATFORM_ICONS.get(item.platform,'fa-solid fa-link')
+        if commit:item.save()
+        return item
+
+
+SECTIONS={
+    'value':(AboutValueBlock,ValueForm,'Ценности и деятельность','Добавить блок'),
+    'stat':(AboutStatItem,StatForm,'AYA в цифрах','Добавить число'),
+    'contact':(AboutContactLink,ContactForm,'Контакты и соцсети','Добавить контакт'),
+    'extra':(AboutExtraBlock,ExtraForm,'Пространство для новых идей','Добавить блок'),
 }
 
 
-def can_edit_about(user):
-    if not user.is_authenticated:
-        return False
-    return user.is_superuser or user.role in ['leader', 'worker', 'head_admin', 'president']
-
-
-def _to_int(val, default=0):
-    try:
-        return int(val)
-    except Exception:
-        return default
-
-
-def _is_checked(request, name):
-    return request.POST.get(name) in ['1', 'true', 'on', 'yes']
-
-
-def _ensure_about_exists():
-    obj, _ = AboutPage.objects.get_or_create(pk=1)
-    return obj
-
-
-def _clean_text(request, key, fallback=''):
-    return (request.POST.get(key) or fallback).strip()
-
-
-def _contact_payload(request):
-    platform = (_clean_text(request, 'platform', 'custom') or 'custom').lower()
-    if platform not in dict(AboutContactLink.PLATFORM_CHOICES):
-        platform = 'custom'
-
-    label = _clean_text(request, 'label') or CONTACT_LABEL_DEFAULTS.get(platform, 'Ссылка')
-    url = _clean_text(request, 'url')
-    icon = _clean_text(request, 'icon')
-    if not icon:
-        icon = AboutContactLink.PLATFORM_ICONS.get(platform, 'fa-solid fa-link')
-
-    return {
-        'platform': platform,
-        'label': label,
-        'url': url,
-        'icon': icon,
-        'order': _to_int(request.POST.get('order'), 0),
-        'is_active': _is_checked(request, 'is_active'),
-        'requires_volunteer_access': _is_checked(request, 'requires_volunteer_access'),
-    }
-
-
 @login_required
+@transaction.atomic
 def about_manage_view(request):
-    if not can_edit_about(request.user):
-        messages.error(request, 'Недостаточно прав для редактирования этой страницы.')
-        return redirect('about_page')
-
-    about = _ensure_about_exists()
-
-    if request.method == 'POST':
-        action = (_clean_text(request, 'action') or '').strip()
-
-        if action == 'update_main':
-            about.title = _clean_text(request, 'title', about.title) or about.title
-            about.description = _clean_text(request, 'description')
-            about.video_url = _clean_text(request, 'video_url')
-            about.mission_title = _clean_text(request, 'mission_title', about.mission_title) or about.mission_title
-            about.mission_text = _clean_text(request, 'mission_text')
-            about.email = _clean_text(request, 'email')
-            about.address = _clean_text(request, 'address')
-            # резервные старые поля оставляем, чтобы fallback на публичной странице тоже работал
-            about.instagram = _clean_text(request, 'instagram')
-            about.telegram = _clean_text(request, 'telegram')
-            about.save()
-            messages.success(request, 'Основная информация сохранена.')
-            return redirect('about_manage')
-
-        if action == 'add_value':
-            AboutValueBlock.objects.create(
-                about=about,
-                title=_clean_text(request, 'title', 'Новый блок') or 'Новый блок',
-                text=_clean_text(request, 'text'),
-                icon=_clean_text(request, 'icon', 'fa-solid fa-star') or 'fa-solid fa-star',
-                order=_to_int(request.POST.get('order'), 0),
-                is_active=_is_checked(request, 'is_active'),
-            )
-            messages.success(request, 'Блок добавлен.')
-            return redirect('about_manage')
-
-        if action == 'update_value':
-            obj = get_object_or_404(AboutValueBlock, pk=request.POST.get('id'), about=about)
-            obj.title = _clean_text(request, 'title', obj.title) or obj.title
-            obj.text = _clean_text(request, 'text')
-            obj.icon = _clean_text(request, 'icon', obj.icon) or obj.icon
-            obj.order = _to_int(request.POST.get('order'), obj.order)
-            obj.is_active = _is_checked(request, 'is_active')
-            obj.save()
-            messages.success(request, 'Блок обновлён.')
-            return redirect('about_manage')
-
-        if action == 'delete_value':
-            get_object_or_404(AboutValueBlock, pk=request.POST.get('id'), about=about).delete()
-            messages.warning(request, 'Блок удалён.')
-            return redirect('about_manage')
-
-        if action == 'add_stat':
-            AboutStatItem.objects.create(
-                about=about,
-                number=_clean_text(request, 'number', '0') or '0',
-                label=_clean_text(request, 'label', 'Подпись') or 'Подпись',
-                icon=_clean_text(request, 'icon', 'fa-solid fa-chart-line') or 'fa-solid fa-chart-line',
-                order=_to_int(request.POST.get('order'), 0),
-                is_active=_is_checked(request, 'is_active'),
-            )
-            messages.success(request, 'Карточка статистики добавлена.')
-            return redirect('about_manage')
-
-        if action == 'update_stat':
-            obj = get_object_or_404(AboutStatItem, pk=request.POST.get('id'), about=about)
-            obj.number = _clean_text(request, 'number', obj.number) or obj.number
-            obj.label = _clean_text(request, 'label', obj.label) or obj.label
-            obj.icon = _clean_text(request, 'icon', obj.icon) or obj.icon
-            obj.order = _to_int(request.POST.get('order'), obj.order)
-            obj.is_active = _is_checked(request, 'is_active')
-            obj.save()
-            messages.success(request, 'Карточка статистики обновлена.')
-            return redirect('about_manage')
-
-        if action == 'delete_stat':
-            get_object_or_404(AboutStatItem, pk=request.POST.get('id'), about=about).delete()
-            messages.warning(request, 'Карточка статистики удалена.')
-            return redirect('about_manage')
-
-        if action == 'add_contact':
-            payload = _contact_payload(request)
-            if not payload['url']:
-                messages.error(request, 'Укажите ссылку или контакт.')
+    if not can_edit_about(request.user):return HttpResponseForbidden('Недостаточно прав.')
+    about,_=AboutPage.objects.get_or_create(pk=1)
+    kind=request.POST.get('kind') or request.GET.get('kind') or 'main'
+    if kind!='main' and kind not in SECTIONS:return HttpResponseBadRequest('Неизвестный раздел.')
+    model,formclass=(AboutPage,MainForm) if kind=='main' else SECTIONS[kind][:2]
+    item_id=request.POST.get('id') if request.method=='POST' else request.GET.get('id')
+    obj=about if kind=='main' else get_object_or_404(model,about=about,pk=item_id) if item_id else None
+    form=formclass(request.POST if request.method=='POST' else None,instance=obj)
+    if request.method=='POST':
+        action=request.POST.get('action')
+        if action=='save':
+            if form.is_valid():
+                item=form.save(commit=False)
+                if kind!='main':
+                    item.about=about
+                    if not item.pk:item.order=(model.objects.filter(about=about).aggregate(n=Max('order'))['n'] or 0)+1
+                item.save();messages.success(request,'Изменения сохранены.')
+                return redirect(reverse('about_manage')+'#'+kind)
+        elif kind!='main' and obj and action in ['toggle','delete','up','down']:
+            if action=='delete':obj.delete()
+            elif action=='toggle':obj.is_active=not obj.is_active;obj.save(update_fields=['is_active'])
             else:
-                AboutContactLink.objects.create(about=about, **payload)
-                messages.success(request, 'Соцсеть/контакт добавлен.')
-            return redirect('about_manage')
-
-        if action == 'update_contact':
-            obj = get_object_or_404(AboutContactLink, pk=request.POST.get('id'), about=about)
-            payload = _contact_payload(request)
-            if not payload['url']:
-                messages.error(request, 'Укажите ссылку или контакт.')
-            else:
-                for key, value in payload.items():
-                    setattr(obj, key, value)
-                obj.save()
-                messages.success(request, 'Соцсеть/контакт обновлён.')
-            return redirect('about_manage')
-
-        if action == 'delete_contact':
-            get_object_or_404(AboutContactLink, pk=request.POST.get('id'), about=about).delete()
-            messages.warning(request, 'Соцсеть/контакт удалён.')
-            return redirect('about_manage')
-
-        if action == 'add_extra':
-            AboutExtraBlock.objects.create(
-                about=about,
-                title=_clean_text(request, 'title', 'Новый блок') or 'Новый блок',
-                text=_clean_text(request, 'text'),
-                icon=_clean_text(request, 'icon', 'fa-solid fa-lightbulb') or 'fa-solid fa-lightbulb',
-                order=_to_int(request.POST.get('order'), 0),
-                is_active=_is_checked(request, 'is_active'),
-            )
-            messages.success(request, 'Дополнительный блок добавлен.')
-            return redirect('about_manage')
-
-        if action == 'update_extra':
-            obj = get_object_or_404(AboutExtraBlock, pk=request.POST.get('id'), about=about)
-            obj.title = _clean_text(request, 'title', obj.title) or obj.title
-            obj.text = _clean_text(request, 'text')
-            obj.icon = _clean_text(request, 'icon', obj.icon) or obj.icon
-            obj.order = _to_int(request.POST.get('order'), obj.order)
-            obj.is_active = _is_checked(request, 'is_active')
-            obj.save()
-            messages.success(request, 'Дополнительный блок обновлён.')
-            return redirect('about_manage')
-
-        if action == 'delete_extra':
-            get_object_or_404(AboutExtraBlock, pk=request.POST.get('id'), about=about).delete()
-            messages.warning(request, 'Дополнительный блок удалён.')
-            return redirect('about_manage')
-
-        messages.error(request, 'Неизвестное действие.')
-        return redirect('about_manage')
-
-    context = {
-        'about': about,
-        'value_blocks': about.value_blocks.all().order_by('order', 'id'),
-        'stat_items': about.stat_items.all().order_by('order', 'id'),
-        'contact_links': about.contact_links.all().order_by('order', 'id'),
-        'extra_blocks': about.extra_blocks.all().order_by('order', 'id'),
-        'platform_choices': AboutContactLink.PLATFORM_CHOICES,
-        'icon_choices': ICON_CHOICES,
-    }
-    return render(request, 'users/about_manage.html', context)
+                records=list(model.objects.filter(about=about).select_for_update().order_by('order','id'))
+                index=next(i for i,x in enumerate(records) if x.pk==obj.pk);other=index+(-1 if action=='up' else 1)
+                if 0<=other<len(records):records[index],records[other]=records[other],records[index]
+                for i,x in enumerate(records):x.order=i
+                model.objects.bulk_update(records,['order'])
+            return redirect(reverse('about_manage')+'#'+kind)
+        else:return HttpResponseBadRequest('Неизвестное действие.')
+    sections=[]
+    for key,(model,_,title,add_label) in SECTIONS.items():
+        items=list(model.objects.filter(about=about).order_by('order','id'))
+        for item in items:
+            item.editor_title=getattr(item,'title','') or getattr(item,'label','')
+            item.editor_summary=getattr(item,'text','') or (item.number if key=='stat' and item.source=='manual' else item.get_source_display() if key=='stat' else getattr(item,'url',''))
+        sections.append({'key':key,'title':title,'add_label':add_label,'items':items})
+    return render(request,'users/about_manage.html',{'about':about,'sections':sections,'form':form,'kind':kind,'item':obj,'form_title':'Основная информация' if kind=='main' else SECTIONS[kind][2], 'is_editing':bool(obj)})

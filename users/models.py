@@ -60,6 +60,14 @@ class User(AbstractUser):
     office_location = models.CharField(max_length=100, blank=True, verbose_name="Кабинет/Местоположение")
     is_old_volunteer = models.BooleanField(default=False, verbose_name="Старый волонтёр")
     
+    new_volunteer_until = models.DateTimeField(blank=True, null=True, verbose_name="До какого времени показывать статус 'Новый волонтёр'")
+    volunteer_access_granted_at = models.DateTimeField(blank=True, null=True, verbose_name='Когда выдан полный доступ')
+    volunteer_access_granted_by = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL, related_name='granted_volunteer_access_to', verbose_name='Кто выдал полный доступ')
+
+    @property
+    def is_new_volunteer(self):
+        return bool(self.is_approved and not self.is_old_volunteer and self.new_volunteer_until and self.new_volunteer_until > timezone.now())
+
     faculty = models.CharField(max_length=200, blank=True, verbose_name="Факультет")
     course = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Курс")
     group = models.CharField(max_length=50, blank=True, verbose_name="Группа")
@@ -177,6 +185,8 @@ class AboutValueBlock(models.Model):
         return self.title
 
 class AboutStatItem(models.Model):
+    SOURCE_CHOICES = [('manual', 'Ввести вручную'), ('volunteers', 'Волонтёры'), ('active', 'Активные волонтёры'), ('workers', 'Работники'), ('leaders', 'Руководители направлений'), ('school_leaders', 'Руководители школ'), ('schools', 'Школы'), ('directions', 'Направления'), ('events', 'Мероприятия')]
+    source = models.CharField(max_length=24, choices=SOURCE_CHOICES, default='manual', verbose_name='Откуда брать число')
     about = models.ForeignKey(AboutPage, on_delete=models.CASCADE, related_name='stat_items')
     number = models.CharField(max_length=30)
     label = models.CharField(max_length=120)
@@ -223,6 +233,9 @@ class AboutContactLink(models.Model):
 
     def __str__(self):
         return self.label
+
+    class Meta:
+        ordering = ['order', 'id']
 
     @property
     def platform_label(self):
@@ -279,3 +292,109 @@ class AuditLog(models.Model):
     target_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='target_logs')
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta: ordering = ['-created_at']
+
+class HomePage(models.Model):
+    quotes_per_view = models.PositiveSmallIntegerField(default=1, choices=[(1, 'По одной'), (2, 'По две'), (3, 'По три')], verbose_name='Показ цитат')
+    hero_image = models.ImageField(upload_to='homepage/', blank=True, verbose_name='Фотография в верхнем блоке')
+    quote_text = models.TextField(blank=True, verbose_name='Цитата')
+    quote_author = models.CharField(max_length=160, blank=True, verbose_name='Автор цитаты')
+    quote_role = models.CharField(max_length=160, blank=True, verbose_name='Подпись автора')
+    quote_photo = models.ImageField(upload_to='homepage/', blank=True, verbose_name='Фотография автора')
+
+    class Meta:
+        verbose_name = 'Главная страница'
+        verbose_name_plural = 'Главная страница'
+
+    def __str__(self):
+        return 'Главная страница AYA'
+
+
+class HomeSlide(models.Model):
+    page = models.ForeignKey(HomePage, on_delete=models.CASCADE, related_name='slides')
+    image = models.ImageField(upload_to='homepage/slides/', verbose_name='Фотография')
+    caption = models.CharField(max_length=200, blank=True, verbose_name='Описание фотографии')
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+
+class HomeQuote(models.Model):
+    page = models.ForeignKey(HomePage, on_delete=models.CASCADE, related_name='quotes')
+    text = models.TextField(verbose_name='Цитата')
+    member = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL, related_name='homepage_quotes', verbose_name='Участник сайта')
+    author_name = models.CharField(max_length=160, blank=True, verbose_name='Имя автора')
+    author_role = models.CharField(max_length=160, blank=True, verbose_name='Подпись автора')
+    photo = models.ImageField(upload_to='homepage/quotes/', blank=True, verbose_name='Фотография автора')
+    source_url = models.URLField(blank=True, verbose_name='Ссылка на источник')
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    @property
+    def display_name(self):
+        return (self.member.get_full_name() or self.member.username) if self.member else self.author_name
+
+    @property
+    def display_role(self):
+        return self.author_role or (self.member.get_role_display() if self.member else '')
+
+    @property
+    def display_photo(self):
+        return self.photo or (self.member.photo if self.member else None)
+
+    @property
+    def author_url(self):
+        from django.urls import reverse
+        return reverse('public_profile', args=[self.member_id]) if self.member_id else self.source_url
+
+
+class ContributionKind(models.Model):
+    name = models.CharField('Вид помощи', max_length=160, unique=True)
+    points = models.PositiveIntegerField('Баллы')
+    active = models.BooleanField('Доступен для начислений', default=True)
+
+    def __str__(self):
+        return f'{self.name} — {self.points} баллов'
+
+
+class ContributionWork(models.Model):
+    submission = models.UUIDField(null=True, blank=True, unique=True)
+    title = models.CharField('Название работы', max_length=200)
+    date = models.DateField('Дата выполненной работы')
+    description = models.TextField('Описание', blank=True)
+    event = models.OneToOneField('events.Event', null=True, blank=True, on_delete=models.SET_NULL)
+    created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date', '-pk']
+
+    def __str__(self):
+        return f'{self.title} ({self.date:%d.%m.%Y})'
+
+
+class ContributionAward(models.Model):
+    work = models.ForeignKey(ContributionWork, on_delete=models.PROTECT, related_name='awards')
+    member = models.ForeignKey(User, on_delete=models.PROTECT, related_name='point_awards')
+    kind = models.ForeignKey(ContributionKind, on_delete=models.PROTECT)
+    points = models.PositiveIntegerField()
+    comment = models.TextField(blank=True)
+    confirmed_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='confirmed_awards')
+    confirmed_at = models.DateTimeField(auto_now_add=True)
+    revoked = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['work', 'member', 'kind'], name='unique_work_member_kind')]
+
+
+class ContributionChange(models.Model):
+    award = models.ForeignKey(ContributionAward, on_delete=models.PROTECT, related_name='changes')
+    actor = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    at = models.DateTimeField(auto_now_add=True)
+    before = models.JSONField(default=dict)
+    after = models.JSONField(default=dict)
+    reason = models.TextField()

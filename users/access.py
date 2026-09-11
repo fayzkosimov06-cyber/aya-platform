@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 STAFF_ONLY_ROLES = {'leader', 'worker', 'head_admin'}
-PRIVILEGED_ROLES = {'leader', 'moderator', 'president', 'worker', 'head_admin'}
+PRIVILEGED_ROLES = {'leader', 'president', 'worker', 'head_admin'}
 DIRECT_ACCESS_ROLES = {'leader', 'president', 'worker', 'head_admin'}
 
 
@@ -42,7 +42,7 @@ def can_register_for_events(user) -> bool:
 def can_see_event_catalog(user) -> bool:
     if not getattr(user, 'is_authenticated', False):
         return True
-    return not is_candidate_user(user)
+    return has_full_volunteer_access(user)
 
 
 def is_public_volunteer(user) -> bool:
@@ -55,3 +55,25 @@ def is_public_volunteer(user) -> bool:
 
 def is_worker_account(user) -> bool:
     return bool(getattr(user, 'role', None) in STAFF_ONLY_ROLES)
+
+
+def can_record_visits(user):
+    return bool(getattr(user, 'is_authenticated', False) and (getattr(user, 'is_superuser', False) or getattr(user, 'role', None) in DIRECT_ACCESS_ROLES | {'moderator'}))
+
+
+def can_manage_members(user):
+    return is_privileged_user(user)
+
+
+def can_manage_event(user, event):
+    if not getattr(user, 'is_authenticated', False):
+        return False
+    if getattr(user, 'is_superuser', False):
+        return True
+    if user.role == 'moderator' or not has_full_volunteer_access(user):
+        return False
+    return user.role in DIRECT_ACCESS_ROLES or user.pk == event.organizer_id
+
+
+def can_create_event(user):
+    return has_full_volunteer_access(user) and (getattr(user, 'is_superuser', False) or user.role != 'moderator')

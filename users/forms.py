@@ -75,6 +75,13 @@ class UserUpdateForm(forms.ModelForm):
         }
 
 class AdminUpdateForm(forms.ModelForm):
+    def __init__(self, *args, actor=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if actor is not None and not actor.is_superuser:
+            from .views import get_user_power_level
+            from types import SimpleNamespace
+            self.fields['role'].choices = [(role, label) for role, label in User.ROLE_CHOICES if get_user_power_level(SimpleNamespace(is_authenticated=True, is_superuser=False, role=role)) < get_user_power_level(actor)]
+
     """
     Форма для АДМИНА/МОДЕРАТОРА.
     Видит всё, но НЕ трогает настройки приватности пользователя.
@@ -120,8 +127,8 @@ class ActivityPeriodForm(forms.ModelForm):
         model = ActivityPeriod
         fields = ['start_date', 'end_date', 'description']
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'start_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Напр.: Активный волонтёр, Координатор, перерыв из-за учёбы...'}),
         }
 
