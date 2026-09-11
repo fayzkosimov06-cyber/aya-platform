@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{% static 'css/admin_v2.css' %}?v=1">
 {% endblock %}
 
+{% block body_class %}aya-unified{% endblock %}
 {% block content %}
 <div class="adm-page">
   <div class="container py-5" style="padding-top: 60px;">
@@ -26,7 +27,7 @@
     <div class="row g-4 mb-5 fade-in-up" style="animation-delay: 0.1s;">
         <div class="col-xl col-lg-4 col-md-6">
             <div class="card border-0 shadow-sm h-100 overflow-hidden text-white hover-lift" 
-                 style="border-radius: 25px; background: linear-gradient(135deg, #0E3644, #2b5876);">
+                 style="border-radius: 25px; background: linear-gradient(135deg, #087cdd, #00a5e8);">
                 <div class="card-body p-4 position-relative">
                     <h3 class="display-5 fw-bold mb-0">{{ total_users }}</h3>
                     <p class="mb-0 opacity-75">Всего волонтеров</p>

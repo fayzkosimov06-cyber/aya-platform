@@ -3,8 +3,9 @@
 
 {% block title %}Управление пользователями{% endblock %}
 
+{% block body_class %}aya-unified{% endblock %}
 {% block content %}
-</div>
+
 
 <div class="container py-5" style="padding-top: 60px;">
     
@@ -23,7 +24,7 @@
                         <span class="input-group-text bg-light border-0 ps-3 rounded-start-pill"><i class="fas fa-search text-muted"></i></span>
                         <input type="text" name="search" class="form-control form-control-lg bg-light border-0 rounded-end-pill ps-2" 
        placeholder="Поиск по имени или логину..." 
-       value="{{ search_query|default:'' }}"> ```
+       value="{{ search_query|default:'' }}">
                     </div>
                 </div>
                 <div class="col-md-4">

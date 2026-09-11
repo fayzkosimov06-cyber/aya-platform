@@ -3,17 +3,16 @@
 
 {% block title %}Мероприятия - AYA{% endblock %}
 
+{% block body_class %}aya-unified{% endblock %}
 {% block content %}
 
-<div class="snow-container">
-    <div class="snow"></div><div class="snow"></div><div class="snow"></div>
-</div>
+
 
 <div class="container py-5" style="padding-top: 60px;">
     
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 fade-in-up">
-        <div class="mb-3 mb-md-0">
-            <h1 class="display-5 fw-bolder mb-1 text-dark">Афиша событий</h1>
+        <div class="mb-3 mb-md-0"><p class="aya-kicker">ВСТРЕЧИ И ВОЗМОЖНОСТИ</p>
+            <h1 class="display-5 fw-bolder mb-1 text-dark">Мероприятия</h1>
             <p class="text-muted mb-0 lead">Присоединяйся, развивайся, действуй.</p>
         </div>
         {% if can_create_event %}
@@ -164,9 +163,9 @@
     }
 
     .custom-tab.active {
-        background-color: #0E3644 !important; /* Темно-синий для активной */
+        background-color: #087cdd !important; /* Темно-синий для активной */
         color: #fff !important; /* Белый текст для активной */
-        border-color: #0E3644 !important;
+        border-color: #087cdd !important;
     }
 
     .custom-tab:hover:not(.active) {

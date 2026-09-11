@@ -3,29 +3,16 @@
 
 {% block title %}Администрация - AYA{% endblock %}
 
+{% block body_class %}aya-unified{% endblock %}
 {% block content %}
-</div>
 
-<div class="position-relative bg-primary overflow-hidden" 
-     style="background: linear-gradient(135deg, #0E3644 0%, #1a5c70 100%); padding-top: 80px; padding-bottom: 140px;">
-    
-    <div style="position: absolute; top: -50px; right: -50px; width: 300px; height: 300px; border-radius: 50%; background: rgba(255,255,255,0.05);"></div>
-    <div style="position: absolute; bottom: 20px; left: 10%; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03);"></div>
-    
-    <div class="container position-relative z-2 text-center text-white">
-        <span class="badge bg-warning text-dark mb-3 px-3 py-2 rounded-pill text-uppercase fw-bold ls-1">Команда управления</span>
-        <h1 class="display-4 fw-bolder mb-3">Администрация Отдела</h1>
-        <p class="lead text-white-50 mx-auto" style="max-width: 600px;">
-            Профессионалы, которые координируют работу и ведут движение AYA вперед.
-        </p>
-    </div>
-</div>
 
+<header class="aya-directory-heading"><div class="container"><p class="aya-kicker">КОМАНДА УПРАВЛЕНИЯ</p><h1>Администрация AYA</h1><p>Люди, которые помогают воплощать инициативы и развивать ассоциацию.</p></div></header>
 <div class="container pb-5">
     
     {% if head_admin %}
     <div class="card border-0 shadow-lg mb-5 overflow-hidden fade-in-up" 
-         style="border-radius: 20px; margin-top: -100px; position: relative; z-index: 10; min-height: 400px;">
+         style="border-radius: 20px; margin-top: 0; position: relative; z-index: 10; min-height: 400px;">
         
         <div class="row g-0 h-100">
             <div class="col-md-5 position-relative p-0" style="min-height: 400px;">
@@ -96,7 +83,7 @@
     <div class="mb-5 mt-5">
         <div class="text-center mb-5">
             <h3 class="fw-bold mb-2 text-dark">Сотрудники отдела</h3>
-            <div style="width: 60px; height: 4px; background-color: #00C4CC; margin: 0 auto; border-radius: 2px;"></div>
+            <div style="width: 60px; height: 4px; background-color: #00b1ed; margin: 0 auto; border-radius: 2px;"></div>
             <p class="text-muted mt-2">Наша надежная команда</p>
         </div>
         

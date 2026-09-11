@@ -3,34 +3,18 @@
 
 {% block title %}Наши Волонтеры - AYA{% endblock %}
 
+{% block body_class %}aya-unified{% endblock %}
 {% block content %}
-</div>
+
 
 <div class="container py-5" style="padding-top: 40px;">
     
-    <div class="text-center mb-5 fade-in-up">
-        <div class="d-inline-flex align-items-center bg-white border px-3 py-1 mb-3 rounded-pill shadow-sm">
-            <span class="badge bg-primary rounded-circle p-1 me-2"> </span>
-            <span class="fw-bold small text-uppercase text-dark ls-1">Команда AYA TGMU</span>
-        </div>
-        <p><a class="btn btn-outline-primary" href="{% url 'volunteer_rating' %}"><i class="fas fa-trophy" aria-hidden="true"></i> Рейтинг волонтёров</a></p>
-        <h1 class="display-4 fw-bolder mb-3 text-dark">
-            База данных <span class="text-gradient">Волонтеров</span>
-        </h1>
-        <p class="lead text-muted mx-auto" style="max-width: 600px;">
-            Люди, которые меняют мир. Найди своих единомышленников.
-            <br>
-            <span class="badge bg-light text-dark border mt-2 px-3 py-2 rounded-pill">
-                Найдено анкет: <b>{{ volunteers_count }}</b>
-            </span>
-        </p>
-    </div>
-
+    <header class="aya-page-heading"><div><p class="aya-kicker">КОМАНДА AYA</p><h1>Наши волонтёры</h1><p>Знакомьтесь с участниками и находите единомышленников.</p></div><a class="btn btn-outline-primary" href="{% url 'volunteer_rating' %}"><i class="fas fa-trophy me-2" aria-hidden="true"></i>Рейтинг волонтёров</a></header>
     <div class="card border-0 shadow-lg mb-5 filter-card fade-in-up" style="border-radius: 25px; overflow: hidden; z-index: 10; position: relative;">
-        <div style="height: 6px; background: linear-gradient(90deg, #0E3644, #00C4CC);"></div>
+        <div style="height: 6px; background: linear-gradient(90deg, #087cdd, #00b1ed);"></div>
         
         <div class="card-body p-4 p-lg-5 bg-white">
-            <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-filter me-2 text-primary"></i>Поиск и Фильтрация</h5>
+            <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-filter me-2 text-primary"></i>Найти волонтёра</h5>
             
             <form method="GET" action="{% url 'volunteer_list' %}">
                 <div class="row g-3">

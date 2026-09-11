@@ -4,76 +4,17 @@
 {% block title %}Вход - AYA{% endblock %}
 
 {% block extra_css %}
-<style>
-    /* Отключаем стандартный навбар и футер, так как у нас свой фон */
-    .navbar, .footer { display: none !important; }
-    
-    body {
-        /* Темный градиент как на главной */
-        background: linear-gradient(135deg, #0E3644 0%, #1a5c70 100%);
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Inter', sans-serif; /* Или ваш шрифт */
-        overflow-x: hidden;
-    }
 
-    /* Контейнер для снега (копия с главной) */
-
-    .brand-logo {
-        color: #0E3644;
-        font-weight: 800;
-        font-size: 2rem;
-        margin-bottom: 5px;
-        letter-spacing: 1px;
-    }
-    
-    .form-control {
-        border-radius: 50px; /* Скругленные поля */
-        padding: 12px 20px;
-        border: 1px solid #e0e0e0;
-        background: #f8f9fa;
-        transition: all 0.3s;
-    }
-    .form-control:focus {
-        background: #fff;
-        border-color: #00C4CC;
-        box-shadow: 0 0 0 4px rgba(0, 196, 204, 0.1);
-    }
-    
-    .btn-primary {
-        background: #00C4CC; /* Цвет акцента с главной */
-        border: none;
-        border-radius: 50px;
-        padding: 12px;
-        font-weight: bold;
-        transition: transform 0.2s;
-    }
-    .btn-primary:hover {
-        background: #00b0b8;
-        transform: translateY(-2px);
-    }
-    
-    .auth-link {
-        color: #0E3644;
-        text-decoration: none;
-        font-weight: 600;
-        transition: color 0.2s;
-    }
-    .auth-link:hover { color: #00C4CC; }
-
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-</style>
 {% endblock %}
 
+{% block body_class %}aya-unified aya-auth{% endblock %}
 {% block content %}
-</div>
+
 
 <div class="container d-flex justify-content-center">
     <div class="auth-card text-center">
         <div class="mb-4">
-            <h1 class="brand-logo">AYA</h1>
+            <img src="{% static 'img/aya-logo-2026.png' %}" class="auth-logo" alt="AYA" width="90" height="80">
             <p class="text-muted small text-uppercase fw-bold ls-1">Волонтерское движение</p>
         </div>
 
