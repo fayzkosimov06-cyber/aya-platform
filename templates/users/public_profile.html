@@ -18,9 +18,9 @@
                      /* ЛОГИКА ЦВЕТОВ (Используем переменную user, так как это public_profile) */
                      {% if user.role == 'president' %}
                         background: conic-gradient(from var(--angle), #FFD700, #FCE686, #FFD700); --glow-rgb: 255, 215, 0;
-                     {% elif user.role == 'leader' and user.school_leader_of.exists %}
+                     {% elif user.directions_led.exists and user.school_leader_of.exists %}
                         background: conic-gradient(from var(--angle), #9400D3, #00CED1, #9400D3); --glow-rgb: 148, 0, 211;
-                     {% elif user.role == 'leader' %}
+                     {% elif user.directions_led.exists %}
                         background: conic-gradient(from var(--angle), #9400D3, #BA55D3, #9400D3); --glow-rgb: 148, 0, 211;
                      {% elif user.school_leader_of.exists %}
                         background: conic-gradient(from var(--angle), #00CED1, #40E0D0, #00CED1); --glow-rgb: 0, 206, 209;

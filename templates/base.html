@@ -23,12 +23,13 @@
         .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
     </style>
     <link rel="stylesheet" href="{% static 'css/aya-unified.css' %}?v=9">
+<link rel="stylesheet" href="{% static 'css/aya-polish.css' %}?v=10">
 </head>
 <body class="aya-site {% block body_class %}{% endblock %}">
 {% get_site_stats as site_stats %}
 
     
-    <nav class="navbar navbar-expand-xl navbar-light sticky-top main-navbar">
+    <nav class="navbar navbar-expand-xxl navbar-light sticky-top main-navbar">
         <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">
                 <img src="{% static 'img/aya-logo-2026.png' %}" alt="AYA" width="76" height="64"><span class="aya-brand-text">ASSOCIATION OF<br>YOUTH ATSMU</span>
@@ -41,6 +42,7 @@
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'home' %} active{% endif %}" href="{% url 'home' %}"{% if request.resolver_match.url_name == 'home' %} aria-current="page"{% endif %}>Главная</a></li>
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'event_list' %} active{% endif %}" href="{% url 'event_list' %}"{% if request.resolver_match.url_name == 'event_list' %} aria-current="page"{% endif %}>Мероприятия</a></li>
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'volunteer_list' %} active{% endif %}" href="{% url 'volunteer_list' %}"{% if request.resolver_match.url_name == 'volunteer_list' %} aria-current="page"{% endif %}>Волонтёры</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'unit_catalog' %}">Направления</a></li><li class="nav-item"><a class="nav-link" href="{% url 'school_catalog' %}">Школы</a></li>
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'volunteer_rating' %} active{% endif %}" href="{% url 'volunteer_rating' %}"{% if request.resolver_match.url_name == 'volunteer_rating' %} aria-current="page"{% endif %}>Рейтинг</a></li>
 {% if can_award_points %}<li class="nav-item"><a class="nav-link" href="{% url 'points_works' %}">Баллы</a></li>{% endif %}
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'administration_page' %} active{% endif %}" href="{% url 'administration_page' %}"{% if request.resolver_match.url_name == 'administration_page' %} aria-current="page"{% endif %}>Администрация</a></li>

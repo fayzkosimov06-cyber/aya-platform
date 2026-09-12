@@ -51,7 +51,7 @@
                     <tbody class="border-top-0">
                     {% for school in schools %}
                         <tr>
-                            <td class="ps-4 fw-bold text-dark fs-5">{{ school.name }}</td>
+                            <td class="ps-4 fw-bold text-dark fs-5">{{ school.name }} <a class="small" href="{% url 'school_detail' school.pk %}">Страница →</a></td>
                             <td>
                                 <div class="d-flex align-items-center">
                                 {% for leader in school.leaders.all %}

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}{% load static %}
 {% block title %}Фотографии и цитаты — AYA{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/home-editor.css' %}?v=3">{% endblock %}
-{% block content %}<div class="container home-editor py-4">
+{% block body_class %}aya-unified aya-editor{% endblock %}{% block content %}<div class="container home-editor py-4">
 <header class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div><h1 class="h3 mb-1">Главная страница</h1><p class="text-muted mb-0">Фотографии команды и слова людей, которые вдохновляют.</p></div><a class="btn btn-outline-primary" href="{% url 'home' %}">Посмотреть главную →</a></header>
 <nav class="editor-tabs mb-4" aria-label="Разделы редактора"><a href="#photos">Фотографии</a><a href="#quotes">Цитаты</a><a href="{% url 'admin_about_manage' %}">Числа и контакты</a></nav>
 <section id="photos" class="editor-panel"><h2 class="h4">Фотографии верхнего блока</h2><p class="text-muted">Смена каждые 7 секунд. Стрелками ↑ ↓ задайте порядок. Лучше подходят горизонтальные фотографии.</p>

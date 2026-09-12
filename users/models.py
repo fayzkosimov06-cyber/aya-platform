@@ -7,6 +7,13 @@ from django.utils import timezone
 import qrcode
 
 class Direction(models.Model):
+    intro = models.CharField('Коротко о направлении', max_length=240, blank=True)
+    description = models.TextField('О направлении', blank=True)
+    cover = models.ImageField('Обложка', upload_to='directions/', blank=True)
+    featured_only = models.BooleanField('Показывать активную команду', default=False)
+    featured_members = models.ManyToManyField('User', blank=True, related_name='featured_in_directions')
+    events = models.ManyToManyField('events.Event', blank=True, related_name='aya_directions')
+
     name = models.CharField(max_length=100, unique=True, verbose_name="Название направления")
     leaders = models.ManyToManyField(
         'User',
@@ -17,17 +24,24 @@ class Direction(models.Model):
     def __str__(self): return self.name
 
 class School(models.Model):
+    active = models.BooleanField('Занятия проводятся', default=True)
+    direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.SET_NULL, related_name='schools', verbose_name='Направление')
+    intro = models.CharField('Коротко о школе', max_length=240, blank=True)
+    description = models.TextField('О школе', blank=True)
+    cover = models.ImageField('Обложка', upload_to='schools/', blank=True)
+    members = models.ManyToManyField('User', blank=True, related_name='aya_schools', verbose_name='Участники школы')
+    events = models.ManyToManyField('events.Event', blank=True, related_name='aya_schools')
+
     name = models.CharField(max_length=100, unique=True, verbose_name="Название школы")
     def __str__(self): return self.name
 
 class User(AbstractUser):
     ROLE_CHOICES = (
         ('volunteer', 'Волонтер'),
-        ('leader', 'Руководитель направления'),
         ('moderator', 'Модератор'),
         ('president', 'Президент Ассоциации'),
         ('worker', 'Работник (Админ)'),
-        ('head_admin', 'Руководитель отдела'),
+        ('head_admin', 'Начальник отдела'),
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='volunteer', verbose_name="Роль в системе")
     is_approved = models.BooleanField(default=False, verbose_name="Профиль одобрен")
@@ -97,7 +111,12 @@ class User(AbstractUser):
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, verbose_name="QR-код")
 
     def get_full_name(self): return f"{self.last_name} {self.first_name} {self.patronymic}".strip()
-    def get_role_display_custom(self): return dict(self.ROLE_CHOICES).get(self.role, self.role.capitalize())
+    def get_role_display_custom(self):
+        if self.is_superuser: return 'Суперадминистратор'
+        if self.role in {'volunteer','leader'} and self.pk:
+            if self.directions_led.exists(): return 'Руководитель направления'
+            if self.school_leader_of.exists(): return 'Учитель школы'
+        return dict(self.ROLE_CHOICES).get(self.role,self.role.capitalize())
     
     def save(self, *args, **kwargs):
         from django.urls import reverse
@@ -362,6 +381,9 @@ class ContributionKind(models.Model):
 
 
 class ContributionWork(models.Model):
+    direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.SET_NULL, related_name='point_works', verbose_name='Направление')
+    school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL, related_name='point_works', verbose_name='Школа')
+
     submission = models.UUIDField(null=True, blank=True, unique=True)
     title = models.CharField('Название работы', max_length=200)
     date = models.DateField('Дата выполненной работы')
@@ -398,3 +420,46 @@ class ContributionChange(models.Model):
     before = models.JSONField(default=dict)
     after = models.JSONField(default=dict)
     reason = models.TextField()
+
+
+class SchoolTeacher(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='teachers')
+    member = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Профиль на сайте')
+    name = models.CharField('Имя преподавателя', max_length=200)
+    subject = models.CharField('Предмет / специализация', max_length=200, blank=True)
+    bio = models.TextField('О преподавателе', blank=True)
+    photo = models.ImageField('Фотография', upload_to='teachers/', blank=True)
+
+    def __str__(self): return self.name
+
+
+class SchoolLesson(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='lessons')
+    topic = models.CharField('Тема занятия', max_length=240)
+    starts_at = models.DateTimeField('Начало занятия')
+    ends_at = models.DateTimeField('Окончание занятия')
+    location = models.CharField('Место / кабинет', max_length=240, blank=True)
+    description = models.TextField('Описание', blank=True)
+    teachers = models.ManyToManyField(SchoolTeacher, blank=True, related_name='lessons', verbose_name='Преподаватели')
+    cancelled = models.BooleanField('Занятие отменено', default=False)
+
+    class Meta:
+        ordering = ['starts_at', 'pk']
+
+    def __str__(self): return self.topic
+
+
+class PointProposal(models.Model):
+    direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.SET_NULL)
+    school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL)
+    author = models.ForeignKey(User, on_delete=models.PROTECT, related_name='point_proposals')
+    title = models.CharField('За какую помощь', max_length=200)
+    date = models.DateField('Дата помощи')
+    description = models.TextField('Описание помощи', blank=True)
+    volunteers = models.ManyToManyField(User, related_name='proposed_awards')
+    status = models.CharField(max_length=12, default='pending', choices=[('pending','На рассмотрении'),('approved','Подтверждено'),('rejected','Отклонено')])
+    reviewer = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='reviewed_proposals')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_note = models.TextField(blank=True)
+    work = models.OneToOneField(ContributionWork, null=True, blank=True, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)

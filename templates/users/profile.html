@@ -24,9 +24,9 @@
                              /* ЛОГИКА ЦВЕТОВ РАМКИ */
                              {% if profile_user.role == 'president' %}
                                 background: conic-gradient(from var(--angle), #FFD700, #FCE686, #FFD700); --glow-rgb: 255, 215, 0;
-                             {% elif profile_user.role == 'leader' and profile_user.school_leader_of.exists %}
+                             {% elif profile_user.directions_led.exists and profile_user.school_leader_of.exists %}
                                 background: conic-gradient(from var(--angle), #9400D3, #00CED1, #9400D3); --glow-rgb: 148, 0, 211;
-                             {% elif profile_user.role == 'leader' %}
+                             {% elif profile_user.directions_led.exists %}
                                 background: conic-gradient(from var(--angle), #9400D3, #BA55D3, #9400D3); --glow-rgb: 148, 0, 211;
                              {% elif profile_user.school_leader_of.exists %}
                                 background: conic-gradient(from var(--angle), #00CED1, #40E0D0, #00CED1); --glow-rgb: 0, 206, 209;
@@ -55,11 +55,11 @@
                     
                     <p class="fw-bold fs-5 mb-4
                         {% if profile_user.role == 'president' %}text-warning
-                        {% elif profile_user.role == 'leader' %}text-purple
+                        {% elif profile_user.directions_led.exists %}text-purple
                         {% elif profile_user.school_leader_of.exists %}text-info
                         {% elif profile_user.is_active_volunteer_title %}text-success
                         {% else %}text-muted{% endif %}">
-                        {% if profile_user.role == 'leader' and profile_user.led_direction %}
+                        {% if profile_user.directions_led.exists and profile_user.led_direction %}
                             Руководитель "{{ profile_user.led_direction.name }}"
                         {% else %}
                             {{ profile_user.get_role_display_custom }}
@@ -79,7 +79,8 @@
                         {% endfor %}
                     </div>
 
-                    <div class="d-grid gap-2 pt-3">
+                    <div class="d-flex flex-wrap justify-content-center gap-2 my-3">{% for direction in profile_user.directions.all %}<a class="badge bg-light text-primary border text-decoration-none" href="{% url 'direction_detail' direction.pk %}">{{ direction.name }}</a>{% endfor %}{% for school in profile_user.aya_schools.all %}<a class="badge bg-light text-primary border text-decoration-none" href="{% url 'school_detail' school.pk %}"><i class="fas fa-graduation-cap" aria-hidden="true"></i> {{ school.name }}</a>{% endfor %}</div>
+<div class="d-grid gap-2 pt-3">
                         {% if request.user == profile_user %}
                             <a href="{% url 'profile_edit' %}" class="btn btn-primary rounded-pill fw-bold py-3 shadow-sm fs-5 hover-lift">
                                 <i class="fas fa-edit me-2"></i> Редактировать профиль

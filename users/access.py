@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-STAFF_ONLY_ROLES = {'leader', 'worker', 'head_admin'}
-PRIVILEGED_ROLES = {'leader', 'president', 'worker', 'head_admin'}
-DIRECT_ACCESS_ROLES = {'leader', 'president', 'worker', 'head_admin'}
+STAFF_ONLY_ROLES = {'worker', 'head_admin'}
+PRIVILEGED_ROLES = {'president', 'worker', 'head_admin'}
+DIRECT_ACCESS_ROLES = {'president', 'worker', 'head_admin'}
 
 
 def is_privileged_user(user) -> bool:

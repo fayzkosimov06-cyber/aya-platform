@@ -139,7 +139,7 @@ class AdmissionAndEventTests(TestCase):
     def test_registration_permissions(self):
         for role in ['volunteer','president','worker','leader','head_admin']:
             user=User.objects.create_user(username='role_'+role,role=role,is_approved=True)
-            self.assertEqual(can_register_for_events(user),role in ['volunteer','president'])
+            self.assertEqual(can_register_for_events(user),role in ['volunteer','president','leader'])
         for user in [self.pending,self.candidate,self.staff]:
             self.post('event_join',self.event,actor=user)
         self.assertEqual(self.event.participants.count(),0)

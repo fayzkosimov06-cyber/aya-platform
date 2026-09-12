@@ -51,7 +51,7 @@ class AboutEditorTests(TestCase):
         User.objects.create(username='root',is_superuser=True,is_approved=True,qr_code='unused.png')
         leader=User.objects.create(username='leader',role='leader',is_approved=True,qr_code='unused.png')
         leader.school_leader_of.add(School.objects.create(name='School A'),School.objects.create(name='School B'))
-        counts=actual_counts();self.assertEqual(counts['volunteers'],0);self.assertEqual(counts['workers'],1);self.assertEqual(counts['leaders'],1);self.assertEqual(counts['school_leaders'],1)
+        counts=actual_counts();self.assertEqual(counts['volunteers'],1);self.assertEqual(counts['workers'],1);self.assertEqual(counts['leaders'],0);self.assertEqual(counts['school_leaders'],1)
 
     def test_contact_policy_shared_and_hidden(self):
         self.post('contact',action='save',platform='telegram',url='@aya_private_test',label='Telegram')

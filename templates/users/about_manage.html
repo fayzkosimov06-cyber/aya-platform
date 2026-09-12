@@ -1,7 +1,7 @@
 {% extends 'base.html' %}{% load static %}
 {% block title %}Редактор «О нас» — AYA{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/home-editor.css' %}?v=4"><link rel="stylesheet" href="{% static 'css/about-clean.css' %}?v=4">{% endblock %}
-{% block content %}<div class="container home-editor py-4">
+{% block body_class %}aya-unified aya-editor{% endblock %}{% block content %}<div class="container home-editor py-4">
 <header class="d-flex flex-wrap justify-content-between gap-3 align-items-center mb-4"><div><h1 class="h3 mb-1">Редактор «О нас»</h1><p class="text-muted mb-0">Тексты, блоки, числа и контакты ассоциации.</p></div><a class="btn btn-outline-primary" href="{% url 'about_page' %}">Посмотреть страницу →</a></header>
 <nav class="editor-tabs"><a href="{% url 'about_manage' %}#edit">Основная информация</a>{% for section in sections %}<a href="#{{ section.key }}">{{ section.title }}</a>{% endfor %}</nav>
 <section class="editor-panel mt-4" id="edit"><div class="d-flex justify-content-between gap-3"><h2 class="h4">{{ form_title }}{% if kind != 'main' %} · {% if is_editing %}редактирование{% else %}новая запись{% endif %}{% endif %}</h2><a href="{% url 'about_page' %}">На страницу</a></div>

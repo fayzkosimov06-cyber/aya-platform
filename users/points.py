@@ -4,16 +4,16 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from .access import has_full_volunteer_access, STAFF_ONLY_ROLES
-from .models import User, ContributionKind, ContributionWork, ContributionAward, ContributionChange
+from .models import User, ContributionKind, ContributionWork, ContributionAward, ContributionChange, Direction, School
 
 
 def can_award(user):
-    return has_full_volunteer_access(user) and (user.is_superuser or user.role in {'leader','worker','head_admin','president'})
+    return has_full_volunteer_access(user) and (user.is_superuser or user.role in {'worker','head_admin','president'})
 
 
 def members():
@@ -64,8 +64,10 @@ def points_rating(request):
     for i,row in enumerate(rows,1):
         if row['points']!=last: place=i
         row['place']=place;last=row['points']
+    work_counts=dict(qs.values('member_id').annotate(n=Count('work_id',distinct=True)).values_list('member_id','n'))
+    for row in rows: row['works']=work_counts.get(row['member'].pk,0)
     page=Paginator(rows,30).get_page(request.GET.get('page'))
-    return render(request,'users/points_rating.html',{**info,'rows':page,'leaders':[r for r in rows if r['place']<=3] if page.number==1 else [],'can_award_points':can_award(request.user)})
+    return render(request,'users/points_rating.html',{**info,'ranked_count':len(rows),'awarded_points':sum(r['points'] for r in rows),'my_rank':next((r for r in rows if r['member'].pk==request.user.pk),None),'rows':page,'leaders':[r for r in rows if r['place']<=3] if page.number==1 else [],'can_award_points':can_award(request.user)})
 
 
 class KindForm(forms.ModelForm):
@@ -116,7 +118,12 @@ def work_list(request):
         if existing:return redirect('points_work',pk=existing.pk)
     form=WorkForm(request.POST or None,initial={'title':event.title if event else '', 'date':timezone.localdate(event.end_time) if event else timezone.localdate()})
     if request.method=='POST' and form.is_valid():
-        work=form.save(commit=False);work.created_by=request.user;work.event=event;work.save()
+        work=form.save(commit=False);work.created_by=request.user;work.event=event
+        if event:
+            if event.aya_schools.count()==1:
+                work.school=event.aya_schools.first();work.direction=work.school.direction
+            elif event.aya_directions.count()==1: work.direction=event.aya_directions.first()
+        work.save()
         return redirect('points_work',pk=work.pk)
     works=ContributionWork.objects.all()
     q=request.GET.get('q','').strip()
@@ -178,6 +185,8 @@ def kinds(request):
 
 
 class QuickAwardForm(forms.Form):
+    direction=forms.ModelChoiceField(queryset=Direction.objects.all(),required=False,label='Направление')
+    school=forms.ModelChoiceField(queryset=School.objects.all(),required=False,label='Школа')
     work=forms.ModelChoiceField(queryset=ContributionWork.objects.all(),required=False,label='Продолжить существующую работу')
     title=forms.CharField(max_length=200,required=False,label='За что начисляем')
     date=forms.DateField(label='Дата помощи',widget=forms.DateInput(format='%Y-%m-%d',attrs={'type':'date'}))
@@ -192,6 +201,10 @@ class QuickAwardForm(forms.Form):
         if not data.get('work') and not data.get('title'):self.add_error('title','Напишите, за какую помощь начисляются баллы.')
         if data.get('date') and data['date']>timezone.localdate():self.add_error('date','Выберите сегодняшнюю или прошедшую дату.')
         work=data.get('work')
+        direction=data.get('direction');school=data.get('school')
+        if not work:
+            if school and direction and school.direction_id!=direction.pk:self.add_error('school','Школа должна относиться к выбранному направлению.')
+            if school and not direction:data['direction']=school.direction
         if work and work.event_id and data.get('volunteers'):
             allowed=set(work.event.participants.values_list('pk',flat=True))
             if any(m.pk not in allowed for m in data['volunteers']):self.add_error('volunteers','Для этой работы выберите только зарегистрированных участников мероприятия.')
@@ -204,6 +217,8 @@ def quick_award(request):
     import uuid
     if not can_award(request.user):return HttpResponseForbidden('Нет доступа к начислениям.')
     initial={'date':timezone.localdate(),'token':uuid.uuid4()}
+    for key,model in [('direction',Direction),('school',School)]:
+        if request.GET.get(key,'').isdigit():initial[key]=get_object_or_404(model,pk=request.GET[key]).pk
     if request.GET.get('member','').isdigit():initial['volunteers']=[int(request.GET['member'])]
     if request.GET.get('work','').isdigit():
         work=get_object_or_404(ContributionWork,pk=request.GET['work'])
@@ -213,7 +228,7 @@ def quick_award(request):
         data=form.cleaned_data
         work=data.get('work')
         if work is None:
-            work,_=ContributionWork.objects.get_or_create(submission=data['token'],defaults={'title':data['title'],'date':data['date'],'description':data['comment'],'created_by':request.user})
+            work,_=ContributionWork.objects.get_or_create(submission=data['token'],defaults={'title':data['title'],'date':data['date'],'description':data['comment'],'created_by':request.user,'direction':data.get('direction'),'school':data.get('school')})
         kind=data.get('kind')
         if kind is None:
             kind,_=ContributionKind.objects.get_or_create(name='Помощь — прямое начисление',defaults={'points':1,'active':False})
@@ -226,4 +241,11 @@ def quick_award(request):
         else:messages.info(request,'Эти начисления уже существуют. Баллы не продублированы. Для изменения откройте запись ниже.')
         return redirect('points_work',pk=work.pk)
     selected={str(v) for v in (request.POST.getlist('volunteers') if request.method=='POST' else initial.get('volunteers',[]))}
-    return render(request,'users/points_quick.html',{'form':form,'people':members().order_by('last_name','first_name'),'selected':selected,'rules':list(ContributionKind.objects.filter(active=True).values('id','points'))})
+    people=members()
+    scope=request.POST if request.method=='POST' else initial
+    team_ids=[]
+    if str(scope.get('school','')).isdigit(): team_ids=list(people.filter(aya_schools=scope['school']).values_list('pk',flat=True))
+    elif str(scope.get('direction','')).isdigit(): team_ids=list(people.filter(directions=scope['direction']).values_list('pk',flat=True))
+    people=list(people.order_by('last_name','first_name'))
+    people.sort(key=lambda person: person.pk not in team_ids)
+    return render(request,'users/points_quick.html',{'form':form,'people':people,'team_ids':team_ids,'selected':selected,'rules':list(ContributionKind.objects.filter(active=True).values('id','points'))})

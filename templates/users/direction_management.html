@@ -51,7 +51,7 @@
                     <tbody class="border-top-0">
                     {% for direction in directions %}
                         <tr>
-                            <td class="ps-4 fw-bold text-dark fs-5">{{ direction.name }}</td>
+                            <td class="ps-4 fw-bold text-dark fs-5">{{ direction.name }} <a class="small" href="{% url 'direction_detail' direction.pk %}">Страница →</a></td>
                             <td>
                                 <div class="d-flex align-items-center">
                                 {% for leader in direction.leaders.all %}

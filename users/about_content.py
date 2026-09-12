@@ -11,7 +11,7 @@ def actual_counts():
         'volunteers':volunteers.count(),
         'active':volunteers.filter(is_active_volunteer_title=True).count(),
         'workers':people.filter(role__in=['worker','head_admin']).count(),
-        'leaders':people.filter(role='leader').count(),
+        'leaders':people.filter(directions_led__isnull=False).distinct().count(),
         'school_leaders':people.filter(school_leader_of__isnull=False).distinct().count(),
         'schools':School.objects.count(), 'directions':Direction.objects.count(),
         'events':Event.objects.filter(is_approved=True).count(),

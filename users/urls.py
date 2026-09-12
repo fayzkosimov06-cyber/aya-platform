@@ -5,10 +5,28 @@ from . import views
 from . import about_views
 from .home_views import home_manage_view
 from .points import points_rating as rating_view
-from . import points
+from . import points, units, proposals
 
 
 urlpatterns = [
+    path('schools/', units.catalog, {'kind':'school'}, name='school_catalog'),
+    path('schools/new/', units.create, {'kind':'school'}, name='school_create_page'),
+    path('directions/new/', units.create, name='direction_create_page'),
+    path('schools/<int:pk>/delete/', units.delete, {'kind':'school'}, name='school_delete_page'),
+    path('directions/<int:pk>/delete/', units.delete, name='direction_delete_page'),
+    path('schools/<int:pk>/suggest-points/', proposals.suggest, {'kind':'school'}, name='school_suggest'),
+    path('directions/<int:pk>/suggest-points/', proposals.suggest, name='direction_suggest'),
+    path('points/proposals/', proposals.listing, name='proposal_list'),
+    path('points/proposals/<int:pk>/', proposals.review, name='proposal_review'),
+    path('directions/', units.catalog, name='unit_catalog'),
+    path('directions/<int:pk>/', units.detail, name='direction_detail'),
+    path('directions/<int:pk>/edit/', units.edit, name='direction_edit'),
+    path('schools/<int:pk>/', units.detail, {'kind':'school'}, name='school_detail'),
+    path('schools/<int:pk>/edit/', units.edit, {'kind':'school'}, name='school_edit'),
+    path('schools/<int:pk>/teachers/new/', units.school_item, {'item_type':'teacher'}, name='teacher_create'),
+    path('schools/<int:pk>/teachers/<int:item_id>/', units.school_item, {'item_type':'teacher'}, name='teacher_edit'),
+    path('schools/<int:pk>/lessons/new/', units.school_item, {'item_type':'lesson'}, name='lesson_create'),
+    path('schools/<int:pk>/lessons/<int:item_id>/', units.school_item, {'item_type':'lesson'}, name='lesson_edit'),
     path('points/new/', points.quick_award, name='points_quick'),
     path('points/works/', points.work_list, name='points_works'),
     path('points/works/<int:pk>/', points.work_detail, name='points_work'),

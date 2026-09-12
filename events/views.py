@@ -146,7 +146,7 @@ def event_report_edit_view(request, pk):
         # Редактировать можно: автор оценки, супер-админ, или "рабочие" админы
         if not (
             request.user.is_superuser
-            or request.user.role in ['leader', 'head_admin', 'worker']
+            or request.user.role in ['president', 'head_admin', 'worker']
             or editing_evaluation.evaluator_id == request.user.id
         ):
             messages.error(request, "У вас нет прав редактировать эту оценку.")

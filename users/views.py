@@ -109,24 +109,24 @@ def can_view_field(viewer, target_user, privacy_setting):
 # --- Проверка прав доступа к админ-функциям ---
 def is_moderator_or_higher(user):
     return user.is_authenticated and (
-        user.role in ['leader', 'moderator', 'president', 'worker', 'head_admin'] or user.is_superuser
+        user.role in ['moderator', 'president', 'worker', 'head_admin'] or user.is_superuser
     )
 
 def is_admin_or_higher(user):
     return user.is_authenticated and (
-        user.role in ['leader', 'president', 'worker', 'head_admin'] or user.is_superuser
+        user.role in ['president', 'worker', 'head_admin'] or user.is_superuser
     )
 
 def can_edit_activity_periods(user):
     """Кто может заполнять/редактировать историю активности волонтёров."""
-    return user.is_authenticated and (user.is_superuser or user.role in ['leader', 'worker', 'head_admin'])
+    return user.is_authenticated and (user.is_superuser or user.role in ['worker', 'head_admin', 'president'])
 
 
 
 def get_user_power_level(user):
     """Числовой уровень прав/иерархии (для сравнения доступа).
 
-    ВАЖНО: Руководитель направления (leader) выше всех; работники/админы выше президента.
+    ВАЖНО: Назначения руководителей направлений не дают глобальных прав.
     """
     if not user or not getattr(user, 'is_authenticated', False):
         return 0
@@ -134,7 +134,7 @@ def get_user_power_level(user):
         return 1000
 
     levels = {
-        'leader': 90,
+        'leader': 20,
         'head_admin': 80,
         'worker': 70,
         'president': 60,
@@ -260,10 +260,10 @@ def about_view(request):
 
 def volunteer_list_view(request):
     queryset = User.objects.filter(is_approved=True).exclude(is_superuser=True).exclude(
-        role__in=['worker', 'head_admin', 'leader']
+        role__in=['worker', 'head_admin']
     ).order_by('last_name', 'first_name')
 
-    base_visible_users = User.objects.filter(is_approved=True).exclude(is_superuser=True).exclude(role__in=['worker', 'head_admin', 'leader'])
+    base_visible_users = User.objects.filter(is_approved=True).exclude(is_superuser=True).exclude(role__in=['worker', 'head_admin'])
     faculties = base_visible_users.exclude(faculty='').values_list('faculty', flat=True).distinct().order_by('faculty')
     courses = base_visible_users.exclude(course__isnull=True).values_list('course', flat=True).distinct().order_by('course')
     cities = base_visible_users.exclude(city='').values_list('city', flat=True).distinct().order_by('city')
@@ -303,7 +303,7 @@ def volunteer_list_view(request):
 
 def administration_page_view(request):
     head_admin = User.objects.filter(role='head_admin', is_approved=True).exclude(is_superuser=True).first()
-    workers = User.objects.filter(role__in=['worker', 'leader'], is_approved=True).exclude(is_superuser=True).order_by('last_name', 'first_name')
+    workers = User.objects.filter(role__in=['worker'], is_approved=True).exclude(is_superuser=True).order_by('last_name', 'first_name')
     return render(request, 'users/administration_page.html', {'head_admin': head_admin, 'workers': workers})
 
 
@@ -318,7 +318,7 @@ def signup_view(request):
             user.save()
             
             # Уведомления
-            staff = User.objects.filter(Q(role__in=['leader','moderator', 'worker', 'head_admin', 'president']) | Q(is_superuser=True)).distinct()
+            staff = User.objects.filter(Q(role__in=['moderator', 'worker', 'head_admin', 'president']) | Q(is_superuser=True)).distinct()
             for s in staff:
                 Notification.objects.create(
                     recipient=s, 
@@ -567,7 +567,7 @@ def moderator_dashboard_view(request):
         'candidates': candidates_qs,
         'can_manual_grant_access': can_grant_candidate_access(request.user),
         'can_review_candidates': can_manage_members(request.user),
-        'recently_approved': User.objects.filter(is_approved=True, is_superuser=False, volunteer_access_granted_at__gte=timezone.now() - timedelta(days=14)).exclude(role__in=['leader', 'worker', 'head_admin']).select_related('volunteer_access_granted_by').order_by('-volunteer_access_granted_at'),
+        'recently_approved': User.objects.filter(is_approved=True, is_superuser=False, volunteer_access_granted_at__gte=timezone.now() - timedelta(days=14)).exclude(role__in=['worker', 'head_admin']).select_related('volunteer_access_granted_by').order_by('-volunteer_access_granted_at'),
     })
 
 @login_required
@@ -617,13 +617,13 @@ def admin_dashboard_view(request):
     if not is_admin_or_higher(request.user):
         return redirect('home')
 
-    volunteers_qs = User.objects.filter(is_approved=True).exclude(is_superuser=True).exclude(role__in=['worker', 'head_admin', 'leader'])
-    workers_qs = User.objects.filter(is_approved=True, role__in=['worker', 'head_admin', 'leader']).exclude(is_superuser=True)
+    volunteers_qs = User.objects.filter(is_approved=True).exclude(is_superuser=True).exclude(role__in=['worker', 'head_admin'])
+    workers_qs = User.objects.filter(is_approved=True, role__in=['worker', 'head_admin']).exclude(is_superuser=True)
 
     context = {
         'total_users': volunteers_qs.count(),
         'active_count': volunteers_qs.filter(is_active_volunteer_title=True).count(),
-        'leaders_count': User.objects.filter(role='leader', is_approved=True).exclude(is_superuser=True).count(),
+        'leaders_count': User.objects.filter(directions_led__isnull=False, is_approved=True).distinct().exclude(is_superuser=True).count(),
         'school_leaders_count': User.objects.filter(school_leader_of__isnull=False, is_approved=True).exclude(is_superuser=True).distinct().count(),
         'workers_count': workers_qs.count(),
     }
@@ -687,9 +687,7 @@ def toggle_active_volunteer_view(request, pk):
 @login_required
 def direction_management_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
-    return render(request, 'users/direction_management.html', {
-        'directions': Direction.objects.all(), 'volunteers': User.objects.filter(is_approved=True).exclude(is_superuser=True)
-    })
+    return redirect('unit_catalog')
 
 @login_required
 def direction_create_view(request):
@@ -718,16 +716,14 @@ def assign_direction_leader_view(request, pk):
             messages.info(request, f"{u} снят.")
         else:
             d.leaders.add(u)
-            u.role = 'leader'; u.save()
+            u.directions.add(d)
             messages.success(request, f"{u} назначен.")
     return redirect('direction_management')
 
 @login_required
 def school_management_view(request):
     if not is_admin_or_higher(request.user): return redirect('home')
-    return render(request, 'users/school_management.html', {
-        'schools': School.objects.all(), 'volunteers': User.objects.filter(is_approved=True).exclude(is_superuser=True)
-    })
+    return redirect('school_catalog')
 
 @login_required
 def school_create_view(request):
@@ -753,9 +749,13 @@ def assign_school_leader_view(request, pk):
         u = get_object_or_404(User, pk=request.POST.get('leader_id'))
         if u in s.leaders.all():
             u.school_leader_of.remove(s)
+            s.teachers.filter(member=u).delete()
             messages.info(request, f"{u} снят.")
         else:
             u.school_leader_of.add(s)
+            s.teachers.get_or_create(member=u,defaults={'name':u.get_full_name() or u.username})
+            s.members.add(u)
+            if s.direction_id:s.direction.user_set.add(u)
             messages.success(request, f"{u} назначен.")
     return redirect('school_management')
 

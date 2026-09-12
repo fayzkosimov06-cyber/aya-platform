@@ -33,9 +33,9 @@
 </div></div>
 <div class="container aya-home-content">
 <section id="directions" class="aya-section" aria-labelledby="directions-title">
-  <div class="aya-section-head"><h2 id="directions-title">Наши направления</h2><a href="{% url 'volunteer_list' %}">Наши волонтёры <span aria-hidden="true">→</span></a></div>
+  <div class="aya-section-head"><h2 id="directions-title">Наши направления</h2><a href="{% url 'unit_catalog' %}">Все направления <span aria-hidden="true">→</span></a></div>
   <div class="aya-directions">
-  {% for direction in directions %}<a class="aya-direction" href="{% url 'volunteer_list' %}?direction={{ direction.pk }}"><span class="aya-icon" aria-hidden="true"><i class="fas fa-{{ direction.home_icon }}"></i></span><span><h3>{{ direction.name }}</h3><span class="aya-caption">Познакомиться с командой</span></span></a>
+  {% for direction in directions %}<a class="aya-direction" href="{% url 'direction_detail' direction.pk %}"><span class="aya-icon" aria-hidden="true"><i class="fas fa-{{ direction.home_icon }}"></i></span><span><h3>{{ direction.name }}</h3><span class="aya-caption">Познакомиться с командой</span></span></a>
   {% empty %}<p class="aya-empty">Скоро здесь появятся направления AYA.</p>{% endfor %}
   </div>
 </section>

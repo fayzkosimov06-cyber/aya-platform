@@ -52,7 +52,7 @@ class ProfileHistoryTests(TestCase):
 
     def test_activity_permissions_and_scoping(self):
         url=reverse('activity_periods_manage',args=[self.member.pk])
-        for role in ('volunteer','moderator','president'):
+        for role in ('volunteer','moderator','leader'):
             actor=User.objects.create(username=role,role=role,is_approved=True,qr_code='unused.png')
             self.client.force_login(actor)
             self.client.post(url,{'start_date':'2025-01-01'})

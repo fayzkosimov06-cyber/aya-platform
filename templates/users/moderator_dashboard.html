@@ -3,7 +3,7 @@
 
 {% block title %}Панель модератора{% endblock %}
 
-{% block body_class %}aya-unified{% endblock %}
+{% block body_class %}aya-unified aya-moderation{% endblock %}
 {% block content %}
 
 
@@ -12,7 +12,7 @@
         <div class="bg-warning text-dark p-3 rounded-circle shadow me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
             <i class="fas fa-shield-alt fa-lg"></i>
         </div>
-        <h2 class="fw-bold mb-0">Панель Модератора</h2>
+        <h2 class="fw-bold mb-0">Кандидаты и визиты</h2>
     </div>
 
     {% if can_review_candidates %}
@@ -80,7 +80,7 @@
                                     <div class="fw-bold fs-5">{{ card.user.get_full_name|default:card.user.username }}</div>
                                     <div class="text-muted small">{{ card.user.username }} · {{ card.user.email }}</div>
                                     <div class="mt-2 text-muted small">
-                                        Кандидат: {{ card.visit_count }}/3 визитов
+                                        <span class="visit-count">Кандидат: {{ card.visit_count }}/3 визитов</span><span class="visit-steps" aria-hidden="true"><span class="{% if card.visit_count >= 1 %}complete{% endif %}">1</span><span class="{% if card.visit_count >= 2 %}complete{% endif %}">2</span><span class="{% if card.visit_count >= 3 %}complete{% endif %}">3</span></span>
                                         {% if card.last_visit %}
                                             · последний визит {{ card.last_visit.visit_date|date:"d.m.Y" }} {{ card.last_visit.created_at|date:"H:i" }}
                                             {% if card.last_visit.marked_by %} · отметил {{ card.last_visit.marked_by.get_full_name|default:card.last_visit.marked_by.username }}{% endif %}

@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{% static 'css/admin_v2.css' %}?v=1">
 {% endblock %}
 
-{% block body_class %}aya-unified{% endblock %}
+{% block body_class %}aya-unified aya-admin{% endblock %}
 {% block content %}
 <div class="adm-page">
   <div class="container py-5" style="padding-top: 60px;">
@@ -18,12 +18,12 @@
             <i class="fas fa-crown fa-lg"></i>
         </div>
         <div>
-            <h2 class="fw-bold mb-0 text-dark">Панель Администратора</h2>
+            <h2 class="fw-bold mb-0 text-dark">Управление AYA</h2>
             <p class="text-muted mb-0">Управление системой AYA </p>
         </div>
     </div>
     
-    <p><a class="btn btn-outline-primary" href="{% url 'home_manage' %}">Редактировать главную страницу</a></p>
+    <nav class="admin-shortcuts" aria-label="Разделы управления"><a href="{% url 'points_works' %}"><i class="fas fa-award" aria-hidden="true"></i> Баллы</a><a href="{% url 'moderator_dashboard' %}"><i class="fas fa-user-check" aria-hidden="true"></i> Кандидаты и визиты</a><a href="{% url 'home_manage' %}"><i class="far fa-images" aria-hidden="true"></i> Главная страница</a><a href="{% url 'admin_about_manage' %}"><i class="fas fa-info-circle" aria-hidden="true"></i> О нас</a><a href="{% url 'audit_log' %}"><i class="fas fa-history" aria-hidden="true"></i> Журнал действий</a></nav>
     <div class="row g-4 mb-5 fade-in-up" style="animation-delay: 0.1s;">
         <div class="col-xl col-lg-4 col-md-6">
             <div class="card border-0 shadow-sm h-100 overflow-hidden text-white hover-lift" 

@@ -42,7 +42,7 @@ class RatingTests(TestCase):
         self.assertEqual(rating_rows(),[])
 
     def test_roles_and_unrated_excluded(self):
-        for role in ('worker','leader','head_admin'):
+        for role in ('worker','head_admin'):
             self.evaluate(self.member(role,role=role))
         self.evaluate(self.member('super',is_superuser=True))
         self.evaluate(self.member('candidate',is_approved=False))
