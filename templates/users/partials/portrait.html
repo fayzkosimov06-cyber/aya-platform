@@ -1,0 +1,1 @@
+{% load static %}<span class="aya-portrait portrait-{{ size }} frame-{{ frame }}"><img src="{% if person.photo %}{{ person.photo.url }}{% elif person.gender == 'F' %}{% static 'img/female_avatar.png' %}{% else %}{% static 'img/male_avatar.png' %}{% endif %}" alt="" loading="lazy" width="240" height="240"></span>

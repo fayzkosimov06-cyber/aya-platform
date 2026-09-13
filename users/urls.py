@@ -5,10 +5,16 @@ from . import views
 from . import about_views
 from .home_views import home_manage_view
 from .points import points_rating as rating_view
-from . import points, units, proposals
+from . import points, units, proposals, management, control_views
 
 
 urlpatterns = [
+    path('administration/rights/', control_views.rights, name='rights_manage'),
+    path('administration/private-log/', control_views.journal, {'mode':'private'}, name='journal_private'),
+    path('administration/activity-log/', control_views.journal, {'mode':'activity'}, name='journal_activity'),
+    path('administration/balance/', control_views.balance, name='ghost_balance'),
+    path('administration/dates/', control_views.dates, name='ghost_dates'),
+    path('activity/search/', control_views.search_event, name='record_search'),
     path('schools/', units.catalog, {'kind':'school'}, name='school_catalog'),
     path('schools/new/', units.create, {'kind':'school'}, name='school_create_page'),
     path('directions/new/', units.create, name='direction_create_page'),
@@ -69,8 +75,8 @@ urlpatterns = [
 
 
     # Панель Администратора
-    path('administration/', views.admin_dashboard_view, name='admin_dashboard'),
-    path('administration/users/', views.user_management_view, name='user_management'),
+    path('administration/', management.dashboard, name='admin_dashboard'),
+    path('administration/users/', management.people, name='user_management'),
     path('administration/users/update-role/<int:pk>/', views.update_user_role_view, name='update_user_role'),
     path('administration/users/toggle-active/<int:pk>/', views.toggle_active_volunteer_view, name='toggle_active_volunteer'),
     path('administration/directions/', views.direction_management_view, name='direction_management'),
@@ -84,7 +90,7 @@ urlpatterns = [
     path('administration/about/edit/', views.about_page_edit_view, name='about_page_edit'),
     path('administration/structure/', views.administration_page_view, name='administration_page'), 
     # --- НОВЫЙ URL ДЛЯ ЖУРНАЛА ---
-    path('administration/logs/', views.audit_log_view, name='audit_log'),
+    path('administration/logs/', control_views.journal, name='audit_log'),
 
     # Уведомления
     path('notifications/', views.notification_list_view, name='notifications'),

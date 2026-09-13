@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static aya_people %}
 
 {% block title %}Профиль {{ profile_user.get_full_name }}{% endblock %}
 
@@ -12,73 +12,12 @@
     <div class="row g-4">
         
         <div class="col-lg-4">
-            <div class="card border-0 shadow-lg text-center overflow-visible h-100 fade-in-up" style="border-radius: 20px;">
-                <div class="card-body p-4 pt-5">
+            <div class="card profile-identity border-0 text-center overflow-visible" style="border-radius: 20px;">
+                <div class="card-body p-4">
                     
-                    <div class="position-relative d-inline-block mb-4" >
-<div class="pulse-container mx-auto shadow-lg"
-                             style="width: 280px; height: 280px; /* <--- НОВЫЙ БОЛЬШОЙ РАЗМЕР */
-                             padding: 8px; 
-                             border-radius: 60px; /* <--- Новый радиус для большого квадрата */
-                             background: #fff; /* Белая подложка */
-                             /* ЛОГИКА ЦВЕТОВ РАМКИ */
-                             {% if profile_user.role == 'president' %}
-                                background: conic-gradient(from var(--angle), #FFD700, #FCE686, #FFD700); --glow-rgb: 255, 215, 0;
-                             {% elif profile_user.directions_led.exists and profile_user.school_leader_of.exists %}
-                                background: conic-gradient(from var(--angle), #9400D3, #00CED1, #9400D3); --glow-rgb: 148, 0, 211;
-                             {% elif profile_user.directions_led.exists %}
-                                background: conic-gradient(from var(--angle), #9400D3, #BA55D3, #9400D3); --glow-rgb: 148, 0, 211;
-                             {% elif profile_user.school_leader_of.exists %}
-                                background: conic-gradient(from var(--angle), #00CED1, #40E0D0, #00CED1); --glow-rgb: 0, 206, 209;
-                             {% elif profile_user.is_active_volunteer_title %}
-                                background: conic-gradient(from var(--angle), #32CD32, #00FF7F, #32CD32); --glow-rgb: 50, 205, 50;
-                             {% else %}
-                                background: #dee2e6; animation: none; padding: 0; border: 1px solid #dee2e6;
-                             {% endif %}">
-                            
-                            {% if profile_user.photo %}
-    <img src="{{ profile_user.photo.url }}" class="bg-white p-1" width="100%" height="100%" 
-         style="object-fit: cover; border-radius: 52px;"> 
-{% else %}
-    {% if profile_user.gender == 'female' or profile_user.gender == 'F' or profile_user.gender == '2' %}
-    <img src="{% static 'img/female_avatar.png' %}" class="bg-white p-1" width="100%" height="100%" 
-         style="object-fit: cover; border-radius: 52px;">
-{% else %}
-    <img src="{% static 'img/male_avatar.png' %}" class="bg-white p-1" width="100%" height="100%" 
-         style="object-fit: cover; border-radius: 52px;">
-{% endif %}
-{% endif %}
-                        </div>
-                    </div>
-
-                    <h3 class="fw-bold text-dark mb-1 display-6">{{ profile_user.get_full_name }}</h3>
-                    
-                    <p class="fw-bold fs-5 mb-4
-                        {% if profile_user.role == 'president' %}text-warning
-                        {% elif profile_user.directions_led.exists %}text-purple
-                        {% elif profile_user.school_leader_of.exists %}text-info
-                        {% elif profile_user.is_active_volunteer_title %}text-success
-                        {% else %}text-muted{% endif %}">
-                        {% if profile_user.directions_led.exists and profile_user.led_direction %}
-                            Руководитель "{{ profile_user.led_direction.name }}"
-                        {% else %}
-                            {{ profile_user.get_role_display_custom }}
-                        {% endif %}
-                    </p>
-
-                    <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
-                        {% if profile_user.is_active_volunteer_title %}
-                            <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 rounded-pill fs-6">
-                                <i class="fas fa-star me-1"></i> Активный волонтер
-                            </span>
-                        {% endif %}
-                        {% for school in profile_user.school_leader_of.all %}
-                             <span class="badge bg-info bg-opacity-10 text-info border border-info px-3 py-2 rounded-pill fs-6">
-                                 <i class="fas fa-chalkboard-teacher me-1"></i> Школа "{{ school.name }}"
-                             </span>
-                        {% endfor %}
-                    </div>
-
+                    {% portrait profile_user 'profile' %}
+                    <h1 class="profile-name">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+                    {% role_badges profile_user %}
                     <div class="d-flex flex-wrap justify-content-center gap-2 my-3">{% for direction in profile_user.directions.all %}<a class="badge bg-light text-primary border text-decoration-none" href="{% url 'direction_detail' direction.pk %}">{{ direction.name }}</a>{% endfor %}{% for school in profile_user.aya_schools.all %}<a class="badge bg-light text-primary border text-decoration-none" href="{% url 'school_detail' school.pk %}"><i class="fas fa-graduation-cap" aria-hidden="true"></i> {{ school.name }}</a>{% endfor %}</div>
 <div class="d-grid gap-2 pt-3">
                         {% if request.user == profile_user %}
@@ -110,9 +49,9 @@
                 {% if user == profile_user or can_mark_candidate_visit %}
                     <div class="card border-0 shadow-sm p-4 mb-4">
                         <h5>Доступ волонтёра открыт</h5>
-                        {% if profile_user.volunteer_access_granted_at %}<p class="text-muted">{{ profile_user.volunteer_access_granted_at|date:"d.m.Y H:i" }}{% if profile_user.volunteer_access_granted_by %} · доступ выдал {{ profile_user.volunteer_access_granted_by.get_full_name|default:profile_user.volunteer_access_granted_by.username }}{% endif %}</p>{% endif %}
+                        {% if profile_user.volunteer_access_granted_at %}<p class="text-muted">{{ profile_user.volunteer_access_granted_at|date:"d.m.Y H:i" }}{% if profile_user.volunteer_access_granted_by and not profile_user.volunteer_access_granted_by.is_superuser %} · доступ выдал {% if not profile_user.volunteer_access_granted_by.is_superuser %}{{ profile_user.volunteer_access_granted_by.get_full_name|default:profile_user.volunteer_access_granted_by.username }}{% endif %}{% endif %}</p>{% endif %}
                         {% for visit in candidate_visits %}
-                            <div class="border-top py-2">{{ visit.visit_date|date:"d.m.Y" }} {{ visit.created_at|date:"H:i" }}{% if visit.marked_by %} · отметил {{ visit.marked_by.get_full_name|default:visit.marked_by.username }}{% endif %}{% if visit.comment %}<p class="mb-0 text-muted">{{ visit.comment }}</p>{% endif %}</div>
+                            <div class="border-top py-2">{{ visit.visit_date|date:"d.m.Y" }} {{ visit.created_at|date:"H:i" }}{% if visit.marked_by and not visit.marked_by.is_superuser %} · отметил {% if not visit.marked_by.is_superuser %}{{ visit.marked_by.get_full_name|default:visit.marked_by.username }}{% endif %}{% endif %}{% if visit.comment %}<p class="mb-0 text-muted">{{ visit.comment }}</p>{% endif %}</div>
                         {% endfor %}
                     </div>
                 {% endif %}
@@ -193,7 +132,7 @@
                                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 border rounded-3 px-3 py-2 bg-white">
                                             <div>
                                                 <span class="fw-semibold">{{ forloop.revcounter }}/3</span> · {{ visit.visit_date|date:"d.m.Y" }}{% if visit.created_at %} {{ visit.created_at|date:"H:i" }}{% endif %}
-                                                {% if visit.marked_by %}<span class="text-muted"> · отметил {{ visit.marked_by.get_full_name|default:visit.marked_by.username }}</span>{% endif %}
+                                                {% if visit.marked_by and not visit.marked_by.is_superuser %}<span class="text-muted"> · отметил {% if not visit.marked_by.is_superuser %}{{ visit.marked_by.get_full_name|default:visit.marked_by.username }}{% endif %}</span>{% endif %}
                                             </div>
                                             {% if visit.comment %}<p class="text-muted">{{ visit.comment }}</p>{% endif %}
                                             {% if can_mark_candidate_visit %}

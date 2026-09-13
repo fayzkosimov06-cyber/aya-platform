@@ -9,6 +9,7 @@ from django.utils import timezone
 from .models import PointProposal,ContributionWork,ContributionKind,ContributionAward,ContributionChange
 from .units import get_unit,can_edit_unit,global_manager,people_field,log
 from .points import snapshot
+from .permissions import allowed
 
 class ProposalForm(forms.ModelForm):
     volunteers=people_field('Кому предложить баллы (можно выбрать помощников вне команды)')
@@ -51,7 +52,7 @@ def suggest(request,pk,kind='direction'):
 @login_required
 def listing(request):
     proposals=PointProposal.objects.select_related('author','school','direction').order_by('-created_at')
-    gm=global_manager(request.user)
+    gm=allowed(request.user,'points_review')
     if not gm:proposals=proposals.filter(author=request.user)
     status=request.GET.get('status','pending')
     if status in {'pending','approved','rejected'}:proposals=proposals.filter(status=status)
@@ -61,14 +62,20 @@ def listing(request):
 @login_required
 @transaction.atomic
 def review(request,pk):
-    if not global_manager(request.user):return HttpResponseForbidden('Баллы подтверждает президент или сотрудник отдела.')
+    if not allowed(request.user,'points_review'):return HttpResponseForbidden('Баллы подтверждает президент или сотрудник отдела.')
     proposal=get_object_or_404(PointProposal.objects.select_for_update(),pk=pk)
     form=ReviewForm(request.POST if request.method=='POST' else None)
-    if request.method=='POST' and proposal.status=='pending' and form.is_valid():
+    valid=request.method=='POST' and proposal.status=='pending' and form.is_valid()
+    if valid and form.cleaned_data['decision']=='approved' and proposal.event_id and proposal.volunteers.exclude(attending_events=proposal.event).exists():
+        form.add_error(None,'Состав мероприятия изменился: некоторые люди из заявки больше не записаны. Проверьте участников перед начислением.');valid=False
+    if valid:
         data=form.cleaned_data
         if data['decision']=='approved':
-            work=ContributionWork.objects.create(title=proposal.title,date=proposal.date,description=proposal.description,direction=proposal.direction,school=proposal.school,created_by=request.user)
-            kind,_=ContributionKind.objects.get_or_create(name='Подтверждённая помощь по заявке',defaults={'points':1,'active':False})
+            if proposal.event_id:
+                work,_=ContributionWork.objects.get_or_create(event=proposal.event,defaults={'title':proposal.title,'date':proposal.date,'description':proposal.description,'direction':proposal.direction,'school':proposal.school,'created_by':request.user})
+            else:
+                work=ContributionWork.objects.create(title=proposal.title,date=proposal.date,description=proposal.description,direction=proposal.direction,school=proposal.school,created_by=request.user)
+            kind,_=ContributionKind.objects.get_or_create(name=f'Заявка на участие #{proposal.pk}' if proposal.event_id else 'Подтверждённая помощь по заявке',defaults={'points':1,'active':False})
             for member in proposal.volunteers.all():
                 award=ContributionAward.objects.create(work=work,member=member,kind=kind,points=data['points'],comment=proposal.description,confirmed_by=request.user)
                 ContributionChange.objects.create(award=award,actor=request.user,after=snapshot(award),reason=f'Подтверждение заявки #{proposal.pk}')

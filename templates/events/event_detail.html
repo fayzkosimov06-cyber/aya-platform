@@ -130,7 +130,7 @@
                         </div>
                         <div class="ms-3">
                             <a href="{% url 'public_profile' hero.user.pk %}" class="fw-bold text-dark text-decoration-none">
-                                {{ hero.user.get_full_name }}
+                                {% if not hero.user.is_superuser %}{{ hero.user.get_full_name }}{% endif %}
                             </a>
                             <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">{{ hero.role_name }}</small>
                         </div>

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from django.db import models
 
 STAFF_ONLY_ROLES = {'worker', 'head_admin'}
 PRIVILEGED_ROLES = {'president', 'worker', 'head_admin'}
@@ -58,22 +59,23 @@ def is_worker_account(user) -> bool:
 
 
 def can_record_visits(user):
-    return bool(getattr(user, 'is_authenticated', False) and (getattr(user, 'is_superuser', False) or getattr(user, 'role', None) in DIRECT_ACCESS_ROLES | {'moderator'}))
+    from .permissions import allowed
+    return allowed(user,'visits')
 
 
 def can_manage_members(user):
-    return is_privileged_user(user)
+    from .permissions import allowed
+    return allowed(user,'people')
 
 
 def can_manage_event(user, event):
-    if not getattr(user, 'is_authenticated', False):
-        return False
-    if getattr(user, 'is_superuser', False):
-        return True
-    if user.role == 'moderator' or not has_full_volunteer_access(user):
-        return False
-    return user.role in DIRECT_ACCESS_ROLES or user.pk == event.organizer_id
+    from .permissions import allowed, request_context
+    req=request_context.get()
+    code=getattr(req,'aya_capability',None)
+    return allowed(user, code if code and (code.startswith('events_') or code.startswith('points_')) else 'events_edit', event)
 
 
 def can_create_event(user):
-    return has_full_volunteer_access(user) and (getattr(user, 'is_superuser', False) or user.role != 'moderator')
+    from .permissions import allowed
+    return allowed(user, 'events_edit')
+

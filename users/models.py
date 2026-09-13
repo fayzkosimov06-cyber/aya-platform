@@ -450,6 +450,7 @@ class SchoolLesson(models.Model):
 
 
 class PointProposal(models.Model):
+    event = models.ForeignKey("events.Event", null=True, blank=True, on_delete=models.SET_NULL)
     direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.SET_NULL)
     school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL)
     author = models.ForeignKey(User, on_delete=models.PROTECT, related_name='point_proposals')
@@ -461,5 +462,38 @@ class PointProposal(models.Model):
     reviewer = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='reviewed_proposals')
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_note = models.TextField(blank=True)
-    work = models.OneToOneField(ContributionWork, null=True, blank=True, on_delete=models.PROTECT)
+    work = models.ForeignKey(ContributionWork, null=True, blank=True, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class PermissionOverride(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='permission_overrides')
+    code = models.CharField(max_length=40)
+    enabled = models.BooleanField(default=False)
+    scope = models.CharField(max_length=12, default='own', choices=[('own','Свои команды'),('selected','Выбранные команды'),('all','Все команды')])
+    directions = models.ManyToManyField(Direction, blank=True)
+    schools = models.ManyToManyField(School, blank=True)
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user','code'], name='unique_person_capability')]
+
+
+class JournalEntry(models.Model):
+    actor = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='+')
+    private = models.BooleanField(default=False, db_index=True)
+    category = models.CharField(max_length=30, db_index=True)
+    section = models.CharField(max_length=100, blank=True)
+    object_id = models.CharField(max_length=100, blank=True)
+    action = models.CharField(max_length=200)
+    before = models.JSONField(default=dict)
+    after = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    class Meta: ordering = ['-created_at','-pk']
+
+
+class BalanceAdjustment(models.Model):
+    member = models.ForeignKey(User, on_delete=models.PROTECT, related_name='balance_adjustments')
+    date = models.DateField()
+    amount = models.IntegerField()
+    note = models.TextField(blank=True)
+    actor = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='+')
     created_at = models.DateTimeField(auto_now_add=True)

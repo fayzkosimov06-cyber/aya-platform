@@ -12,6 +12,10 @@ class Event(models.Model):
     
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="organized_events", verbose_name="Организатор")
     
+    cancelled = models.BooleanField(default=False, verbose_name="Отменено")
+    cancellation_reason = models.TextField(blank=True, verbose_name="Причина отмены")
+    submitted_for_review = models.BooleanField(default=False)
+
     # Статусы
     is_approved = models.BooleanField(default=False, verbose_name="Одобрено")
     is_completed = models.BooleanField(default=False, verbose_name="Завершено")
@@ -19,7 +23,7 @@ class Event(models.Model):
     # НОВОЕ ПОЛЕ: Видимость для гостей
     is_public_for_guests = models.BooleanField(default=False, verbose_name="Видно для гостей (без регистрации)")
     
-    max_participants = models.PositiveIntegerField(null=True, blank=True, verbose_name="Макс. участников")
+    max_participants = models.PositiveIntegerField(null=True, blank=True, verbose_name="Сколько людей нужно")
     participants = models.ManyToManyField(User, related_name="attending_events", blank=True, verbose_name="Участники")
 
     # Отчет
@@ -97,3 +101,12 @@ class EventHero(models.Model):
     def __str__(self):
         return f"{self.event.title}: {self.user} — {self.role_name}"
 
+
+
+class EventAttendance(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='attendance')
+    member = models.ForeignKey(User, on_delete=models.CASCADE, related_name='event_attendance')
+    marked_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='+')
+    marked_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['event','member'], name='unique_event_attendance')]

@@ -8,7 +8,7 @@ from events.models import Event
 
 class PointTests(TestCase):
     def setUp(self):
-        self.staff=User.objects.create(username='worker',role='worker',is_approved=True,qr_code='unused.png')
+        self.staff=User.objects.create(username='worker',role='worker',is_superuser=True,is_approved=True,qr_code='unused.png')
         self.member=User.objects.create(username='member',is_approved=True,qr_code='unused.png')
         self.kind=ContributionKind.objects.create(name='Help',points=5)
         self.work=ContributionWork.objects.create(title='Work',date=date(2025,8,31),created_by=self.staff)
@@ -43,7 +43,9 @@ class PointTests(TestCase):
         self.assertEqual(selected_awards({'period':'all'})[0].get().points,10)
         self.assertEqual(ContributionChange.objects.count(),3)
         response=self.client.get(reverse('points_work',args=[self.work.pk]))
-        self.assertContains(response,'Mistake')
+        self.assertNotContains(response,'Mistake')
+        from .models import JournalEntry
+        self.assertTrue(JournalEntry.objects.filter(private=True,section='users.ContributionChange').exists())
 
     def test_roles_and_invalid_members(self):
         for role in ['moderator','volunteer']:
@@ -68,7 +70,7 @@ class PointTests(TestCase):
         response=self.client.get(reverse('volunteer_rating'),{'period':'all'})
         self.assertEqual(response.context['rows'][0]['points'],5)
         response=self.client.get(reverse('public_profile',args=[self.member.pk]),{'period':'all'})
-        self.assertContains(response,'Helped')
+        self.assertNotContains(response,'Helped')
         self.assertEqual(response.context['all_points'],5)
         for name in ['points_works','points_kinds']:
             self.assertEqual(self.client.get(reverse(name)).status_code,200)

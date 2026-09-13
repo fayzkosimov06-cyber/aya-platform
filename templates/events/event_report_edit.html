@@ -141,7 +141,7 @@
               <ul class="mb-0">
                 {% for hero in roles %}
                   <li class="mb-1">
-                    <strong>{{ hero.user.get_full_name|default:hero.user.username }}</strong>
+                    <strong>{% if not hero.user.is_superuser %}{{ hero.user.get_full_name|default:hero.user.username }}{% endif %}</strong>
                     — {{ hero.role_name }}
                     <form method="post" class="d-inline">
                       {% csrf_token %}

@@ -15,14 +15,17 @@ from events.models import Event
 
 
 def global_manager(user):
-    return bool(user.is_authenticated and (user.is_superuser or (has_full_volunteer_access(user) and user.role in {'president','worker','head_admin'})))
+    from .permissions import allowed,setting,request_context
+    if allowed(user,'people'):return True
+    req=request_context.get();code=getattr(req,'aya_capability',None)
+    rule=setting(user,code) if code in {'directions','schools'} and user.is_authenticated else None
+    return bool(rule and rule.enabled and allowed(user,code,getattr(req,'aya_object',None)))
 
 
 def can_edit_unit(user,obj):
-    if global_manager(user): return True
-    if not has_full_volunteer_access(user): return False
-    if isinstance(obj,Direction):return obj.leaders.filter(pk=user.pk).exists()
-    return obj.teachers.filter(member=user).exists() or bool(obj.direction_id and obj.direction.leaders.filter(pk=user.pk).exists())
+    from .permissions import allowed,request_context
+    req=request_context.get();code=getattr(req,'aya_capability',None)
+    return allowed(user, code if code in {'points_propose','directions','schools'} else ('schools' if isinstance(obj,School) else 'directions'),obj)
 
 
 def get_unit(kind,pk): return get_object_or_404(School if kind=='school' else Direction,pk=pk)
@@ -36,6 +39,7 @@ def catalog(request,kind='direction'):
     if school and request.GET.get('direction','').isdigit():objects=objects.filter(direction_id=request.GET['direction'])
     if query:objects=objects.filter(name__icontains=query)
     page=Paginator(objects.order_by('name'),18).get_page(request.GET.get('page'))
+    request.aya_result_count=page.paginator.count
     for obj in page:obj.manage_allowed=can_edit_unit(request.user,obj)
     return render(request,'users/unit_catalog.html',{'objects':page,'kind':kind,'is_school':school,'global_manager':global_manager(request.user),'q':query,'inactive':inactive,'directions':Direction.objects.all(),'filter_direction':request.GET.get('direction','')})
 
@@ -47,13 +51,13 @@ def detail(request,pk,kind='direction'):
     if not school and obj.featured_only:people=people.filter(featured_in_directions=obj)
     events=obj.events.filter(is_approved=True)
     if not has_full_volunteer_access(request.user):events=events.filter(is_public_for_guests=True)
-    upcoming=events.filter(is_completed=False,end_time__gte=timezone.now()).order_by('start_time')
+    upcoming=events.filter(is_completed=False,cancelled=False,end_time__gte=timezone.now()).order_by('start_time')
     from datetime import date
     today=timezone.localdate();year=today.year-(today.month<9)
     awards=ContributionAward.objects.filter(revoked=False,work__date__gte=date(year,9,1),work__date__lt=date(year+1,9,1))
     awards=awards.filter(work__school=obj) if school else awards.filter(Q(work__direction=obj)|Q(work__school__direction=obj))
     lessons=obj.lessons.filter(ends_at__gte=timezone.now()).prefetch_related('teachers') if school and obj.active else SchoolLesson.objects.none()
-    return render(request,'users/unit_detail.html',{'unit':obj,'is_school':school,'kind':kind,'unit_can_manage':can_edit,'can_edit_unit':can_edit,'global_manager':global_manager(request.user),'can_award_points':can_award(request.user),'unit_leaders':obj.leaders.filter(is_approved=True,is_superuser=False) if not school else [],'member_count':count,'member_page':Paginator(people.order_by('last_name','first_name','pk'),24).get_page(request.GET.get('page')),'upcoming':upcoming[:8],'schools':obj.schools.filter(active=True) if not school else [],'teachers':obj.teachers.select_related('member') if school else [],'lessons':Paginator(lessons,20).get_page(request.GET.get('lessons_page')),'unit_points':awards.aggregate(n=Sum('points'))['n'] if has_full_volunteer_access(request.user) else None})
+    return render(request,'users/unit_detail.html',{'unit':obj,'is_school':school,'kind':kind,'unit_can_manage':can_edit,'can_edit_unit':can_edit,'global_manager':global_manager(request.user),'can_award_points':can_award(request.user),'unit_leaders':obj.leaders.filter(is_approved=True,is_superuser=False) if not school else [],'member_count':count,'member_page':Paginator(people.order_by('last_name','first_name','pk'),24).get_page(request.GET.get('page')),'upcoming':upcoming[:8],'schools':obj.schools.filter(active=True) if not school else [],'teachers':obj.teachers.exclude(member__is_superuser=True).select_related('member') if school else [],'lessons':Paginator(lessons,20).get_page(request.GET.get('lessons_page')),'unit_points':awards.aggregate(n=Sum('points'))['n'] if has_full_volunteer_access(request.user) else None})
 
 
 class PeopleField(forms.ModelMultipleChoiceField):
@@ -112,8 +116,9 @@ class FeatureForm(forms.Form):
 
 class EventForm(forms.Form):
     events=forms.ModelMultipleChoiceField(queryset=Event.objects.filter(is_approved=True),required=False,label='Мероприятия',widget=forms.CheckboxSelectMultiple(attrs={'class':'member-picker'}))
-    def __init__(self,*args,obj,**kwargs):
+    def __init__(self,*args,obj,user=None,**kwargs):
         super().__init__(*args,**kwargs);self.obj=obj;self.initial['events']=obj.events.values_list('pk',flat=True)
+        if user and not global_manager(user):self.fields['events'].queryset=obj.events.filter(is_approved=True)
     def save(self): self.obj.events.set(self.cleaned_data['events'])
 
 class SchoolLinkForm(forms.Form):
@@ -121,8 +126,9 @@ class SchoolLinkForm(forms.Form):
     def __init__(self,*args,obj,**kwargs):
         super().__init__(*args,**kwargs);self.obj=obj;self.initial['schools']=obj.schools.values_list('pk',flat=True)
     def save(self):
-        selected=self.cleaned_data['schools'];self.obj.schools.exclude(pk__in=selected).update(direction=None)
-        selected.update(direction=self.obj)
+        selected=self.cleaned_data['schools']
+        for school in self.obj.schools.exclude(pk__in=selected):school.direction=None;school.save(update_fields=['direction'])
+        for school in selected:school.direction=self.obj;school.save(update_fields=['direction'])
         for school in selected:self.obj.user_set.add(*school.members.all())
 
 
@@ -143,14 +149,15 @@ def edit(request,pk,kind='direction'):
     data=request.POST if request.method=='POST' else None;form=None
     if tab=='about':
         form=AboutSchool(data,request.FILES or None,instance=obj,user=request.user) if school else AboutDirection(data,request.FILES or None,instance=obj)
-    elif tab in {'members','featured','leaders','events','schools'}:form={'members':MemberForm,'featured':FeatureForm,'leaders':LeaderForm,'events':EventForm,'schools':SchoolLinkForm}[tab](data,obj=obj)
+    elif tab=='events':form=EventForm(data,obj=obj,user=request.user)
+    elif tab in {'members','featured','leaders','schools'}:form={'members':MemberForm,'featured':FeatureForm,'leaders':LeaderForm,'events':EventForm,'schools':SchoolLinkForm}[tab](data,obj=obj)
     if request.method=='POST' and form and form.is_valid():
         form.save()
         if school and obj.direction_id:obj.direction.user_set.add(*obj.members.all())
         log(request.user,f'Изменён раздел «{dict(tabs)[tab]}»: {obj.name}')
         messages.success(request,'Изменения сохранены.')
         return redirect(request.path+'?tab='+tab)
-    return render(request,'users/unit_edit.html',{'form':form,'unit':obj,'kind':kind,'is_school':school,'global_manager':gm,'tabs':tabs,'tab':tab,'teachers':obj.teachers.select_related('member') if school else [],'lessons':obj.lessons.prefetch_related('teachers') if school else [],'can_award_points':can_award(request.user)})
+    return render(request,'users/unit_edit.html',{'form':form,'unit':obj,'kind':kind,'is_school':school,'global_manager':gm,'tabs':tabs,'tab':tab,'teachers':obj.teachers.exclude(member__is_superuser=True).select_related('member') if school else [],'lessons':obj.lessons.prefetch_related('teachers') if school else [],'can_award_points':can_award(request.user)})
 
 
 class TeacherForm(forms.ModelForm):
@@ -172,7 +179,7 @@ class LessonForm(forms.ModelForm):
         model=SchoolLesson;fields=['topic','starts_at','ends_at','location','description','teachers','cancelled']
         widgets={'starts_at':forms.DateTimeInput(format='%Y-%m-%dT%H:%M',attrs={'type':'datetime-local'}),'ends_at':forms.DateTimeInput(format='%Y-%m-%dT%H:%M',attrs={'type':'datetime-local'}),'teachers':forms.CheckboxSelectMultiple(attrs={'class':'member-picker'})}
     def __init__(self,*args,school,**kwargs):
-        super().__init__(*args,**kwargs);self.fields['teachers'].queryset=school.teachers.filter(member__isnull=False);self.fields['teachers'].label='Учителя'
+        super().__init__(*args,**kwargs);self.fields['teachers'].queryset=school.teachers.filter(member__isnull=False,member__is_superuser=False);self.fields['teachers'].label='Учителя'
         if self.instance.pk:self.fields.pop('repeat_until')
     def clean(self):
         data=super().clean();start=data.get('starts_at');end=data.get('ends_at');until=data.get('repeat_until')

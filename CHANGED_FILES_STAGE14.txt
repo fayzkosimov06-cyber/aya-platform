@@ -1,0 +1,31 @@
+Изменённые файлы по сравнению с этапом 13:
+templates/base.html
+templates/events/editor.html
+templates/events/hub.html
+templates/events/page.html
+templates/users/about.html
+templates/users/admin_hub.html
+templates/users/administration_page.html
+templates/users/moderator_dashboard.html
+templates/users/partials/volunteer_card.html
+templates/users/people_hub.html
+templates/users/points_quick.html
+templates/users/points_rating.html
+templates/users/profile.html
+templates/users/unit_catalog.html
+templates/users/unit_detail.html
+templates/users/unit_edit.html
+templates/users/unit_people.html
+templates/users/volunteer_list.html
+users/views.py
+
+Новые файлы:
+START_HERE_STAGE14.md
+CHANGED_FILES_STAGE14.txt
+static/css/aya-design.css
+static/js/design.js
+users/templatetags/aya_people.py
+users/test_design.py
+templates/users/partials/portrait.html
+templates/users/partials/role_badges.html
+templates/users/partials/operations_nav.html

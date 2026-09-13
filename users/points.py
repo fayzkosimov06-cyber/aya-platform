@@ -13,7 +13,8 @@ from .models import User, ContributionKind, ContributionWork, ContributionAward,
 
 
 def can_award(user):
-    return has_full_volunteer_access(user) and (user.is_superuser or user.role in {'worker','head_admin','president'})
+    from .permissions import allowed
+    return allowed(user,'points_award')
 
 
 def members():
@@ -33,7 +34,8 @@ def period(query, today=None):
     elif selected=='month':
         start=today.replace(day=1);end=(start.replace(day=28)+timedelta(days=4)).replace(day=1)
     else: start=date(chosen,9,1);end=date(chosen+1,9,1)
-    years=set(ContributionWork.objects.values_list('date',flat=True))
+    from .models import BalanceAdjustment
+    years=set(ContributionWork.objects.values_list('date',flat=True))|set(BalanceAdjustment.objects.values_list('date',flat=True))
     years={d.year if d.month>=9 else d.year-1 for d in years}|{year}
     return {'period':selected,'selected_year':chosen,'years':[(y,f'{y}/{y+1}') for y in sorted(years,reverse=True)],'start':start,'end':end}
 
@@ -50,14 +52,15 @@ def point_profile(request, member):
     qs,info=selected_awards(request.GET,member)
     current,_=selected_awards({},member)
     return {**info,'point_page':Paginator(qs.select_related('work','kind','confirmed_by').order_by('-work__date','-pk'),10).get_page(request.GET.get('points_page')),
-            'year_points':current.aggregate(n=Sum('points'))['n'] or 0,
-            'all_points':ContributionAward.objects.filter(member=member,revoked=False).aggregate(n=Sum('points'))['n'] or 0,'can_award_points':can_award(request.user)}
+            'year_points':(current.aggregate(n=Sum('points'))['n'] or 0)+adjustment_total(member=member),
+            'all_points':(ContributionAward.objects.filter(member=member,revoked=False).aggregate(n=Sum('points'))['n'] or 0)+adjustment_total(member=member,query={'period':'all'}),'can_award_points':can_award(request.user)}
 
 
 def points_rating(request):
     if not has_full_volunteer_access(request.user): return render(request,'users/points_rating.html',{'locked':True})
     qs,info=selected_awards(request.GET)
     totals=dict(qs.values('member_id').annotate(total=Sum('points')).values_list('member_id','total'))
+    for mid,total in adjustment_rows(request.GET):totals[mid]=totals.get(mid,0)+total
     rows=[{'member':m,'points':totals[m.pk]} for m in members().filter(pk__in=totals)]
     rows.sort(key=lambda r:(-r['points'],r['member'].last_name,r['member'].first_name,r['member'].pk))
     last=None;place=0
@@ -109,7 +112,7 @@ def snapshot(award):
 @login_required
 @transaction.atomic
 def work_list(request):
-    if not can_award(request.user): return HttpResponseForbidden('Нет доступа к начислениям.')
+    if not (can_award(request.user) or request.method=='GET' and can_read_points(request.user)): return HttpResponseForbidden('Нет доступа к начислениям.')
     event=None
     if request.GET.get('event'):
         from events.models import Event
@@ -134,7 +137,7 @@ def work_list(request):
 @login_required
 @transaction.atomic
 def work_detail(request,pk):
-    if not can_award(request.user): return HttpResponseForbidden('Нет доступа к начислениям.')
+    if not (can_award(request.user) or request.method=='GET' and can_read_points(request.user)): return HttpResponseForbidden('Нет доступа к начислениям.')
     work=get_object_or_404(ContributionWork,pk=pk)
     form=AwardForm(request.POST or None,work=work)
     if request.method=='POST' and form.is_valid():
@@ -158,7 +161,8 @@ class CorrectionForm(forms.Form):
 @login_required
 @transaction.atomic
 def correct_award(request,pk):
-    if not can_award(request.user):return HttpResponseForbidden('Нет доступа к начислениям.')
+    from .permissions import allowed
+    if not allowed(request.user,'points_correct'):return HttpResponseForbidden('Нет доступа к начислениям.')
     award=get_object_or_404(ContributionAward.objects.select_for_update(),pk=pk)
     form=CorrectionForm(request.POST or None,initial=snapshot(award))
     if request.method=='POST' and form.is_valid():
@@ -173,7 +177,8 @@ def correct_award(request,pk):
 @login_required
 @transaction.atomic
 def kinds(request):
-    if not can_award(request.user):return HttpResponseForbidden('Нет доступа к правилам.')
+    from .permissions import allowed
+    if not allowed(request.user,'points_rules'):return HttpResponseForbidden('Нет доступа к правилам.')
     instance=get_object_or_404(ContributionKind,pk=request.GET['edit']) if request.GET.get('edit') else None
     form=KindForm(request.POST or None,instance=instance)
     if request.method=='POST' and form.is_valid():
@@ -249,3 +254,19 @@ def quick_award(request):
     people=list(people.order_by('last_name','first_name'))
     people.sort(key=lambda person: person.pk not in team_ids)
     return render(request,'users/points_quick.html',{'form':form,'people':people,'team_ids':team_ids,'selected':selected,'rules':list(ContributionKind.objects.filter(active=True).values('id','points'))})
+
+
+def adjustment_rows(query=None,member=None):
+    from .models import BalanceAdjustment
+    qs=BalanceAdjustment.objects.all();info=period(query or {})
+    if member:qs=qs.filter(member=member)
+    if info['start']:qs=qs.filter(date__gte=info['start'],date__lt=info['end'])
+    return qs.values('member_id').annotate(total=Sum('amount')).values_list('member_id','total')
+
+def adjustment_total(member,query=None):
+    return sum(n for _,n in adjustment_rows(query,member))
+
+
+def can_read_points(user):
+    from .permissions import allowed
+    return any(allowed(user,c) for c in ['points_award','points_review','points_correct','points_rules'])

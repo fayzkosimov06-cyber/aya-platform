@@ -7,7 +7,7 @@ from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from urllib.parse import urlsplit
-from .access import can_manage_members
+from .permissions import allowed
 from .models import AboutContactLink, AboutExtraBlock, AboutPage, AboutStatItem, AboutValueBlock
 ICON_CHOICES = [
     ('fa-solid fa-star', 'Звезда'),
@@ -29,7 +29,7 @@ ICON_CHOICES = [
 ]
 
 
-def can_edit_about(user):return can_manage_members(user)
+def can_edit_about(user):return allowed(user,'about')
 
 
 class AboutForm(forms.ModelForm):

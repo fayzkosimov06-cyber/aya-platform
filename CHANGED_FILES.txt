@@ -71,3 +71,5 @@ START_HERE_STAGE5.md
 Этап 11: users/models.py, users/units.py, users/points.py, users/urls.py, users/test_units.py, users/migrations/0036_contributionwork_direction_contributionwork_school_and_more.py, templates/users/unit_*.html, templates/users/home.html, templates/users/profile.html, templates/users/points_quick.html, templates/users/direction_management.html, templates/users/school_management.html, templates/base.html, static/css/units.css, static/css/aya-shell.css, START_HERE_STAGE11.md
 
 STAGE12: scoped student leadership; schools catalog and editors; teacher accounts; weekly lessons; points proposals; compact unit design; migrations 0037/0038. See START_HERE_STAGE12.md.
+
+STAGE13: events workspace, scoped permissions and publishing; participant/attendance bulk actions; XLSX export; event point proposals; bulk admin management; moderator design; events0011/users0039. See START_HERE_STAGE13.md.

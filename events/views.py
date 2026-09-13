@@ -263,14 +263,14 @@ def event_join_view(request, pk):
     if not can_register_for_events(request.user):
         messages.error(request, "Участие откроется после полного допуска волонтёра.")
         return redirect('event_detail', pk=pk)
-    if not event.is_approved or event.is_completed or event.end_time <= timezone.now():
+    if not event.is_approved or event.is_completed or event.cancelled or event.end_time <= timezone.now():
         messages.error(request, "Запись на это мероприятие закрыта.")
         return redirect('event_detail', pk=pk)
 
     action = request.POST.get('action', 'join')
     if action == 'leave':
         # Preserve participants who already have a report role or evaluation.
-        if event.heroes.filter(user=request.user).exists() or event.evaluations.filter(volunteer=request.user).exists():
+        if event.attendance.filter(member=request.user).exists() or event.heroes.filter(user=request.user).exists() or event.evaluations.filter(volunteer=request.user).exists():
             messages.error(request, "Отмена недоступна: ваше участие уже отмечено в отчёте. Обратитесь к организатору.")
         else:
             event.participants.remove(request.user)
@@ -279,7 +279,8 @@ def event_join_view(request, pk):
         if event.participants.filter(pk=request.user.pk).exists():
             messages.info(request, "Вы уже записаны.")
         elif event.max_participants is not None and event.participants.count() >= event.max_participants:
-            messages.error(request, "Свободных мест больше нет.")
+            event.participants.add(request.user)
+            messages.warning(request, "Вы записаны. Нужное количество людей уже набрано, но могут понадобиться дополнительные помощники.")
         else:
             event.participants.add(request.user)
             messages.success(request, "Вы записаны!")

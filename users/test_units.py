@@ -82,4 +82,6 @@ class UnitTests(TestCase):
         other=Direction.objects.create(name='Other direction')
         self.client.post(reverse('school_edit',args=[self.school.pk]),{'intro':'Updated','direction':other.pk,'members':[self.member.pk]})
         self.school.refresh_from_db();self.assertEqual(self.school.direction,self.direction)
-        self.assertEqual(self.school.intro,'Updated')
+        self.assertEqual(self.school.intro,'')
+        self.client.post(reverse('school_edit',args=[self.school.pk]),{'intro':'Updated'})
+        self.school.refresh_from_db();self.assertEqual(self.school.intro,'Updated')

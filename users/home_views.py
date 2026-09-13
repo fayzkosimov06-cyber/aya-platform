@@ -5,7 +5,7 @@ from django.db import transaction
 from django.db.models import Max
 from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.shortcuts import render, redirect, get_object_or_404
-from .access import can_manage_members
+from .permissions import allowed
 from .models import HomePage, HomeSlide, HomeQuote, User
 
 
@@ -64,7 +64,7 @@ class HomeQuoteForm(StyledForm):
 @login_required
 @transaction.atomic
 def home_manage_view(request):
-    if not can_manage_members(request.user):
+    if not allowed(request.user,'home'):
         return HttpResponseForbidden('Недостаточно прав.')
     page, _ = HomePage.objects.get_or_create(pk=1)
     slide = get_object_or_404(HomeSlide, page=page, pk=request.GET['slide']) if request.GET.get('slide') else None

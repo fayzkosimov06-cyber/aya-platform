@@ -34,27 +34,21 @@ except Exception:
     VolunteerVisit = None
 
 from events.models import Event, EventEvaluation
+from .permissions import allowed
 
 
 # --- HELPER: ЗАПИСЬ В ЖУРНАЛ (С РЕЖИМОМ ПРИЗРАКА) ---
 def log_action(user, action, target=None):
-    if user.is_superuser:
-        return
-    try:
-        AuditLog.objects.create(actor=user, action=action, target_user=target)
-    except Exception:
-        pass
+    AuditLog.objects.create(actor=user, action=action, target_user=target)
 
 
-
-
-# --- HELPER: КТО МОЖЕТ УПРАВЛЯТЬ КАНДИДАТАМИ (отмечать визиты / давать доступ) ---
 def can_manage_candidates(user):
     return can_record_visits(user)
 
 
 def can_grant_candidate_access(user):
-    return can_manage_members(user)
+    from .permissions import allowed
+    return allowed(user,'admissions')
 
 
 def _back_redirect(request, fallback_name='moderator_dashboard', **kwargs):
@@ -75,8 +69,8 @@ def _candidate_visits_qs(user_obj):
 
 # --- HELPER: ПРОВЕРКА ПРАВ НА ПРОСМОТР (НОВОЕ) ---
 def is_privileged_viewer(user):
-    """Начальство видит приватные поля без ограничений."""
-    return is_privileged_user(user)
+    from .permissions import allowed
+    return allowed(user,'contacts')
 
 
 def can_view_field(viewer, target_user, privacy_setting):
@@ -108,46 +102,24 @@ def can_view_field(viewer, target_user, privacy_setting):
 
 # --- Проверка прав доступа к админ-функциям ---
 def is_moderator_or_higher(user):
-    return user.is_authenticated and (
-        user.role in ['moderator', 'president', 'worker', 'head_admin'] or user.is_superuser
-    )
+    from .permissions import legacy
+    return legacy(user, 'visits')
+
 
 def is_admin_or_higher(user):
-    return user.is_authenticated and (
-        user.role in ['president', 'worker', 'head_admin'] or user.is_superuser
-    )
+    from .permissions import legacy
+    return legacy(user, 'people')
+
 
 def can_edit_activity_periods(user):
-    """Кто может заполнять/редактировать историю активности волонтёров."""
-    return user.is_authenticated and (user.is_superuser or user.role in ['worker', 'head_admin', 'president'])
-
+    from .permissions import allowed
+    return allowed(user, 'activity')
 
 
 def get_user_power_level(user):
-    """Числовой уровень прав/иерархии (для сравнения доступа).
+    from .permissions import rank
+    return rank(user)
 
-    ВАЖНО: Назначения руководителей направлений не дают глобальных прав.
-    """
-    if not user or not getattr(user, 'is_authenticated', False):
-        return 0
-    if getattr(user, 'is_superuser', False):
-        return 1000
-
-    levels = {
-        'leader': 20,
-        'head_admin': 80,
-        'worker': 70,
-        'president': 60,
-        'moderator': 50,
-        'volunteer': 10,
-    }
-    base_level = levels.get(getattr(user, 'role', None), 0)
-
-    # Небольшой бонус для 'Активного волонтёра', но только если он обычный volunteer.
-    if getattr(user, 'is_active_volunteer_title', False) and getattr(user, 'role', None) == 'volunteer':
-        base_level += 15
-
-    return base_level
 
 def build_evaluation_stats(volunteer: User):
     """Сводка оценок волонтёра по всем мероприятиям."""
@@ -225,7 +197,7 @@ def home_view(request):
     icons = [('эко', 'leaf'), ('мед', 'briefcase-medical'), ('здоров', 'heart'), ('спорт', 'running'), ('наук', 'microscope'), ('образ', 'graduation-cap'), ('культур', 'palette'), ('междун', 'globe'), ('it', 'laptop-code')]
     for direction in directions:
         direction.home_icon = next((icon for word, icon in icons if word in direction.name.lower()), 'users')
-    events = Event.objects.filter(is_approved=True, is_completed=False, end_time__gte=timezone.now()).order_by('start_time')
+    events = Event.objects.filter(is_approved=True, is_completed=False, cancelled=False, end_time__gte=timezone.now()).order_by('start_time')
     if not request.user.is_authenticated:
         events = events.filter(is_public_for_guests=True)
     from .about_content import public_stats, public_contacts
@@ -236,23 +208,25 @@ def home_view(request):
         'home_page': home_page, 'about_content': about,
         'home_slides': list(home_page.slides.filter(is_active=True)) if home_page else [],
         'home_quotes': list(home_page.quotes.filter(is_active=True).select_related('member').exclude(member__is_superuser=True).exclude(member__is_approved=False)) if home_page else [],
-        'home_contacts': contacts, 'can_edit_home': can_manage_members(request.user),
+        'home_contacts': contacts, 'can_edit_home': allowed(request.user,'home'),
         'home_full_access': has_full_volunteer_access(request.user),
         'home_catalog_access': can_see_event_catalog(request.user),
     })
 
 
 def about_view(request):
+    from .models import HomeSlide
     from .about_content import public_stats, public_contacts, video_embed_url
     from urllib.parse import urlsplit
     about = AboutPage.objects.filter(pk=1).first()
     return render(request, 'users/about.html', {
         'about_content': about,
+        'about_photo': HomeSlide.objects.filter(page_id=1, is_active=True).first(),
         'value_blocks': about.value_blocks.filter(is_active=True).order_by('order', 'id') if about else [],
         'extra_blocks': about.extra_blocks.filter(is_active=True).order_by('order', 'id') if about else [],
         'stat_items': public_stats(about),
         'contact_links': public_contacts(about, request.user),
-        'can_edit_about': can_manage_members(request.user),
+        'can_edit_about': allowed(request.user,'about'),
         'about_video_embed': video_embed_url(about.video_url) if about else '',
         'about_video_url': about.video_url if about and urlsplit(about.video_url).scheme in ['http','https'] else '',
     })
@@ -289,11 +263,14 @@ def volunteer_list_view(request):
         queryset = queryset.filter(is_active_volunteer_title=True)
     elif status == 'school_leader':
         queryset = queryset.filter(school_leader_of__isnull=False).distinct()
+    elif status == 'leader':
+        queryset = queryset.filter(directions_led__isnull=False).distinct()
     elif status == 'president':
         queryset = queryset.filter(role='president')
 
+    request.aya_result_count=queryset.distinct().count()
     context = {
-        'volunteers': queryset.distinct(),
+        'volunteers': queryset.distinct().prefetch_related('directions_led', 'school_leader_of'),
         'volunteers_count': queryset.distinct().count(),
         'faculties': faculties, 'courses': courses, 'cities': cities, 'directions': directions,
         'form_values': request.GET,
@@ -387,7 +364,7 @@ def profile_edit_view(request):
 
 # --- ПРОФИЛЬ (Публичный) - ЗДЕСЬ ГЛАВНАЯ МАГИЯ ---
 def public_profile_view(request, pk):
-    profile_user = get_object_or_404(User, pk=pk)
+    profile_user = get_object_or_404(User.objects.all() if request.user.is_superuser else User.objects.filter(is_superuser=False), pk=pk)
 
     is_candidate_profile = bool(getattr(profile_user, 'candidate_approved', False) and not getattr(profile_user, 'is_approved', False))
     needs_initial_approval = bool(not getattr(profile_user, 'is_approved', False) and not getattr(profile_user, 'candidate_approved', False))
@@ -427,7 +404,7 @@ def public_profile_view(request, pk):
 
     candidate_visits = _candidate_visits_qs(profile_user)
     candidate_visit_count = len(candidate_visits)
-    can_review_candidate = bool(request.user.is_authenticated and request.user != profile_user and can_manage_members(request.user))
+    can_review_candidate = bool(request.user.is_authenticated and request.user != profile_user and allowed(request.user,'admissions'))
     can_mark_candidate_visit = bool(request.user.is_authenticated and request.user != profile_user and can_manage_candidates(request.user))
     can_manual_grant_access = bool(request.user.is_authenticated and request.user != profile_user and can_grant_candidate_access(request.user))
 
@@ -548,7 +525,7 @@ def moderator_dashboard_view(request):
         is_approved=False,
     ).exclude(is_superuser=True).order_by('-date_joined')
 
-    if not can_manage_members(request.user):
+    if not allowed(request.user,'admissions'):
         pending_users = User.objects.none()
 
     candidate_cards = []
@@ -566,14 +543,14 @@ def moderator_dashboard_view(request):
         'candidate_cards': candidate_cards,
         'candidates': candidates_qs,
         'can_manual_grant_access': can_grant_candidate_access(request.user),
-        'can_review_candidates': can_manage_members(request.user),
+        'can_review_candidates': allowed(request.user,'admissions'),
         'recently_approved': User.objects.filter(is_approved=True, is_superuser=False, volunteer_access_granted_at__gte=timezone.now() - timedelta(days=14)).exclude(role__in=['worker', 'head_admin']).select_related('volunteer_access_granted_by').order_by('-volunteer_access_granted_at'),
     })
 
 @login_required
 @transaction.atomic
 def approve_user_view(request, pk):
-    if not can_manage_members(request.user):
+    if not allowed(request.user,'admissions'):
         return HttpResponseForbidden('Недостаточно прав.')
     user_to_approve = get_object_or_404(User.objects.select_for_update(), pk=pk, is_superuser=False, role='volunteer')
 
@@ -602,7 +579,7 @@ def approve_user_view(request, pk):
 
 @login_required
 def reject_user_view(request, pk):
-    if not can_manage_members(request.user): return HttpResponseForbidden('Недостаточно прав.')
+    if not allowed(request.user,'admissions'): return HttpResponseForbidden('Недостаточно прав.')
     user_to_reject = get_object_or_404(User, pk=pk, is_approved=False, candidate_approved=False, is_superuser=False, role='volunteer')
     if request.method == 'POST':
         reason = request.POST.get('reason', 'Причина не указана.')
@@ -920,7 +897,7 @@ def grant_volunteer_access_view(request, pk):
 @transaction.atomic
 def delete_candidate_visit_view(request, visit_id):
     """Удалить ошибочную отметку визита."""
-    if not can_manage_candidates(request.user):
+    if not allowed(request.user,'admissions'):
         return redirect('home')
 
     if VolunteerVisit is None:

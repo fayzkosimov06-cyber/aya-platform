@@ -56,7 +56,8 @@ class ManagementTests(TestCase):
         self.assertTrue(self.school.members.filter(pk=self.outsider.pk).exists())
         self.client.force_login(self.teacher)
         url=reverse('teacher_edit',args=[self.school.pk,self.st.pk])
-        self.assertEqual(self.client.post(url,{'member':self.outsider.pk,'subject':'Updated'}).status_code,302)
+        self.assertEqual(self.client.post(url,{'member':self.outsider.pk,'subject':'Updated'}).status_code,403)
+        self.assertEqual(self.client.post(url,{'subject':'Updated'}).status_code,302)
         self.st.refresh_from_db();self.assertEqual(self.st.member,self.teacher)
         self.assertEqual(self.client.post(url,{'action':'delete'}).status_code,403)
     def test_school_links_and_inactive_catalog(self):

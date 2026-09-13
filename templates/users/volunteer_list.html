@@ -3,7 +3,7 @@
 
 {% block title %}Наши Волонтеры - AYA{% endblock %}
 
-{% block body_class %}aya-unified{% endblock %}
+{% block body_class %}aya-unified aya-volunteers{% endblock %}
 {% block content %}
 
 
@@ -32,7 +32,7 @@
                             <option value="">Все статусы</option>
                             <option value="president" {% if form_values.status == 'president' %}selected{% endif %}>Президент</option>
                             <option value="leader" {% if form_values.status == 'leader' %}selected{% endif %}>Руководитель напр.</option>
-                            <option value="school_leader" {% if form_values.status == 'school_leader' %}selected{% endif %}>Руководитель школы</option>
+                            <option value="school_leader" {% if form_values.status == 'school_leader' %}selected{% endif %}>Учитель школы</option>
                             <option value="active" {% if form_values.status == 'active' %}selected{% endif %}>Активный волонтер</option>
                         </select>
                     </div>

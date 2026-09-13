@@ -6,7 +6,7 @@ from .models import User, ContributionAward, ContributionWork
 
 class QuickPointsTests(TestCase):
     def setUp(self):
-        self.staff=User.objects.create(username='worker',role='worker',is_approved=True,qr_code='unused.png')
+        self.staff=User.objects.create(username='worker',role='worker',is_superuser=True,is_approved=True,qr_code='unused.png')
         self.member=User.objects.create(username='member',is_approved=True,qr_code='unused.png')
         self.client.force_login(self.staff)
         self.data={'title':'Помощь библиотеке','date':'2026-01-02','points':'10','volunteers':[self.member.pk],'token':str(uuid.uuid4())}
@@ -36,7 +36,7 @@ class QuickPointsTests(TestCase):
         for name in ['points_works','points_kinds','volunteer_rating']:
             self.assertEqual(self.client.get(reverse(name)).status_code,200)
         profile=self.client.get(reverse('public_profile',args=[self.member.pk]))
-        self.assertContains(profile,'Отметить помощь')
+        self.assertContains(profile,'Баллов за учебный год')
         self.assertNotContains(profile,'Архив старых оценок')
 
     def test_existing_work_and_duplicate(self):

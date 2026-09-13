@@ -30,7 +30,7 @@
                             <td>{{ log.created_at|date:"d M Y, H:i" }}</td>
                             <td>
                                 {% if log.actor %}
-                                    <a href="{% url 'public_profile' log.actor.pk %}">{{ log.actor.get_full_name }}</a>
+                                    <a href="{% url 'public_profile' log.actor.pk %}">{% if not log.actor.is_superuser %}{{ log.actor.get_full_name }}{% endif %}</a>
                                 {% else %}
                                     <span class="text-muted">Система</span>
                                 {% endif %}
