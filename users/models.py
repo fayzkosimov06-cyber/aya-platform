@@ -1,3 +1,4 @@
+from .profile_choices import CITY_CHOICES, FACULTY_CHOICES, COURSE_CHOICES
 # users/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -63,7 +64,7 @@ class User(AbstractUser):
     patronymic = models.CharField(max_length=100, blank=True, verbose_name="Отчество")
     birth_date = models.DateField(null=True, blank=True, verbose_name="Дата рождения")
     gender = models.CharField(max_length=1, choices=[('M', 'Мужской'), ('F', 'Женский')], blank=True, verbose_name="Пол")
-    city = models.CharField(max_length=100, blank=True, verbose_name="Город")
+    city = models.CharField(max_length=100, blank=True, choices=CITY_CHOICES, verbose_name="Город")
     
     # --- НОВЫЕ ПОЛЯ ---
     about_me = models.TextField(blank=True, verbose_name="О себе (Bio)")
@@ -82,8 +83,8 @@ class User(AbstractUser):
     def is_new_volunteer(self):
         return bool(self.is_approved and not self.is_old_volunteer and self.new_volunteer_until and self.new_volunteer_until > timezone.now())
 
-    faculty = models.CharField(max_length=200, blank=True, verbose_name="Факультет")
-    course = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Курс")
+    faculty = models.CharField(max_length=200, blank=True, choices=FACULTY_CHOICES, verbose_name="Факультет")
+    course = models.PositiveSmallIntegerField(null=True, blank=True, choices=COURSE_CHOICES, verbose_name="Курс")
     group = models.CharField(max_length=50, blank=True, verbose_name="Группа")
     directions = models.ManyToManyField(Direction, blank=True, verbose_name="Участвует в направлениях")
     

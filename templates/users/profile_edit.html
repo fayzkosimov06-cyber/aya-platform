@@ -109,7 +109,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Город</label>
-                                {{ form.city }}
+                                {{ form.city }}{% if form.city.help_text %}<small class="text-muted d-block">{{ form.city.help_text }}</small>{% endif %}{{ form.city.errors }}
                             </div>
                         </div>
 
@@ -129,11 +129,11 @@
                             {% else %}
                                 <div class="col-md-4">
                                     <label class="form-label">Факультет</label>
-                                    {{ form.faculty }}
+                                    {{ form.faculty }}{% if form.faculty.help_text %}<small class="text-muted d-block">{{ form.faculty.help_text }}</small>{% endif %}{{ form.faculty.errors }}
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Курс</label>
-                                    {{ form.course }}
+                                    {{ form.course }}{% if form.course.help_text %}<small class="text-muted d-block">{{ form.course.help_text }}</small>{% endif %}{{ form.course.errors }}
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Группа</label>

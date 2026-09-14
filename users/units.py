@@ -14,12 +14,21 @@ from .points import can_award, members as eligible_members
 from events.models import Event
 
 
-def global_manager(user):
-    from .permissions import allowed,setting,request_context
-    if allowed(user,'people'):return True
-    req=request_context.get();code=getattr(req,'aya_capability',None)
-    rule=setting(user,code) if code in {'directions','schools'} and user.is_authenticated else None
-    return bool(rule and rule.enabled and allowed(user,code,getattr(req,'aya_object',None)))
+def global_manager(user, code=None):
+    from .permissions import allowed, setting, request_context
+    req = request_context.get()
+    code = code or getattr(req, 'aya_capability', None)
+    if code not in {'directions', 'schools'}:
+        return allowed(user, 'people')
+    obj = getattr(req, 'aya_object', None)
+    if not allowed(user, code, obj):
+        return False
+    if user.is_superuser:
+        return True
+    rule = setting(user, code)
+    scope = rule.scope if rule else ('all' if user.role in {'president','worker','head_admin'} else 'own')
+    # Creation requires all teams; explicit scoped administration only works on an existing team.
+    return scope == 'all' or bool(obj and rule and rule.enabled)
 
 
 def can_edit_unit(user,obj):
@@ -41,7 +50,7 @@ def catalog(request,kind='direction'):
     page=Paginator(objects.order_by('name'),18).get_page(request.GET.get('page'))
     request.aya_result_count=page.paginator.count
     for obj in page:obj.manage_allowed=can_edit_unit(request.user,obj)
-    return render(request,'users/unit_catalog.html',{'objects':page,'kind':kind,'is_school':school,'global_manager':global_manager(request.user),'q':query,'inactive':inactive,'directions':Direction.objects.all(),'filter_direction':request.GET.get('direction','')})
+    return render(request,'users/unit_catalog.html',{'objects':page,'kind':kind,'is_school':school,'global_manager':global_manager(request.user, 'schools' if school else 'directions'),'q':query,'inactive':inactive,'directions':Direction.objects.all(),'filter_direction':request.GET.get('direction','')})
 
 
 def detail(request,pk,kind='direction'):

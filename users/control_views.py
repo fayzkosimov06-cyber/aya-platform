@@ -1,6 +1,7 @@
 from datetime import date,timedelta
 from django import forms
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q,Sum
@@ -16,15 +17,21 @@ class RightsForm(forms.Form):
  acknowledge=forms.BooleanField(required=False,label='Понимаю, что отключаю важные права руководителя или учителя')
  def __init__(self,*args,actor,**kwargs):
   super().__init__(*args,**kwargs);self.actor=actor
-  people=list(User.objects.exclude(is_superuser=True).prefetch_related('directions_led','school_leader_of'))
-  self.fields['targets'].queryset=User.objects.filter(pk__in=[p.pk for p in people if can_change(actor,p)])
+  people=list(User.objects.exclude(is_superuser=True).prefetch_related('directions_led','school_leader_of','schoolteacher_set'))
+  self.fields['targets'].queryset=User.objects.filter(pk__in=[p.pk for p in people if can_change(actor,p)]).order_by('last_name','first_name','pk').prefetch_related('directions_led','school_leader_of','schoolteacher_set','permission_overrides__directions','permission_overrides__schools')
   for code,label in CAPABILITIES.items():
-   self.fields[code]=forms.ChoiceField(label=label,choices=[('keep','Не менять'),('inherit','Стандарт должности'),('on','Разрешить'),('off','Запретить')],initial='keep')
-  self.fields['scope']=forms.ChoiceField(label='Область изменяемых прав команд',choices=[('own','Свои команды'),('selected','Выбранные команды'),('all','Все команды')])
+   self.fields[code]=forms.ChoiceField(required=False,label=label,choices=[('keep','Не менять'),('inherit','Стандарт должности'),('on','Разрешить'),('off','Запретить')],initial='keep')
+  self.fields['scope']=forms.ChoiceField(required=False,initial='own',label='Область изменяемых прав команд',choices=[('own','Свои команды'),('selected','Выбранные команды'),('all','Все команды')])
   self.fields['scope_directions']=forms.ModelMultipleChoiceField(queryset=Direction.objects.all(),required=False,widget=forms.CheckboxSelectMultiple,label='Направления')
   self.fields['scope_schools']=forms.ModelMultipleChoiceField(queryset=School.objects.all(),required=False,widget=forms.CheckboxSelectMultiple,label='Школы')
  def clean(self):
   d=super().clean();people=d.get('targets',[])
+  for code in CAPABILITIES:d[code]=d.get(code) or 'keep'
+  d['scope']=d.get('scope') or 'own'
+  if not any(d[c]!='keep' for c in CAPABILITIES):
+   raise forms.ValidationError('Выберите хотя бы одно изменение прав.')
+  if d['scope']=='selected' and any(d[c]=='on' for c in SCOPED) and not (d.get('scope_directions') or d.get('scope_schools')):
+   raise forms.ValidationError('Выберите хотя бы одно направление или школу для ограниченного доступа.')
   for person in people:
    if not can_change(self.actor,person):raise forms.ValidationError('Недоступный пользователь.')
    for code in CAPABILITIES:
@@ -58,10 +65,27 @@ def rights(request):
     if mode=='inherit':PermissionOverride.objects.filter(user=person,code=code).delete();continue
     obj,_=PermissionOverride.objects.update_or_create(user=person,code=code,defaults={'enabled':mode=='on','scope':d['scope'] if code in SCOPED else 'all'})
     obj.directions.set(d['scope_directions']);obj.schools.set(d['scope_schools'])
+  messages.success(request, f'Права сохранены. Пользователей: {len(d["targets"])}. Остальные разрешения сохранены.')
   return redirect('rights_manage')
  users=form.fields['targets'].queryset
- summaries=[{'person':p,'rights':[label for c,label in CAPABILITIES.items() if allowed(p,c)]} for p in users]
- return render(request,'users/rights.html',{'form':form,'summaries':summaries})
+ groups = [
+  ('Люди и доступ', ['people','admissions','visits','contacts','permissions']),
+  ('Мероприятия', ['events_edit','events_publish','events_delete']),
+  ('Направления и школы', ['directions','schools']),
+  ('Баллы и деятельность', ['points_propose','points_award','points_review','points_correct','points_rules','activity']),
+  ('Страницы и журнал', ['home','about','audit']),
+ ]
+ people_data=[]
+ for person in users:
+  rules={r.code:r for r in person.permission_overrides.all()}
+  states={}
+  for code in CAPABILITIES:
+   rule=rules.get(code)
+   enabled=bool(person.is_approved or person.volunteer_access or person.role in {'president','worker','head_admin'}) and (rule.enabled if rule else defaults(person,code))
+   states[code]={'enabled':enabled, 'source':'Личная настройка' if rule else 'По должности',
+    'scope':dict(PermissionOverride.SCOPE_CHOICES).get(rule.scope,rule.scope) if rule and hasattr(PermissionOverride,'SCOPE_CHOICES') else (rule.scope if rule else ('all' if person.role in {'president','worker','head_admin'} else 'own'))}
+  people_data.append({'id':str(person.pk),'name':person.get_full_name() or person.username,'role':('Руководитель направления' if person.directions_led.exists() else 'Учитель школы' if person.school_leader_of.exists() or person.schoolteacher_set.exists() else person.get_role_display()),'states':states})
+ return render(request,'users/rights.html',{'form':form,'permission_groups':[(title,[form[c] for c in codes]) for title,codes in groups], 'people_data':people_data, 'scoped_codes':sorted(SCOPED)})
 
 @login_required
 def journal(request,mode='public'):

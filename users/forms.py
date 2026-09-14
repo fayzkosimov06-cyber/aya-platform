@@ -28,7 +28,26 @@ class UserRegisterForm(UserCreationForm):
             user.save()
         return user
 
-class UserUpdateForm(forms.ModelForm):
+class FixedProfileChoicesMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.legacy_profile_fields = set()
+        for name in ('course', 'faculty', 'city'):
+            field = self.fields[name]
+            previous = getattr(self.instance, name, None)
+            valid = {str(key) for key, label in field.choices}
+            if previous not in (None, '') and str(previous) not in valid:
+                self.legacy_profile_fields.add(name)
+                field.help_text = f'Ранее указано: {previous}. Выберите подходящий вариант из списка перед сохранением.'
+
+    def clean(self):
+        data = super().clean()
+        for name in self.legacy_profile_fields:
+            if name in data and data[name] in (None, ''):
+                self.add_error(name, 'Выберите значение из списка: прежнее значение не входит в справочник.')
+        return data
+
+class UserUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
     """
     Форма для ВОЛОНТЕРА (редактирование своего профиля).
     Включает настройки приватности.
@@ -52,10 +71,10 @@ class UserUpdateForm(forms.ModelForm):
             'patronymic': forms.TextInput(attrs={'class': 'form-control'}),
             'birth_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-select'}),
-            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'city': forms.Select(attrs={'class': 'form-select'}),
             'about_me': forms.Textarea(attrs={'rows': 4, 'class': 'form-control', 'placeholder': 'Расскажите о себе...'}),
-            'faculty': forms.TextInput(attrs={'class': 'form-control'}),
-            'course': forms.NumberInput(attrs={'class': 'form-control'}),
+            'faculty': forms.Select(attrs={'class': 'form-select'}),
+            'course': forms.Select(attrs={'class': 'form-select'}),
             'group': forms.TextInput(attrs={'class': 'form-control'}),
             
             # Контакты
@@ -74,7 +93,7 @@ class UserUpdateForm(forms.ModelForm):
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
-class AdminUpdateForm(forms.ModelForm):
+class AdminUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
     def __init__(self, *args, actor=None, **kwargs):
         super().__init__(*args, **kwargs)
         if actor is not None and not actor.is_superuser:
@@ -106,12 +125,12 @@ class AdminUpdateForm(forms.ModelForm):
             'role': forms.Select(attrs={'class': 'form-select'}),
             'birth_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-select'}),
-            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'city': forms.Select(attrs={'class': 'form-select'}),
             'about_me': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
             'job_title': forms.TextInput(attrs={'class': 'form-control'}),
             'office_location': forms.TextInput(attrs={'class': 'form-control'}),
-            'faculty': forms.TextInput(attrs={'class': 'form-control'}),
-            'course': forms.NumberInput(attrs={'class': 'form-control'}),
+            'faculty': forms.Select(attrs={'class': 'form-select'}),
+            'course': forms.Select(attrs={'class': 'form-select'}),
             'group': forms.TextInput(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'telegram': forms.TextInput(attrs={'class': 'form-control'}),

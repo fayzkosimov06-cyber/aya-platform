@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from ..profile_choices import filter_profiles, filter_choices
 from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -84,9 +85,9 @@ def people(request):
     if request.GET.get('direction','').isdigit():people=people.filter(directions=request.GET['direction'])
     if request.GET.get('school','').isdigit():people=people.filter(aya_schools=request.GET['school'])
     from ..views import get_user_power_level
-    people=list(people)
+    people=list(filter_profiles(people, request.GET))
     for person in people:person.bulk_allowed=person.pk!=request.user.pk and get_user_power_level(person)<get_user_power_level(request.user)
-    return render(request,'users/people_hub.html',{'form':form,'people':people,'selected':request.POST.getlist('selected'),'q':q,'state':state,'directions':Direction.objects.all(),'schools':School.objects.all(),'filter_direction':request.GET.get('direction',''),'filter_school':request.GET.get('school','')})
+    return render(request,'users/people_hub.html',{**filter_choices(),'filters':request.GET,'form':form,'people':people,'selected':request.POST.getlist('selected'),'q':q,'state':state,'directions':Direction.objects.all(),'schools':School.objects.all(),'filter_direction':request.GET.get('direction',''),'filter_school':request.GET.get('school','')})
 
 @login_required
 def dashboard(request):

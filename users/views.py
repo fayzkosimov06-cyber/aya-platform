@@ -1,3 +1,4 @@
+from .profile_choices import filter_profiles, filter_choices
 # users/views.py
 
 import json
@@ -237,26 +238,19 @@ def volunteer_list_view(request):
         role__in=['worker', 'head_admin']
     ).order_by('last_name', 'first_name')
 
-    base_visible_users = User.objects.filter(is_approved=True).exclude(is_superuser=True).exclude(role__in=['worker', 'head_admin'])
-    faculties = base_visible_users.exclude(faculty='').values_list('faculty', flat=True).distinct().order_by('faculty')
-    courses = base_visible_users.exclude(course__isnull=True).values_list('course', flat=True).distinct().order_by('course')
-    cities = base_visible_users.exclude(city='').values_list('city', flat=True).distinct().order_by('city')
+    choices = filter_choices()
+    faculties, courses, cities = choices['faculties'], choices['courses'], choices['cities']
     directions = Direction.objects.all().order_by('name')
 
     query = request.GET.get('query')
     if query:
         queryset = queryset.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(patronymic__icontains=query))
 
-    if request.GET.get('faculty'):
-        queryset = queryset.filter(faculty=request.GET.get('faculty'))
-    if request.GET.get('course'):
-        queryset = queryset.filter(course=request.GET.get('course'))
-    if request.GET.get('city'):
-        queryset = queryset.filter(city=request.GET.get('city'))
+    queryset = filter_profiles(queryset, request.GET)
     if request.GET.get('gender'):
         queryset = queryset.filter(gender=request.GET.get('gender'))
     if request.GET.get('direction'):
-        queryset = queryset.filter(directions__id=request.GET.get('direction'))
+        queryset = queryset.filter(directions__id=request.GET['direction']) if request.GET['direction'].isdigit() else queryset.none()
 
     status = request.GET.get('status')
     if status == 'active':
