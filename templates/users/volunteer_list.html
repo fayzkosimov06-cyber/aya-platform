@@ -16,7 +16,7 @@
         <div class="card-body p-4 p-lg-5 bg-white">
             <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-filter me-2 text-primary"></i>Найти волонтёра</h5>
             
-            <form method="GET" action="{% url 'volunteer_list' %}">
+            <form data-tour="volunteer-search" method="GET" action="{% url 'volunteer_list' %}">
                 <div class="row g-3">
                     <div class="col-lg-12 mb-2">
                         <div class="input-group">
@@ -99,7 +99,7 @@
     
     <div class="row g-4 fade-in-up" style="animation-delay: 0.2s;">
         {% for volunteer in volunteers %}
-            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+            <div data-tour="volunteer-card" class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
                 {% include 'users/partials/volunteer_card.html' with volunteer=volunteer %}
             </div>
         {% empty %}

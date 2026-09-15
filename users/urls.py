@@ -3,12 +3,15 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 from . import about_views
+from . import training
 from .home_views import home_manage_view
 from .points import points_rating as rating_view
 from . import points, units, proposals, management, control_views
 
 
 urlpatterns = [
+    path('help/', training.help_view, name='training_help'),
+    path('help/progress/', training.progress_view, name='training_progress'),
     path('administration/rights/', control_views.rights, name='rights_manage'),
     path('administration/private-log/', control_views.journal, {'mode':'private'}, name='journal_private'),
     path('administration/activity-log/', control_views.journal, {'mode':'activity'}, name='journal_activity'),

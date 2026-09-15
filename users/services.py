@@ -15,4 +15,8 @@ def grant_access(user, actor, *, old=False):
     user.volunteer_access_granted_by = actor
     user.new_volunteer_until = None if old else now + timedelta(days=14)
     user.save(update_fields=['candidate_approved', 'volunteer_access', 'is_approved', 'is_old_volunteer', 'volunteer_access_granted_at', 'volunteer_access_granted_by', 'new_volunteer_until'])
+    # Both the third visit and manual/bulk admission use this service.
+    # Existing members have no row: they can start from Help without a popup.
+    from .models import TourProgress
+    TourProgress.objects.get_or_create(user=user, topic='main')
     return True

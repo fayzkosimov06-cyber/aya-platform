@@ -1,0 +1,26 @@
+.aya-help {max-width:1100px}
+.aya-help-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,285px),1fr));gap:16px;margin-top:24px}
+.aya-help-card {background:#fff;border:1px solid #d7e6f3;border-radius:18px;padding:22px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.aya-help-card h2 {font-size:1.25rem;margin:0;color:#143451}
+.aya-help-card p {margin:0;color:#456079}
+.aya-help-card small {color:#456079}
+.aya-help-actions {display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:8px}
+dialog.aya-tour {position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:transparent;color:#153650;overflow:hidden}
+dialog.aya-tour::backdrop {background:transparent}
+.aya-tour-shade {position:fixed;background:rgba(12,33,54,.66);pointer-events:auto}
+.aya-tour-ring {position:fixed;border:3px solid #55d4df;border-radius:9px;pointer-events:none;box-shadow:0 0 0 3px rgba(255,255,255,.75)}
+.aya-tour-panel {position:fixed;box-sizing:border-box;width:390px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;background:#fff;border:1px solid #d8eafa;border-radius:20px;padding:24px;box-shadow:0 18px 65px #07192c55}
+.aya-tour-panel:focus {outline:none}
+.aya-tour-panel h2 {font-size:1.4rem;color:#123557;margin:12px 0;line-height:1.3}
+.aya-tour-panel p {font-size:1rem;line-height:1.55;color:#35526a;margin:0 0 16px}
+.aya-tour-progress {font-size:.85rem;font-weight:700;color:#186779;letter-spacing:.02em}
+.aya-tour-actions {display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.aya-tour button,.aya-help button {font:inherit;min-height:44px;border-radius:10px;padding:9px 16px;border:1px solid #bfd2e3;background:#f6faff;color:#173f63;cursor:pointer}
+.aya-tour button.aya-tour-primary,.aya-help button.aya-tour-primary {background:#1265b5;border-color:#1265b5;color:white}
+.aya-tour button:focus-visible,.aya-help button:focus-visible {outline:3px solid #11a6b6;outline-offset:3px}
+.aya-tour button:disabled {opacity:.5;cursor:wait}
+.aya-tour-later {margin-top:12px;width:100%;background:transparent!important}
+.aya-tour-error {color:#9c2534!important;font-size:.9rem!important}
+.aya-tour-notice {position:fixed;bottom:16px;left:16px;right:16px;z-index:2000;background:#fff;border:2px solid #1265b5;border-radius:12px;padding:16px;color:#173f63}
+@media (max-width:600px) {.aya-tour-panel {width:calc(100vw - 24px);padding:18px;border-radius:18px}.aya-tour-panel h2{font-size:1.25rem}.aya-tour-panel p{font-size:.95rem}}
+@media (prefers-reduced-motion:reduce) {dialog.aya-tour *, .aya-help * {scroll-behavior:auto!important;animation:none!important;transition:none!important}}

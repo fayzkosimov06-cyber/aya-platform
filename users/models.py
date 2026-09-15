@@ -138,6 +138,22 @@ class User(AbstractUser):
 
     def __str__(self): return self.get_full_name() or self.username
 
+class TourProgress(models.Model):
+    """Account-owned learning state; never used to grant site permissions."""
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='tour_progress')
+    topic = models.CharField(max_length=32)
+    version = models.PositiveSmallIntegerField(default=1)
+    status = models.CharField(max_length=16, default='not_started', choices=[
+        ('not_started', 'Не начато'), ('in_progress', 'В процессе'),
+        ('deferred', 'Отложено'), ('completed', 'Завершено'),
+    ])
+    step = models.PositiveSmallIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user', 'topic'], name='unique_user_tour_topic')]
+
+
 class ActivityPeriod(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_periods')
     start_date = models.DateField(verbose_name="Дата начала периода")

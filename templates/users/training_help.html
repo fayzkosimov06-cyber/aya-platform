@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Помощь и обучение — AYA{% endblock %}
+{% block content %}
+<div class="container my-4 aya-help">
+  <p class="aya-kicker">ОСВОЙТЕСЬ В AYA</p>
+  <h1>Помощь и обучение</h1>
+  <p>Короткие подсказки прямо на страницах сайта. Выберите тему — её можно отложить и продолжить в любое время.</p>
+  {% if not training_full_access %}<p class="alert alert-info">Сейчас доступна тема о профиле. Остальные темы откроются вместе с полным доступом волонтёра.</p>{% endif %}
+  <div id="aya-help-status" role="status">Загружаем темы…</div>
+  <div class="aya-help-grid" id="aya-help-topics" data-tour="help-topics"></div>
+  <noscript><p>Для интерактивных подсказок включите JavaScript. Основные разделы сайта доступны через меню.</p></noscript>
+  <details class="mt-4"><summary>Как проходит обучение</summary><p>«Далее» переключает подсказку и при необходимости открывает страницу. Обучение не сохраняет профиль, не записывает на события и не читает уведомления за вас. Чтобы работать со страницей, закройте подсказку кнопкой «Закончить позже» или клавишей Escape.</p></details>
+</div>
+{% endblock %}

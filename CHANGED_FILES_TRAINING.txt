@@ -1,0 +1,22 @@
+AYA training update — compared with the supplied django_project.zip
+Baseline Git HEAD: 979fb2d5305baa62a60b595919b43c3c37a1e32e
+
+NEW: static/css/training.css
+NEW: static/js/training.js
+MODIFIED: templates/base.html
+MODIFIED: templates/events/hub.html
+MODIFIED: templates/events/page.html
+MODIFIED: templates/users/points_rating.html
+MODIFIED: templates/users/profile_edit.html
+NEW: templates/users/training_help.html
+MODIFIED: templates/users/unit_catalog.html
+MODIFIED: templates/users/unit_detail.html
+MODIFIED: templates/users/volunteer_list.html
+NEW: TEST_REPORT_TRAINING.md
+NEW: UPDATE_TRAINING.md
+NEW: users/migrations/0043_tour_progress.py
+MODIFIED: users/models.py
+MODIFIED: users/services.py
+NEW: users/test_training.py
+NEW: users/training.py
+MODIFIED: users/urls.py

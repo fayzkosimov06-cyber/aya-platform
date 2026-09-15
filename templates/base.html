@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="{% static 'css/aya-unified.css' %}?v=9">
 <link rel="stylesheet" href="{% static 'css/aya-polish.css' %}?v=10">
 <link rel="stylesheet" href="{% static 'css/aya-design.css' %}?v=15">
+<link rel="stylesheet" href="{% static 'css/training.css' %}?v=1">
 </head>
 <body class="aya-site aya-design {% block body_class %}{% endblock %}">
 {% get_site_stats as site_stats %}
@@ -32,7 +33,7 @@
     
     <nav class="navbar navbar-expand-xxl navbar-light sticky-top main-navbar">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">
+            <a class="navbar-brand" data-tour="nav-home" href="{% url 'home' %}">
                 <img src="{% static 'img/aya-logo-2026.png' %}" alt="AYA" width="76" height="64"><span class="aya-brand-text">ASSOCIATION OF<br>YOUTH ATSMU</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Меню сайта">
@@ -41,10 +42,10 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'home' %} active{% endif %}" href="{% url 'home' %}"{% if request.resolver_match.url_name == 'home' %} aria-current="page"{% endif %}>Главная</a></li>
-                    <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'event_list' %} active{% endif %}" href="{% url 'event_list' %}"{% if request.resolver_match.url_name == 'event_list' %} aria-current="page"{% endif %}>Мероприятия</a></li>
-                    <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'volunteer_list' %} active{% endif %}" href="{% url 'volunteer_list' %}"{% if request.resolver_match.url_name == 'volunteer_list' %} aria-current="page"{% endif %}>Волонтёры</a></li>
-<li class="nav-item"><a class="nav-link" href="{% url 'unit_catalog' %}">Направления</a></li><li class="nav-item"><a class="nav-link" href="{% url 'school_catalog' %}">Школы</a></li>
-                    <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'volunteer_rating' %} active{% endif %}" href="{% url 'volunteer_rating' %}"{% if request.resolver_match.url_name == 'volunteer_rating' %} aria-current="page"{% endif %}>Рейтинг</a></li>
+                    <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'event_list' %} active{% endif %}" data-tour="nav-events" href="{% url 'event_list' %}"{% if request.resolver_match.url_name == 'event_list' %} aria-current="page"{% endif %}>Мероприятия</a></li>
+                    <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'volunteer_list' %} active{% endif %}" data-tour="nav-volunteers" href="{% url 'volunteer_list' %}"{% if request.resolver_match.url_name == 'volunteer_list' %} aria-current="page"{% endif %}>Волонтёры</a></li>
+<li class="nav-item"><a class="nav-link" data-tour="nav-directions" href="{% url 'unit_catalog' %}">Направления</a></li><li class="nav-item"><a class="nav-link" data-tour="nav-schools" href="{% url 'school_catalog' %}">Школы</a></li>
+                    <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'volunteer_rating' %} active{% endif %}" data-tour="nav-rating" href="{% url 'volunteer_rating' %}"{% if request.resolver_match.url_name == 'volunteer_rating' %} aria-current="page"{% endif %}>Рейтинг</a></li>
 {% if can_award_points %}<li class="nav-item"><a class="nav-link" href="{% url 'points_works' %}">Баллы</a></li>{% endif %}
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'administration_page' %} active{% endif %}" href="{% url 'administration_page' %}"{% if request.resolver_match.url_name == 'administration_page' %} aria-current="page"{% endif %}>Администрация</a></li>
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'about_page' %} active{% endif %}" href="{% url 'about_page' %}"{% if request.resolver_match.url_name == 'about_page' %} aria-current="page"{% endif %}>О нас</a></li>
@@ -53,7 +54,7 @@
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
                     <li class="nav-item me-3 d-flex align-items-center">
-                        <a class="nav-link" href="{% url 'notifications' %}">
+                        <a class="nav-link" data-tour="nav-notifications" href="{% url 'notifications' %}">
                             <i class="fas fa-bell fa-lg" aria-hidden="true"></i><span class="visually-hidden">Уведомления</span>
                             {% if unread_notifications_count %}
                                 <span class="badge bg-danger rounded-pill">{{ unread_notifications_count }}</span>
@@ -61,7 +62,7 @@
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-tour="account" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <div class="position-relative d-inline-block me-2">
                                 
                                 <i class="fas fa-user-circle fa-lg"></i>
@@ -71,6 +72,7 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                             {% if can_manage_rights %}<li><a class="dropdown-item" href="{% url 'rights_manage' %}">Права доступа</a></li>{% endif %}{% if can_view_audit %}<li><a class="dropdown-item" href="{% url 'audit_log' %}">Журнал действий</a></li>{% endif %}{% if user.is_superuser %}<li><a class="dropdown-item" href="{% url 'journal_private' %}">Закрытое управление</a></li>{% endif %}<li><a class="dropdown-item" href="{% url 'my_profile' %}">Мой профиль</a></li>
                             <li><a class="dropdown-item" href="{% url 'profile_edit' %}">Редактировать</a></li>
+<li><a class="dropdown-item" data-tour="help-link" href="{% url 'training_help' %}">Помощь и обучение</a></li>
                             
                             {% if can_award_points %}<a class="dropdown-item" href="{% url 'points_works' %}">Центр баллов</a>{% endif %}
 {% if can_open_admin %}
@@ -138,5 +140,9 @@
     <script src="{% static 'js/design.js' %}?v=14" defer></script>
     {% if user.is_authenticated %}<span hidden data-activity-endpoint="{% url 'record_search' %}" data-section="{{ request.resolver_match.url_name }}" data-csrf="{{ csrf_token }}"></span>{% endif %}<script src="{% static 'js/control.js' %}?v=15" defer></script>
 {% block extra_js %}{% endblock %}
+{% if user.is_authenticated %}
+<span hidden id="aya-training-config" data-endpoint="{% url 'training_progress' %}" data-help="{% url 'training_help' %}" data-user="{{ user.pk }}" data-page="{{ request.resolver_match.url_name }}" data-csrf="{{ csrf_token }}"></span>
+<script src="{% static 'js/training.js' %}?v=4" defer></script>
+{% endif %}
 </body>
 </html>
