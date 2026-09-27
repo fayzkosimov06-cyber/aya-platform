@@ -1,5 +1,6 @@
 """Small, versioned tours. URLs and eligibility stay on the server."""
 import json
+from urllib.parse import urlencode
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import JsonResponse
@@ -10,16 +11,28 @@ from django.views.decorators.http import require_http_methods
 from .access import has_full_volunteer_access, is_candidate_user
 from .models import TourProgress, User, Direction, School
 
-VERSION = 1
+VERSION = 2
 
 
 def full_access(user):
     return has_full_volunteer_access(user) and not is_candidate_user(user)
 
 
-def step(route, target, title, text, *, pk=None, fallback=''):
-    return {'url': reverse(route, args=[pk] if pk else None), 'target': target,
+def step(route, target, title, text, *, pk=None, fallback='', query=None):
+    url=reverse(route, args=[pk] if pk else None)
+    if query:url+='?'+urlencode(query)
+    return {'url': url, 'target': target,
             'title': title, 'text': text, 'fallback': fallback}
+
+
+def organize(topics):
+    basics={'main','profile','notifications'}
+    community={'events','volunteers','rating','directions','schools','clubs'}
+    for key,topic in topics.items():
+        topic['group']='basics' if key in basics else 'community' if key in community else 'work'
+        topic['minutes']=max(1,(len(topic['steps'])+2)//3)
+        topic['priority']=80 if key.endswith('_editor') or key in {'moderation','people'} else 70 if key=='main' else 60 if key=='profile' else 40
+    return topics
 
 
 def topics_for(user):
@@ -31,7 +44,7 @@ def topics_for(user):
     ]
     topics = {'profile': {'title': 'Профиль и приватность', 'description': 'Фотография, учёба и видимость контактов.', 'steps': profile}}
     if not full_access(user):
-        return topics
+        return organize(topics)
     main = [
         step('home', 'nav-home', 'Добро пожаловать в AYA', 'Основные разделы находятся в меню сверху. На телефоне меню раскрывается кнопкой с тремя полосками.'),
         step('home', 'account', 'Ваш аккаунт', 'Нажмите на своё имя, чтобы открыть профиль, редактирование и помощь. Подробные темы можно пройти отдельно.'),
@@ -78,7 +91,56 @@ def topics_for(user):
         else:
             steps.append(step(r, 'direction-schools', 'Связанные школы', 'Отсюда можно перейти к школам направления и выбрать интересные занятия.', pk=ident, fallback='У этого направления пока нет активных связанных школ. Самостоятельные школы можно найти в общем каталоге.'))
         topics[key] = {'title': title, 'description': explanation, 'steps': steps}
-    return topics
+    from .models import Club
+    from .permissions import allowed
+    club = Club.objects.order_by('name').first()
+    topics['clubs'] = {'title':'Клубы и встречи','description':'Ответственные, активная команда и расписание.', 'steps':[
+        step('club_catalog','club-catalog','Найдите свой клуб','Клуб может быть самостоятельным или связанным со школой и направлением.'),
+        step('club_detail' if club else 'club_catalog','club-schedule','Проверьте встречи', 'Смотрите ближайшие, прошедшие и отменённые встречи. Участников добавляют управляющие клуба.',pk=club.pk if club else None,fallback='Когда появится первый клуб, на его странице будут ответственные, команда и расписание.') ]}
+    for code, key, title, description, route, target in [
+        ('visits','moderation','Кандидаты и визиты','Один визит в день. Третий открывает полный доступ. Приём заявок и ручной допуск требуют отдельного права.','moderator_dashboard','moderation-guide'),
+        ('points_award','awarding','Начисление баллов','Выберите работу, участников и количество баллов. Перед сохранением проверьте состав и дату. Удаление работы снимает её начисления у всех.','points_quick','points-guide'),
+        ('permissions','rights','Полномочия','Выберите нижестоящих пользователей. Изменяйте только нужные разрешения и проверяйте область команд перед сохранением.','rights_manage','rights-guide'),
+        ('audit','journal','Понятный журнал','Сначала выберите пользователя по последней активности. Затем откройте действие: таблица покажет, что изменилось.','audit_log','journal-overview'),
+        ('people','people','Управление людьми','Сначала найдите людей и отметьте нужных. Массовые действия применяются ко всем выбранным, включая скрытых поиском.','user_management','people-guide'),
+        ('home','home_editor','Главная и фотографии','В редакторе можно менять тексты, цитаты и изображения. После выбора одиночной фотографии настройте кадр, затем сохраните форму.','home_manage','home-editor-guide'),
+        ('points_review','reviewing','Проверка заявок на баллы','Откройте заявку, проверьте участников и основание. Подтверждайте только проверенную работу; при отклонении укажите причину.','proposal_list','proposal-guide'),
+        ('works_delete','work_deletion','Удаление работы и баллов','Откройте работу и выберите удаление. На странице подтверждения перечислены участники и снимаемые баллы. Удаление убирает начисления у всех участников этой работы.','points_works','works-guide'),
+        ('users_delete','account_deletion','Удаление аккаунта','Кнопка находится в профиле нижестоящего пользователя. Сначала изучите материалы, затем выберите, какие дополнительно удалить. Невыбранные материалы сохраняются с отметкой «Аккаунт удалён». Подтверждение требует логина.','volunteer_list','volunteer-search'),
+        ('about','about_editor','Сведения об AYA','Обновляйте описание ассоциации и контакты. Проверьте результат после сохранения.','about_manage','about-editor'),
+    ]:
+        if allowed(user,code):topics[key]={'title':title,'description':description,'steps':[step(route,target,title,description,fallback=description)]}
+    for model, code, title, route, target in [(Direction,'directions','Редактор направления','direction_edit','unit-editor-guide'),(School,'schools','Редактор школы','school_edit','unit-editor-guide'),(Club,'clubs','Редактор клуба','club_edit','club-editor')]:
+        obj=next((o for o in model.objects.all() if allowed(user,code,o)),None)
+        if obj:
+            text='Описание, участники и активная команда.' if model==Direction else 'Команда, учителя и расписание школы.' if model==School else 'Участники, ответственные и встречи клуба.'
+            steps=[step(route,target,'Начните с нужной вкладки','Каждый раздел сохраняется отдельно. Здесь вы управляете командой «'+obj.name+'».',pk=obj.pk)]
+            content='club-content' if model==Club else 'unit-field-members'
+            steps.append(step(route,content,'Добавить или убрать участника','Найдите человека и отметьте галочку. Снимите её, чтобы убрать из команды. Поиск не сбрасывает выбор. После обучения сохраните форму. Снятие руководящего назначения требует достаточных прав.',pk=obj.pk,query={'tab':'members'}))
+            if model!=Club:
+                steps.append(step(route,'unit-field-featured_members','Кого показать первым','Выберите активную команду из участников. На странице она будет показана первой, а остальные доступны по кнопке «Все участники».',pk=obj.pk,query={'tab':'featured'}))
+            else:
+                steps.append(step(route,'club-content','Активная команда','Ниже участников выберите тех, кого показывать первыми. Они должны входить в состав клуба. Если список пуст, страница показывает всех участников.',pk=obj.pk,query={'tab':'members'}))
+                if allowed(user,'club_appointments',obj):
+                    steps.append(step(route,'club-content','Назначение ответственных','Здесь выбирают людей с правом управления клубом. Снятие назначения оставляет человека участником. Нельзя назначать себя, равных или вышестоящих.',pk=obj.pk,query={'tab':'leaders'}))
+            if model==School:
+                steps.append(step(route,'unit-teachers-guide','Учителя — отдельное назначение','Просто участие в школе не делает человека учителем. В этом разделе видны действующие карточки. Снять назначение можно внутри карточки; назначать и снимать учителей могут уполномоченные управляющие.',pk=obj.pk,query={'tab':'teachers'}))
+            if model!=Direction:
+                steps.append(step(route,'club-schedule-editor' if model==Club else 'unit-schedule-guide','Запланировать встречу','Добавьте тему, начало, окончание и место. Можно создать еженедельные повторы. Прошедшие и отменённые встречи сохраняются; их можно открыть через фильтр расписания.',pk=obj.pk,query={'tab':'schedule'}))
+            topics[code+'_editor']={'title':title,'description':text,'steps':steps}
+    if user.role in {'worker','head_admin'} or user.is_superuser:
+        topics['profile']['steps']=[profile[0],profile[-1]]
+        topics['profile']['title']='Рабочий профиль и контакты'
+        topics['profile']['description']='Рабочая должность, кабинет, контакты и фотография.'
+        topics['profile']['steps'][0]=step('profile_edit','profile-info','Рабочий профиль','Укажите должность, кабинет, контакты и дату рождения. Факультет, курс и группа в профиле сотрудника не используются.')
+        topics['events']['title']='Найти мероприятие'
+        topics['events']['description']='Время, место, организаторы и подробности события.'
+        topics['events']['steps']=events[:2]
+        topics['main']['steps']=[s for s in main if s['target']!='nav-rating']
+    if user.is_superuser or user.role=='head_admin':
+        text='Проверьте имя, должность и заявку. Сотрудников подтверждает начальник или суперадминистратор, начальника — только суперадминистратор. До подтверждения вход и служебные права недоступны.'
+        topics['staff_applications']={'title':'Заявки сотрудников','description':text,'steps':[step('staff_applications','staff-applications','Подтверждение сотрудников',text,fallback=text)]}
+    return organize(topics)
 
 
 def serialize(row):
@@ -88,7 +150,9 @@ def serialize(row):
 @login_required
 @never_cache
 def help_view(request):
-    return render(request, 'users/training_help.html', {'training_full_access': full_access(request.user)})
+    from .templatetags.aya_people import presentation
+    audience=' · '.join(label for _,label in presentation(request.user)['roles']) if full_access(request.user) else 'Знакомство нового участника'
+    return render(request, 'users/training_help.html', {'training_full_access': full_access(request.user),'training_audience':audience})
 
 
 @login_required

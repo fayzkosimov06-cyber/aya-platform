@@ -29,6 +29,7 @@ class BulkForm(forms.Form):
         data=super().clean();chosen=data.get('selected');action=data.get('action','')
         if not chosen:self.add_error('selected','Выберите людей в списке.');return data
         if any(m.pk==self.actor.pk or get_user_power_level(m)>=get_user_power_level(self.actor) for m in chosen):self.add_error('selected','Нельзя изменять себя или пользователей равного/более высокого уровня. Снимите их выбор.')
+        if action in {'leader_add','teacher_add'} and not self.actor.is_superuser and (50 if action=='leader_add' else 40)>=get_user_power_level(self.actor):self.add_error('selected','Нельзя назначить должность равного или более высокого уровня.')
         if action.startswith(('direction_','leader_')) and not data.get('direction'):self.add_error('direction','Выберите направление.')
         if action.startswith(('school_','teacher_')) and not data.get('school'):self.add_error('school','Выберите школу.')
         if action not in {'role','candidate','grant'} and (chosen.filter(is_approved=False).exists() or chosen.filter(role__in=STAFF_ONLY_ROLES).exists()):self.add_error('selected','Для этого действия выберите допущенных студентов.')
@@ -36,7 +37,7 @@ class BulkForm(forms.Form):
             if not data.get('role'):self.add_error('role','Выберите роль.')
             if chosen.filter(is_approved=False).exists():self.add_error('selected','Сначала откройте полный доступ выбранным пользователям.')
             if data.get('role')=='head_admin' and (chosen.count()!=1 or User.objects.filter(role='head_admin').exclude(pk__in=chosen).exists()):self.add_error('role','Начальник отдела должен быть один. Сначала измените роль прежнего начальника.')
-        if action in {'candidate','grant'} and chosen.exclude(role='volunteer').exists():self.add_error('selected','Выберите заявки или кандидатов с ролью волонтёра.')
+        if action in {'candidate','grant'} and (chosen.exclude(role='volunteer').exists() or chosen.filter(staff_application__isnull=False).exists()):self.add_error('selected','Выберите заявки или кандидатов с ролью волонтёра.')
         return data
 
 @login_required
@@ -49,13 +50,13 @@ def people(request):
         for person in selected:
             if action in {'active','inactive'}:person.is_active_volunteer_title=action=='active';person.save(update_fields=['is_active_volunteer_title'])
             elif action=='direction_add':person.directions.add(direction)
-            elif action=='direction_remove':person.directions.remove(direction);direction.featured_members.remove(person)
+            elif action=='direction_remove':person.directions.remove(direction);direction.featured_members.remove(person);direction.leaders.remove(person)
             elif action=='leader_add':direction.leaders.add(person);person.directions.add(direction)
             elif action=='leader_remove':direction.leaders.remove(person)
             elif action=='school_add':
                 school.members.add(person)
                 if school.direction_id:person.directions.add(school.direction)
-            elif action=='school_remove':school.members.remove(person)
+            elif action=='school_remove':school.members.remove(person);school.featured_members.remove(person);school.leaders.remove(person);school.teachers.filter(member=person).delete()
             elif action=='teacher_add':
                 SchoolTeacher.objects.get_or_create(school=school,member=person,defaults={'name':person.get_full_name() or person.username})
                 school.leaders.add(person);school.members.add(person)

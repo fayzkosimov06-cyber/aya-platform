@@ -21,8 +21,8 @@ class ControlTests(TestCase):
   self.login(actor);data={c:'keep' for c in CAPABILITIES};data.update(targets=[target.pk],scope='all',acknowledge='on');data.update(changes)
   return self.client.post(reverse('rights_manage'),data)
  def test_hierarchy_and_equal_protection(self):
-  self.assertEqual(rank(self.head),rank(self.worker));self.assertEqual(rank(self.leader),rank(self.mod));self.assertGreater(rank(self.mod),rank(self.teacher))
-  self.assertEqual(self.rights(self.head,self.worker,events_edit='off').status_code,200)
+  self.assertGreater(rank(self.head),rank(self.worker));self.assertEqual(rank(self.leader),rank(self.mod));self.assertGreater(rank(self.mod),rank(self.teacher))
+  self.assertEqual(self.rights(self.worker,self.worker,events_edit='off').status_code,200)
   self.assertFalse(PermissionOverride.objects.filter(user=self.worker).exists())
   self.assertEqual(self.rights(self.root,self.head,events_edit='off').status_code,302)
  def test_delegate_permission_management_without_rank_escalation(self):
@@ -92,7 +92,7 @@ class ControlTests(TestCase):
   AuditLog.objects.create(actor=self.worker,action='Public legacy')
   import_module('users.migrations.0041_import_legacy_journal').copy_logs(apps,None)
   self.assertTrue(JournalEntry.objects.filter(action='Private legacy',private=True).exists())
-  self.login(self.worker);response=self.client.get(reverse('audit_log'))
+  self.login(self.worker);response=self.client.get(reverse('audit_log')+'?view=timeline')
   self.assertContains(response,'Public legacy');self.assertNotContains(response,'Private legacy')
  def test_disable_own_permission_management_impossible(self):
   response=self.rights(self.president,self.president,permissions='off')

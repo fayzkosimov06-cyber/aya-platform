@@ -50,8 +50,8 @@ class ControlMiddleware:
  def process_view(self,request,view,args,kwargs):
   name=request.resolver_match.url_name
   if request.path.startswith('/superadmin/') and not request.user.is_superuser:raise Http404
-  from .models import User,Direction,School,ContributionWork,ContributionAward,PointProposal
-  if name in {'public_profile','admin_edit_user','activity_periods_manage','activity_period_edit','activity_period_delete','admin_password_change'} and 'pk' in kwargs:
+  from .models import User,Direction,School,Club,ContributionWork,ContributionAward,PointProposal
+  if name in {'public_profile','admin_edit_user','activity_periods_manage','activity_period_edit','activity_period_delete','admin_password_change','toggle_active_volunteer'} and 'pk' in kwargs:
    target=User.objects.filter(pk=kwargs['pk']).first()
    if target and target.is_superuser and not request.user.is_superuser:raise Http404
    if name not in {'public_profile','admin_password_change'} and target and request.user.is_authenticated and not request.user.is_superuser and (target.pk==request.user.pk or rank(target)>=rank(request.user)):
@@ -59,7 +59,7 @@ class ControlMiddleware:
   code=ROUTES.get(name)
   if request.user.is_authenticated and request.method=='GET':
    if name in {'points_work','points_works'} and not allowed(request.user,'points_award'):
-    code=next((c for c in ['points_correct','points_review','points_rules'] if allowed(request.user,c)),code)
+    code=next((c for c in ['points_correct','points_review','points_rules','works_delete'] if allowed(request.user,c)),code)
    if name=='moderator_dashboard' and not allowed(request.user,'visits') and allowed(request.user,'admissions'):code='admissions'
   if not code:return
   if not request.user.is_authenticated:return
@@ -73,6 +73,8 @@ class ControlMiddleware:
    from events.models import Event,EventPhoto
    if name=='event_photo_delete':photo=EventPhoto.objects.filter(pk=pk).first();obj=photo.event if photo else None
    else:obj=Event.objects.filter(pk=pk).first()
+  elif pk and name=='assign_direction_leader':obj=Direction.objects.filter(pk=pk).first()
+  elif pk and name=='assign_school_leader':obj=School.objects.filter(pk=pk).first()
   elif pk and name.startswith('direction_'):obj=Direction.objects.filter(pk=pk).first()
   elif pk and name.startswith(('school_','teacher_','lesson_')):obj=School.objects.filter(pk=pk).first()
   request.aya_capability=code;request.aya_object=obj
@@ -123,7 +125,7 @@ class ControlMiddleware:
      if old_work:d=old_work.date.isoformat()
     if d and d!=timezone.localdate().isoformat():return HttpResponseForbidden('Задним числом начисляет только суперадминистратор.')
    if code in {'events_edit','directions','schools','points_propose'}:
-    for key,model in [('directions',Direction),('schools',School)]:
+    for key,model in [('directions',Direction),('schools',School),('clubs',Club)]:
      ids=request.POST.getlist(key)
      if any(not v.isdigit() for v in ids):return HttpResponseForbidden('Некорректный состав команд.')
      if any(not allowed(request.user,code,x) for x in model.objects.filter(pk__in=ids)):

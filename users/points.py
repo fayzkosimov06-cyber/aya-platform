@@ -9,7 +9,7 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from .access import has_full_volunteer_access, STAFF_ONLY_ROLES
-from .models import User, ContributionKind, ContributionWork, ContributionAward, ContributionChange, Direction, School
+from .models import User, ContributionKind, ContributionWork, ContributionAward, ContributionChange, Direction, School, Club
 
 
 def can_award(user):
@@ -190,6 +190,7 @@ def kinds(request):
 
 
 class QuickAwardForm(forms.Form):
+    club=forms.ModelChoiceField(queryset=Club.objects.all(),required=False,label='Клуб')
     direction=forms.ModelChoiceField(queryset=Direction.objects.all(),required=False,label='Направление')
     school=forms.ModelChoiceField(queryset=School.objects.all(),required=False,label='Школа')
     work=forms.ModelChoiceField(queryset=ContributionWork.objects.all(),required=False,label='Продолжить существующую работу')
@@ -208,6 +209,11 @@ class QuickAwardForm(forms.Form):
         work=data.get('work')
         direction=data.get('direction');school=data.get('school')
         if not work:
+            club=data.get('club')
+            if club:
+                if school and club.school_id!=school.pk:self.add_error('club','Клуб не относится к выбранной школе.')
+                if direction and club.direction_id!=direction.pk:self.add_error('club','Клуб не относится к выбранному направлению.')
+                data['school']=school=club.school;data['direction']=direction=club.direction
             if school and direction and school.direction_id!=direction.pk:self.add_error('school','Школа должна относиться к выбранному направлению.')
             if school and not direction:data['direction']=school.direction
         if work and work.event_id and data.get('volunteers'):
@@ -222,7 +228,7 @@ def quick_award(request):
     import uuid
     if not can_award(request.user):return HttpResponseForbidden('Нет доступа к начислениям.')
     initial={'date':timezone.localdate(),'token':uuid.uuid4()}
-    for key,model in [('direction',Direction),('school',School)]:
+    for key,model in [('direction',Direction),('school',School),('club',Club)]:
         if request.GET.get(key,'').isdigit():initial[key]=get_object_or_404(model,pk=request.GET[key]).pk
     if request.GET.get('member','').isdigit():initial['volunteers']=[int(request.GET['member'])]
     if request.GET.get('work','').isdigit():
@@ -233,7 +239,7 @@ def quick_award(request):
         data=form.cleaned_data
         work=data.get('work')
         if work is None:
-            work,_=ContributionWork.objects.get_or_create(submission=data['token'],defaults={'title':data['title'],'date':data['date'],'description':data['comment'],'created_by':request.user,'direction':data.get('direction'),'school':data.get('school')})
+            work,_=ContributionWork.objects.get_or_create(submission=data['token'],defaults={'title':data['title'],'date':data['date'],'description':data['comment'],'created_by':request.user,'direction':data.get('direction'),'school':data.get('school'),'club':data.get('club')})
         kind=data.get('kind')
         if kind is None:
             kind,_=ContributionKind.objects.get_or_create(name='Помощь — прямое начисление',defaults={'points':1,'active':False})
@@ -249,7 +255,8 @@ def quick_award(request):
     people=members()
     scope=request.POST if request.method=='POST' else initial
     team_ids=[]
-    if str(scope.get('school','')).isdigit(): team_ids=list(people.filter(aya_schools=scope['school']).values_list('pk',flat=True))
+    if str(scope.get('club','')).isdigit(): team_ids=list(people.filter(aya_clubs=scope['club']).values_list('pk',flat=True))
+    elif str(scope.get('school','')).isdigit(): team_ids=list(people.filter(aya_schools=scope['school']).values_list('pk',flat=True))
     elif str(scope.get('direction','')).isdigit(): team_ids=list(people.filter(directions=scope['direction']).values_list('pk',flat=True))
     people=list(people.order_by('last_name','first_name'))
     people.sort(key=lambda person: person.pk not in team_ids)
@@ -269,4 +276,4 @@ def adjustment_total(member,query=None):
 
 def can_read_points(user):
     from .permissions import allowed
-    return any(allowed(user,c) for c in ['points_award','points_review','points_correct','points_rules'])
+    return any(allowed(user,c) for c in ['points_award','points_review','points_correct','points_rules','works_delete'])

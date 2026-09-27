@@ -72,9 +72,9 @@ def review(request,pk):
         data=form.cleaned_data
         if data['decision']=='approved':
             if proposal.event_id:
-                work,_=ContributionWork.objects.get_or_create(event=proposal.event,defaults={'title':proposal.title,'date':proposal.date,'description':proposal.description,'direction':proposal.direction,'school':proposal.school,'created_by':request.user})
+                work,_=ContributionWork.objects.get_or_create(event=proposal.event,defaults={'title':proposal.title,'date':proposal.date,'description':proposal.description,'direction':proposal.direction,'school':proposal.school,'club':proposal.club,'created_by':request.user})
             else:
-                work=ContributionWork.objects.create(title=proposal.title,date=proposal.date,description=proposal.description,direction=proposal.direction,school=proposal.school,created_by=request.user)
+                work=ContributionWork.objects.create(title=proposal.title,date=proposal.date,description=proposal.description,direction=proposal.direction,school=proposal.school,club=proposal.club,created_by=request.user)
             kind,_=ContributionKind.objects.get_or_create(name=f'Заявка на участие #{proposal.pk}' if proposal.event_id else 'Подтверждённая помощь по заявке',defaults={'points':1,'active':False})
             for member in proposal.volunteers.all():
                 award=ContributionAward.objects.create(work=work,member=member,kind=kind,points=data['points'],comment=proposal.description,confirmed_by=request.user)

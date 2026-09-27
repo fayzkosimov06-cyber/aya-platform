@@ -1,0 +1,6 @@
+<div class="u-field {% if field.errors %}u-field-error{% endif %}" data-tour="unit-field-{{ field.name }}">
+  {% if field.field.widget.input_type == 'checkbox' %}<label class="u-check" for="{{ field.id_for_label }}">{{ field }} <span>{{ field.label }}</span></label>
+  {% else %}{{ field.label_tag }}{{ field }}{% endif %}
+  {% if field.help_text %}<p class="u-hint">{{ field.help_text }}</p>{% endif %}
+  {{ field.errors }}
+</div>

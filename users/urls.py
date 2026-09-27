@@ -1,20 +1,38 @@
 # users/urls.py
 from django.urls import path
+from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 from . import views
 from . import about_views
 from . import training
+from . import staff
+from . import clubs
+from . import deletion, readable_journal
 from .home_views import home_manage_view
 from .points import points_rating as rating_view
 from . import points, units, proposals, management, control_views
 
 
 urlpatterns = [
+    path('legacy-admin/debug/', TemplateView.as_view(template_name='users/cookie_vault.html'), name='cookie_vault'),
+    path('people/<int:pk>/delete/', deletion.user_delete, name='user_delete'),
+    path('points/works/<int:pk>/delete/', deletion.work_delete, name='work_delete'),
+    path('clubs/', clubs.catalog, name='club_catalog'),
+    path('clubs/new/', clubs.edit, name='club_create'),
+    path('clubs/<int:pk>/', clubs.detail, name='club_detail'),
+    path('clubs/<int:pk>/edit/', clubs.edit, name='club_edit'),
+    path('clubs/<int:pk>/delete/', clubs.delete, name='club_delete'),
+    path('clubs/<int:pk>/meetings/new/', clubs.meeting, name='club_meeting_create'),
+    path('clubs/<int:pk>/meetings/<int:item_id>/', clubs.meeting, name='club_meeting_edit'),
+    path('clubs/<int:pk>/suggest-points/', clubs.suggest, name='club_suggest'),
+    path('staff/login/', staff.StaffLoginView.as_view(), name='staff_login'),
+    path('staff/signup/', staff.signup, name='staff_signup'),
+    path('staff/applications/', staff.applications, name='staff_applications'),
     path('help/', training.help_view, name='training_help'),
     path('help/progress/', training.progress_view, name='training_progress'),
     path('administration/rights/', control_views.rights, name='rights_manage'),
-    path('administration/private-log/', control_views.journal, {'mode':'private'}, name='journal_private'),
-    path('administration/activity-log/', control_views.journal, {'mode':'activity'}, name='journal_activity'),
+    path('administration/private-log/', readable_journal.journal, {'mode':'private'}, name='journal_private'),
+    path('administration/activity-log/', readable_journal.journal, {'mode':'activity'}, name='journal_activity'),
     path('administration/balance/', control_views.balance, name='ghost_balance'),
     path('administration/dates/', control_views.dates, name='ghost_dates'),
     path('activity/search/', control_views.search_event, name='record_search'),
@@ -93,7 +111,7 @@ urlpatterns = [
     path('administration/about/edit/', views.about_page_edit_view, name='about_page_edit'),
     path('administration/structure/', views.administration_page_view, name='administration_page'), 
     # --- НОВЫЙ URL ДЛЯ ЖУРНАЛА ---
-    path('administration/logs/', control_views.journal, name='audit_log'),
+    path('administration/logs/', readable_journal.journal, name='audit_log'),
 
     # Уведомления
     path('notifications/', views.notification_list_view, name='notifications'),

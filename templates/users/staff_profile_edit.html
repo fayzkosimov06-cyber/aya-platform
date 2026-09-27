@@ -1,0 +1,1 @@
+{% extends 'users/unit_base.html' %}{% block unit_content %}<h1>Профиль сотрудника</h1><form method="post" enctype="multipart/form-data" class="u-panel u-form" data-dirty-form data-tour="profile-info">{% csrf_token %}{{ form.as_p }}<div data-tour="profile-save"><button class="u-button u-primary">Сохранить</button></div></form>{% endblock %}

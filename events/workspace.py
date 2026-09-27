@@ -66,7 +66,7 @@ def edit(request,pk=None):
     if tab not in {'about','participants','report','points','status'}:raise Http404
     form=None
     if tab=='about':
-        form=EventWorkspaceForm(request.POST if request.method=='POST' else None,request.FILES or None,instance=event,user=request.user,initial={key:[request.GET[key]] for key in ['directions','schools'] if request.GET.get(key,'').isdigit()})
+        form=EventWorkspaceForm(request.POST if request.method=='POST' else None,request.FILES or None,instance=event,user=request.user,initial={key:[request.GET[key]] for key in ['directions','schools','clubs'] if request.GET.get(key,'').isdigit()})
         if request.method=='POST' and form.is_valid():
             obj=form.save(commit=False)
             if not event:obj.organizer=request.user
@@ -187,7 +187,7 @@ def event_points(request,event):
                 if new:ContributionChange.objects.create(award=award,actor=request.user,after=snapshot(award),reason='Начисление из мероприятия')
             messages.success(request,'Баллы сохранены. Повторные начисления за то же участие пропущены.')
             return redirect('points_work',pk=work.pk)
-        obj=form.save(commit=False);obj.author=request.user;obj.event=event;obj.direction=direction;obj.school=school;obj.save();form.save_m2m()
+        obj=form.save(commit=False);obj.author=request.user;obj.event=event;obj.club=event.aya_clubs.first() if event.aya_clubs.count()==1 else None;obj.direction=direction;obj.school=school;obj.save();form.save_m2m()
         log(request.user,f'Заявка на баллы за мероприятие #{event.pk}');messages.success(request,'Заявка отправлена.');return redirect('proposal_list')
     return render_editor(request,event,'points',form=form,direct_points=direct)
 

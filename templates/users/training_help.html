@@ -1,14 +1,18 @@
 {% extends 'base.html' %}
 {% block title %}Помощь и обучение — AYA{% endblock %}
 {% block content %}
-<div class="container my-4 aya-help">
-  <p class="aya-kicker">ОСВОЙТЕСЬ В AYA</p>
-  <h1>Помощь и обучение</h1>
-  <p>Короткие подсказки прямо на страницах сайта. Выберите тему — её можно отложить и продолжить в любое время.</p>
-  {% if not training_full_access %}<p class="alert alert-info">Сейчас доступна тема о профиле. Остальные темы откроются вместе с полным доступом волонтёра.</p>{% endif %}
-  <div id="aya-help-status" role="status">Загружаем темы…</div>
+<div class="container aya-help">
+  <header class="aya-help-hero">
+    <div><p class="aya-help-eyebrow">ВАШ ПУТЕВОДИТЕЛЬ ПО AYA</p><h1>Что хотите сделать?</h1><p class="aya-help-lead">Выберите задачу — покажем нужные кнопки прямо на сайте.</p><div class="aya-help-audience"><span class="aya-help-audience-dot" aria-hidden="true"></span>{{ training_audience }}</div></div>
+    <div class="aya-help-progress" id="aya-help-progress" aria-live="polite"><div class="aya-help-progress-ring"><strong>—</strong></div><div><strong>В вашем темпе</strong><p>Прогресс сохраняется в аккаунте</p></div></div>
+  </header>
+  {% if not training_full_access %}<p class="aya-help-access-note">Начните с профиля. Остальные темы появятся после открытия полного доступа.</p>{% endif %}
+  <section id="aya-help-next" class="aya-help-next" aria-label="Рекомендуемая тема" hidden></section>
+  <div class="aya-help-toolbar"><div><h2>Короткие инструкции</h2><p>Только то, что доступно вам сейчас</p></div><label class="aya-help-search"><span>Найти задачу</span><input type="search" id="aya-help-search" placeholder="Например, учителя или баллы" autocomplete="off"></label></div>
+  <nav id="aya-help-filters" class="aya-help-filters" aria-label="Категории обучения"></nav>
+  <p id="aya-help-status" role="status">Загружаем ваши темы…</p>
   <div class="aya-help-grid" id="aya-help-topics" data-tour="help-topics"></div>
   <noscript><p>Для интерактивных подсказок включите JavaScript. Основные разделы сайта доступны через меню.</p></noscript>
-  <details class="mt-4"><summary>Как проходит обучение</summary><p>«Далее» переключает подсказку и при необходимости открывает страницу. Обучение не сохраняет профиль, не записывает на события и не читает уведомления за вас. Чтобы работать со страницей, закройте подсказку кнопкой «Закончить позже» или клавишей Escape.</p></details>
+  <details class="aya-help-explainer"><summary>Как пользоваться подсказками</summary><div><p><strong>Одна задача за раз.</strong> Кнопка «Далее» показывает следующий шаг и при необходимости открывает нужную страницу.</p><p><strong>Сначала посмотрите, затем попробуйте.</strong> Обучение не отправляет формы, не назначает роли и не выполняет действия за вас.</p><p><strong>Можно сделать паузу.</strong> Нажмите «Продолжить позже» или Escape. Вернуться к сохранённому шагу можно здесь с любого устройства после входа.</p></div></details>
 </div>
 {% endblock %}

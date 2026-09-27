@@ -339,10 +339,14 @@ def my_profile_view(request):
     if context['show_evaluations']:
         from .points import point_profile
         context.update(point_profile(request, context['profile_user']))
-    return render(request, 'users/profile.html', context)
+    return render(request, 'users/staff_profile.html' if profile_user_is_staff(context['profile_user']) else 'users/profile.html', context)
 
 
 # --- РЕДАКТИРОВАНИЕ ПРОФИЛЯ ---
+def profile_user_is_staff(person):
+    return person.role in {'worker','head_admin'} or person.is_superuser
+
+
 @login_required
 def profile_edit_view(request):
     if request.method == 'POST':
@@ -353,7 +357,7 @@ def profile_edit_view(request):
             return redirect('my_profile')
     else:
         form = UserUpdateForm(instance=request.user)
-    return render(request, 'users/profile_edit.html', {'form': form, 'user_to_edit': request.user})
+    return render(request, 'users/staff_profile_edit.html' if profile_user_is_staff(request.user) else 'users/profile_edit.html', {'form': form, 'user_to_edit': request.user})
 
 
 # --- ПРОФИЛЬ (Публичный) - ЗДЕСЬ ГЛАВНАЯ МАГИЯ ---
@@ -423,7 +427,7 @@ def public_profile_view(request, pk):
     if context['show_evaluations']:
         from .points import point_profile
         context.update(point_profile(request, context['profile_user']))
-    return render(request, 'users/profile.html', context)
+    return render(request, 'users/staff_profile.html' if profile_user_is_staff(context['profile_user']) else 'users/profile.html', context)
 
 
 
@@ -512,12 +516,12 @@ def moderator_dashboard_view(request):
     pending_users = User.objects.filter(
         is_approved=False,
         candidate_approved=False,
-    ).exclude(is_superuser=True).order_by('-date_joined')
+    ).exclude(is_superuser=True).filter(staff_application__isnull=True).order_by('-date_joined')
 
     candidates_qs = User.objects.filter(
         candidate_approved=True,
         is_approved=False,
-    ).exclude(is_superuser=True).order_by('-date_joined')
+    ).exclude(is_superuser=True).filter(staff_application__isnull=True).order_by('-date_joined')
 
     if not allowed(request.user,'admissions'):
         pending_users = User.objects.none()
@@ -546,7 +550,7 @@ def moderator_dashboard_view(request):
 def approve_user_view(request, pk):
     if not allowed(request.user,'admissions'):
         return HttpResponseForbidden('Недостаточно прав.')
-    user_to_approve = get_object_or_404(User.objects.select_for_update(), pk=pk, is_superuser=False, role='volunteer')
+    user_to_approve = get_object_or_404(User.objects.select_for_update(), pk=pk, is_superuser=False, role='volunteer', staff_application__isnull=True)
 
     if request.method == 'POST':
         if getattr(user_to_approve, 'is_approved', False):
@@ -670,11 +674,8 @@ def direction_create_view(request):
 
 @login_required
 def direction_delete_view(request, pk):
-    if not is_admin_or_higher(request.user): return redirect('home')
-    if request.method == 'POST':
-        Direction.objects.get(pk=pk).delete()
-        messages.warning(request, "Направление удалено.")
-    return redirect('direction_management')
+    from .units import delete
+    return delete(request, pk, kind='direction')
 
 @login_required
 def assign_direction_leader_view(request, pk):
@@ -682,6 +683,7 @@ def assign_direction_leader_view(request, pk):
     if request.method == 'POST':
         d = get_object_or_404(Direction, pk=pk)
         u = get_object_or_404(User, pk=request.POST.get('leader'))
+        if not request.user.is_superuser and (u.pk==request.user.pk or get_user_power_level(u)>=get_user_power_level(request.user) or get_user_power_level(request.user)<=50):return HttpResponseForbidden('Назначение недоступно.')
         if u in d.leaders.all():
             d.leaders.remove(u)
             messages.info(request, f"{u} снят.")
@@ -706,11 +708,8 @@ def school_create_view(request):
 
 @login_required
 def school_delete_view(request, pk):
-    if not is_admin_or_higher(request.user): return redirect('home')
-    if request.method == 'POST':
-        School.objects.get(pk=pk).delete()
-        messages.warning(request, "Школа удалена.")
-    return redirect('school_management')
+    from .units import delete
+    return delete(request, pk, kind='school')
 
 @login_required
 def assign_school_leader_view(request, pk):
@@ -718,6 +717,7 @@ def assign_school_leader_view(request, pk):
     if request.method == 'POST':
         s = get_object_or_404(School, pk=pk)
         u = get_object_or_404(User, pk=request.POST.get('leader_id'))
+        if not request.user.is_superuser and (u.pk==request.user.pk or get_user_power_level(u)>=get_user_power_level(request.user) or get_user_power_level(request.user)<=40):return HttpResponseForbidden('Назначение недоступно.')
         if u in s.leaders.all():
             u.school_leader_of.remove(s)
             s.teachers.filter(member=u).delete()
@@ -742,7 +742,9 @@ def notification_list_view(request):
 def mark_notification_as_read_view(request, pk):
     n = get_object_or_404(Notification, pk=pk, recipient=request.user)
     n.is_read = True; n.save()
-    return redirect(n.link if n.link else 'notifications')
+    from django.utils.http import url_has_allowed_host_and_scheme
+    safe_link=n.link and url_has_allowed_host_and_scheme(n.link,allowed_hosts={request.get_host()},require_https=request.is_secure())
+    return redirect(n.link if safe_link else 'notifications')
 
 @login_required
 def admin_edit_user_view(request, pk):
@@ -762,7 +764,7 @@ def admin_edit_user_view(request, pk):
             return redirect('public_profile', pk=pk)
     else:
         form = AdminUpdateForm(instance=target, actor=request.user)
-    return render(request, 'users/profile_edit.html', {'form': form, 'user_to_edit': target})
+    return render(request, 'users/staff_profile_edit.html' if profile_user_is_staff(target) else 'users/profile_edit.html', {'form': form, 'user_to_edit': target})
 
 @login_required
 def audit_log_view(request):
@@ -818,7 +820,7 @@ def mark_candidate_visit_view(request, pk):
     if not can_manage_candidates(request.user):
         return redirect('home')
 
-    candidate = get_object_or_404(User.objects.select_for_update(), pk=pk, is_superuser=False, role__in=['volunteer', 'president', 'moderator'])
+    candidate = get_object_or_404(User.objects.select_for_update(), pk=pk, is_superuser=False, role__in=['volunteer', 'president', 'moderator'], staff_application__isnull=True)
 
     if request.method != 'POST':
         return _back_redirect(request, 'public_profile', pk=pk)
@@ -866,7 +868,7 @@ def grant_volunteer_access_view(request, pk):
         messages.error(request, 'Модератор может только отмечать посещения. Полный доступ выдают роли выше модератора.')
         return redirect('home')
 
-    target = get_object_or_404(User.objects.select_for_update(), pk=pk, is_superuser=False, role__in=['volunteer', 'president', 'moderator'])
+    target = get_object_or_404(User.objects.select_for_update(), pk=pk, is_superuser=False, role__in=['volunteer', 'president', 'moderator'], staff_application__isnull=True)
 
     if request.method != 'POST':
         return _back_redirect(request, 'public_profile', pk=pk)

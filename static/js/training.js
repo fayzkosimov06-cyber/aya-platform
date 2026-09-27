@@ -4,8 +4,10 @@
   const config = document.getElementById('aya-training-config');
   if (!config || typeof HTMLDialogElement === 'undefined') return;
   const cfg = config.dataset;
-  let catalog, states, active, dialog, panel, target, busy = false, generation = 0;
+  let version, catalog, states, active, dialog, panel, target, busy = false, generation = 0;
   let restoreMenu = () => {}, restoreScroll = '', restorePadding = '', oldFocus, shades = [], ring;
+  let helpFilter='all';
+  const groupLabels={basics:'Начало работы',community:'Участие и команды',work:'Мои рабочие задачи'};
   const mutedKey = `aya-tour-muted:${cfg.user}`;
   const el = (tag, text, cls) => {
     const node = document.createElement(tag);
@@ -32,7 +34,7 @@
     } finally { clearTimeout(timer); }
   }
   async function save(topic, action) {
-    const result = await api({topic, action, version:1, revision:states[topic]?.revision ?? null});
+    const result = await api({topic, action, version, revision:states[topic]?.revision ?? null});
     states[topic] = result.state;
     catalog[topic] = result.topic;
     return result.state;
@@ -47,12 +49,28 @@
     const status = panel?.querySelector('[role="status"]') || document.getElementById('aya-help-status');
     if (status) status.textContent = message;
   }
-  function notice(message) {
+  function nextTopic(exclude) {
+    const available=Object.entries(catalog || {}).filter(([id])=>id!==exclude && !(states[id]?.status==='completed' && states[id]?.version===version));
+    return available.sort(([a,ta],[b,tb])=>{
+      const resume=id=>['in_progress','deferred'].includes(states[id]?.status) && states[id].version===version;
+      return Number(resume(b))-Number(resume(a)) || (tb.priority||0)-(ta.priority||0);
+    })[0];
+  }
+  function notice(message, title='Прогресс сохранён', next=null) {
     document.querySelector('.aya-tour-notice')?.remove();
-    const node = el('div', '', 'aya-tour-notice'); node.setAttribute('role', 'status');
-    node.append(el('span', message + ' '));
-    const link = el('a', 'Открыть помощь'); link.href = cfg.help; node.append(link);
-    node.append(button('Закрыть', () => node.remove())); document.body.append(node);
+    const node=el('section','','aya-tour-notice');node.setAttribute('aria-label',title);
+    const icon=el('span','✓','aya-notice-icon');icon.setAttribute('aria-hidden','true');
+    const copy=el('div','','aya-notice-copy'), announcement=el('div');announcement.setAttribute('role','status');
+    announcement.append(el('strong',title),el('p',message));copy.append(announcement);
+    const actions=el('div','','aya-notice-actions');
+    if(next){
+      const [id,topic]=next, resume=['in_progress','deferred'].includes(states[id]?.status)&&states[id].version===version;
+      copy.append(el('small',`Далее: ${topic.title}`));
+      actions.append(button('Следующая тема',()=>action(resume?'resume':'start',id),true));
+    }
+    const link=el('a','Все инструкции');link.href=cfg.help;actions.append(link);copy.append(actions);
+    const dismiss=button('×',()=>node.remove());dismiss.className='aya-notice-close';dismiss.setAttribute('aria-label','Закрыть сообщение');
+    node.append(icon,copy,dismiss);document.body.append(node);
   }
   function clearParameter() {
     const url = new URL(location.href); url.searchParams.delete('aya_tour');
@@ -170,6 +188,7 @@
   }
   async function action(command, topic = active) {
     if (busy) return;
+    document.querySelector('.aya-tour-notice')?.remove();
     busy = true; const epoch = generation;
     panel?.querySelectorAll('button:not(.aya-tour-later)').forEach(b=>b.disabled=true);
     try {
@@ -178,9 +197,9 @@
       active = topic;
       if (state.status === 'completed') {
         teardown(); active=null; clearParameter();renderHelp();
-        notice('Тема завершена. Повторить её можно в любое время.');
+        notice(`«${catalog[topic].title}» — готово. Теперь можно попробовать самостоятельно или выбрать другую инструкцию.`,'Тема пройдена',nextTopic(topic));
       } else go();
-    } catch (e) { if (epoch === generation) error(e.message); }
+    } catch (e) { if (epoch === generation) {error(e.message);if(!panel&&!document.getElementById('aya-help-status'))notice(e.message,'Не удалось открыть тему');} }
     finally {busy=false;panel?.querySelectorAll('button').forEach(b=>b.disabled=false);}
   }
   function go() {
@@ -188,7 +207,9 @@
     const item = topic.steps[Math.min(state.step,topic.steps.length-1)];
     const destination = new URL(item.url, location.origin);
     destination.searchParams.set('aya_tour', active);
-    if (location.pathname !== destination.pathname) { location.assign(destination); return; }
+    const current=new URL(location.href);current.searchParams.delete('aya_tour');
+    const desired=new URL(destination);desired.searchParams.delete('aya_tour');
+    if (current.pathname !== desired.pathname || current.search !== desired.search) { location.assign(destination); return; }
     history.replaceState(null, '', destination);
     showStep(item, state.step, topic);
   }
@@ -197,10 +218,11 @@
     reveal(target);
     if (target && !target.getClientRects().length) target = null;
     renderPanel(item.title, (!target && item.fallback) || item.text, `${topic.title} · ${index+1} из ${topic.steps.length}`);
+    const meter=el('div','','aya-tour-meter');meter.setAttribute('aria-hidden','true');const fill=el('span');fill.style.width=`${(index+1)/topic.steps.length*100}%`;meter.append(fill);panel.prepend(meter);
     const actions = el('div','','aya-tour-actions');
     if (index > 0) actions.append(button('Назад',()=>action('back')));
     actions.append(button(index+1 === topic.steps.length ? 'Завершить' : 'Далее',()=>action('next'),true));
-    panel.append(actions, button('Закончить позже',close)); panel.lastChild.classList.add('aya-tour-later');
+    panel.append(actions, button('Продолжить позже',close)); panel.lastChild.classList.add('aya-tour-later');
     if (target) {
       target.scrollIntoView({block:window.innerWidth <= 600 ? 'start' : 'center',behavior:'instant'});
       if (window.innerWidth <= 600 && !target.closest('#navbarNav')) {
@@ -221,19 +243,38 @@
   function renderHelp() {
     const grid = document.getElementById('aya-help-topics'); if (!grid) return;
     grid.replaceChildren();document.getElementById('aya-help-status').textContent='';
-    const labels={not_started:'Не начато',in_progress:'В процессе',deferred:'Отложено',completed:'Завершено'};
-    Object.entries(catalog).forEach(([id,topic])=>{
-      const state=states[id], card=el('article','','aya-help-card');
-      card.append(el('h2',topic.title),el('p',topic.description));
-      card.append(el('small',`${labels[state?.status] || 'Не начато'} · Шагов: ${topic.steps.length}`));
+    const entries=Object.entries(catalog), done=id=>states[id]?.status==='completed'&&states[id].version===version;
+    const resumable=id=>['in_progress','deferred'].includes(states[id]?.status)&&states[id].version===version;
+    const completed=entries.filter(([id])=>done(id)).length, progress=document.getElementById('aya-help-progress');
+    progress.replaceChildren();const circle=el('div','','aya-help-progress-ring');circle.style.setProperty('--progress',`${completed/entries.length*100}%`);circle.append(el('strong',`${completed}/${entries.length}`));
+    const text=el('div');text.append(el('strong',completed===entries.length?'Все темы пройдены':'Ваш прогресс'),el('p','Можно продолжить в любой момент'));progress.append(circle,text);
+    const next=document.getElementById('aya-help-next'), suggested=nextTopic();next.replaceChildren();next.hidden=!suggested;
+    if(suggested){const [id,topic]=suggested, copy=el('div');copy.append(el('small',resumable(id)?'ПРОДОЛЖИТЬ С ТОГО ЖЕ МЕСТА':'РЕКОМЕНДУЕМ ДЛЯ ВАС'),el('h2',topic.title),el('p',topic.description));next.append(copy,button(resumable(id)?'Продолжить →':'Показать шаги →',()=>action(resumable(id)?'resume':'start',id),true));}
+    const filters=document.getElementById('aya-help-filters');filters.replaceChildren();
+    const groups=new Set(entries.map(([,t])=>t.group));
+    for(const [id,label] of [['all','Все темы'],...Object.entries(groupLabels).filter(([key])=>groups.has(key)),['completed','Пройденные']]){
+      const item=button(label,()=>{helpFilter=id;renderHelp();document.querySelector(`#aya-help-filters [data-filter="${id}"]`)?.focus({preventScroll:true});});item.dataset.filter=id;item.setAttribute('aria-pressed',String(id===helpFilter));filters.append(item);
+    }
+    const query=document.getElementById('aya-help-search').value.trim().toLocaleLowerCase();let shown=0;
+    entries.forEach(([id,topic])=>{
+      if(helpFilter==='completed'?!done(id):helpFilter!=='all'&&topic.group!==helpFilter)return;
+      if(query&&!`${topic.title} ${topic.description} ${topic.steps.map(s=>s.title+' '+s.text).join(' ')}`.toLocaleLowerCase().includes(query))return;
+      shown++;
+      const state=states[id], card=el('article','','aya-help-card');card.dataset.topic=id;
+      const meta=el('div','','aya-help-card-meta');meta.append(el('span',groupLabels[topic.group]||'Начало работы','aya-help-category'),el('span',`≈ ${topic.minutes||1} мин`));
+      card.append(meta,el('h3',topic.title),el('p',topic.description));
+      const badge=el('small',done(id)?'✓ Пройдено':resumable(id)?`Продолжить с шага ${state.step+1}`:`Шагов: ${topic.steps.length}`,'aya-help-state');card.append(badge);
+      if(done(id))card.classList.add('is-complete');
       const actions=el('div','','aya-help-actions');
-      if (state && ['in_progress','deferred'].includes(state.status) && state.version === 1) actions.append(button('Продолжить',()=>action('resume',id),true));
-      actions.append(button(state && state.status !== 'not_started' ? 'Пройти заново' : 'Начать',()=>action('start',id),!actions.children.length));
+      if(resumable(id))actions.append(button('Продолжить',()=>action('resume',id),true));
+      actions.append(button(done(id)?'Повторить':resumable(id)?'Сначала':'Показать шаги',()=>action('start',id),!actions.children.length&&!done(id)));
       card.append(actions);grid.append(card);
     });
+    if(!shown){const empty=el('div','','aya-help-empty');empty.append(el('h3','Пока нет подходящих тем'),el('p','Попробуйте другое слово или откройте все инструкции.'),button('Показать все',()=>{helpFilter='all';document.getElementById('aya-help-search').value='';renderHelp();}));grid.append(empty);}
   }
+  document.getElementById('aya-help-search')?.addEventListener('input',()=>{if(catalog)renderHelp();});
   api().then(data=>{
-    catalog=data.topics;states=data.states;renderHelp();
+    version=data.version;catalog=data.topics;states=data.states;renderHelp();
     const requested=new URL(location.href).searchParams.get('aya_tour');
     if (requested && catalog[requested] && states[requested]?.status === 'in_progress') {active=requested;go();}
     else if (!requested && cfg.page === 'home' && states.main?.status === 'not_started' && !muted()) welcome();

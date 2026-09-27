@@ -10,7 +10,7 @@ class Event(models.Model):
     end_time = models.DateTimeField(verbose_name="Время окончания")
     location = models.CharField(max_length=255, blank=True, verbose_name="Место проведения")
     
-    organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="organized_events", verbose_name="Организатор")
+    organizer = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="organized_events", verbose_name="Организатор")
     
     cancelled = models.BooleanField(default=False, verbose_name="Отменено")
     cancellation_reason = models.TextField(blank=True, verbose_name="Причина отмены")
@@ -47,7 +47,7 @@ class EventEvaluation(models.Model):
     """Оценка работы волонтёра на конкретном мероприятии от конкретного оценивающего."""
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='evaluations')
     volunteer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_event_evaluations')
-    evaluator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='given_event_evaluations')
+    evaluator = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='given_event_evaluations')
 
     role_name = models.CharField(max_length=100, blank=True)
     # Пример: [{"name": "Пунктуальность", "score": 5}, {"name": "Командная работа", "score": 4}]

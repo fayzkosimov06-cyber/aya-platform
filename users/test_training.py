@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from .models import User, TourProgress, Notification, VolunteerVisit, Direction, School
 from .services import grant_access
+from .training import VERSION
 from events.models import Event
 
 
@@ -24,14 +25,14 @@ class TrainingTests(TestCase):
 
     def command(self, action, topic='main', **extra):
         row = TourProgress.objects.filter(user=self.member, topic=topic).first()
-        return self.client.post(self.url, json.dumps({'action': action, 'topic': topic, 'version': 1,
+        return self.client.post(self.url, json.dumps({'action': action, 'topic': topic, 'version': VERSION,
             'revision': row.updated_at.isoformat() if row else None, **extra}), content_type='application/json')
 
     def test_existing_member_read_is_not_enrolled(self):
         data = self.client.get(self.url).json()
         self.assertEqual(data['states'], {})
         self.assertEqual(TourProgress.objects.count(), 0)
-        self.assertEqual(len(data['topics']), 8)
+        self.assertEqual(len(data['topics']), 9)
 
     def test_candidate_has_profile_only_and_cannot_forge_full_tour(self):
         self.client.force_login(self.candidate)
@@ -85,8 +86,8 @@ class TrainingTests(TestCase):
     def test_invalid_payloads_and_methods(self):
         for body in ['[]', 'null', '{', '{"topic": []}', '{"topic":"main","action":"start","version":true}']:
             self.assertEqual(self.client.post(self.url, body, content_type='application/json').status_code, 400)
-        for args in [{'topic':'unknown'}, {'version':2}, {'action':'delete'}]:
-            payload = {'topic':'main','action':'start','version':1, **args}
+        for args in [{'topic':'unknown'}, {'version':VERSION+1}, {'action':'delete'}]:
+            payload = {'topic':'main','action':'start','version':VERSION, **args}
             self.assertEqual(self.client.post(self.url,json.dumps(payload),content_type='application/json').status_code,400)
         self.assertEqual(self.client.put(self.url).status_code,405)
         self.assertEqual(TourProgress.objects.count(),0)
@@ -104,7 +105,7 @@ class TrainingTests(TestCase):
         self.assertEqual(client.post(self.url,'{}',content_type='application/json').status_code,403)
         client.get(reverse('training_help'))
         token=client.cookies['csrftoken'].value
-        self.assertEqual(client.post(self.url,json.dumps({'topic':'main','action':'start','version':1}),content_type='application/json',HTTP_X_CSRFTOKEN=token).status_code,200)
+        self.assertEqual(client.post(self.url,json.dumps({'topic':'main','action':'start','version':VERSION}),content_type='application/json',HTTP_X_CSRFTOKEN=token).status_code,200)
 
     def test_empty_catalog_routes_render_and_notifications_stay_unread(self):
         note=Notification.objects.create(recipient=self.member,message='Test notice')

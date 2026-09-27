@@ -8,7 +8,7 @@ from django.db.models import Q,Sum
 from django.http import HttpResponseForbidden,JsonResponse
 from django.shortcuts import render,redirect,get_object_or_404
 from django.utils import timezone
-from .models import User,PermissionOverride,Direction,School,JournalEntry,BalanceAdjustment,ContributionWork,ContributionAward,ContributionKind,ActivityPeriod,VolunteerVisit
+from .models import User,PermissionOverride,Direction,School,Club,JournalEntry,BalanceAdjustment,ContributionWork,ContributionAward,ContributionKind,ActivityPeriod,VolunteerVisit
 from .permissions import CAPABILITIES,SCOPED,allowed,defaults,setting,rank,can_change
 from .journal import emit,PRIVATE,safe_value
 
@@ -23,6 +23,7 @@ class RightsForm(forms.Form):
    self.fields[code]=forms.ChoiceField(required=False,label=label,choices=[('keep','Не менять'),('inherit','Стандарт должности'),('on','Разрешить'),('off','Запретить')],initial='keep')
   self.fields['scope']=forms.ChoiceField(required=False,initial='own',label='Область изменяемых прав команд',choices=[('own','Свои команды'),('selected','Выбранные команды'),('all','Все команды')])
   self.fields['scope_directions']=forms.ModelMultipleChoiceField(queryset=Direction.objects.all(),required=False,widget=forms.CheckboxSelectMultiple,label='Направления')
+  self.fields['scope_clubs']=forms.ModelMultipleChoiceField(queryset=Club.objects.all(),required=False,widget=forms.CheckboxSelectMultiple,label='Клубы')
   self.fields['scope_schools']=forms.ModelMultipleChoiceField(queryset=School.objects.all(),required=False,widget=forms.CheckboxSelectMultiple,label='Школы')
  def clean(self):
   d=super().clean();people=d.get('targets',[])
@@ -30,7 +31,7 @@ class RightsForm(forms.Form):
   d['scope']=d.get('scope') or 'own'
   if not any(d[c]!='keep' for c in CAPABILITIES):
    raise forms.ValidationError('Выберите хотя бы одно изменение прав.')
-  if d['scope']=='selected' and any(d[c]=='on' for c in SCOPED) and not (d.get('scope_directions') or d.get('scope_schools')):
+  if d['scope']=='selected' and any(d[c]=='on' for c in SCOPED) and not (d.get('scope_directions') or d.get('scope_schools') or d.get('scope_clubs')):
    raise forms.ValidationError('Выберите хотя бы одно направление или школу для ограниченного доступа.')
   for person in people:
    if not can_change(self.actor,person):raise forms.ValidationError('Недоступный пользователь.')
@@ -44,7 +45,7 @@ class RightsForm(forms.Form):
      desired=d.get('scope') if mode=='on' else ('all' if person.role in {'president','worker','head_admin'} else 'own')
      if scope!='all':
       if desired!='selected':raise forms.ValidationError('При ограниченных правах выберите конкретные доступные команды.')
-      if any(not allowed(self.actor,code,obj) for obj in list(d.get('scope_directions',[]))+list(d.get('scope_schools',[]))):raise forms.ValidationError('Нельзя передать недоступную команду.')
+      if any(not allowed(self.actor,code,obj) for obj in list(d.get('scope_directions',[]))+list(d.get('scope_schools',[]))+list(d.get('scope_clubs',[]))):raise forms.ValidationError('Нельзя передать недоступную команду.')
     if mode=='off' and code in {'events_edit','directions','schools'} and rank(person) in {40,50} and not d.get('acknowledge'):
      raise forms.ValidationError('Среди выбранных есть руководитель, учитель или модератор. Подтвердите отключение важных прав. Имя, должность и рамка сохранятся.')
   return d
@@ -64,15 +65,15 @@ def rights(request):
     if mode=='keep':continue
     if mode=='inherit':PermissionOverride.objects.filter(user=person,code=code).delete();continue
     obj,_=PermissionOverride.objects.update_or_create(user=person,code=code,defaults={'enabled':mode=='on','scope':d['scope'] if code in SCOPED else 'all'})
-    obj.directions.set(d['scope_directions']);obj.schools.set(d['scope_schools'])
+    obj.directions.set(d['scope_directions']);obj.schools.set(d['scope_schools']);obj.clubs.set(d['scope_clubs'])
   messages.success(request, f'Права сохранены. Пользователей: {len(d["targets"])}. Остальные разрешения сохранены.')
   return redirect('rights_manage')
  users=form.fields['targets'].queryset
  groups = [
-  ('Люди и доступ', ['people','admissions','visits','contacts','permissions']),
+  ('Люди и доступ', ['people','admissions','visits','contacts','permissions','users_delete']),
   ('Мероприятия', ['events_edit','events_publish','events_delete']),
-  ('Направления и школы', ['directions','schools']),
-  ('Баллы и деятельность', ['points_propose','points_award','points_review','points_correct','points_rules','activity']),
+  ('Направления и школы', ['directions','schools','clubs','club_appointments']),
+  ('Баллы и деятельность', ['points_propose','points_award','points_review','points_correct','points_rules','activity','works_delete']),
   ('Страницы и журнал', ['home','about','audit']),
  ]
  people_data=[]

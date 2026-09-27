@@ -25,6 +25,7 @@ class Direction(models.Model):
     def __str__(self): return self.name
 
 class School(models.Model):
+    featured_members = models.ManyToManyField('User', blank=True, related_name='featured_in_schools', verbose_name='Активная команда')
     active = models.BooleanField('Занятия проводятся', default=True)
     direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.SET_NULL, related_name='schools', verbose_name='Направление')
     intro = models.CharField('Коротко о школе', max_length=240, blank=True)
@@ -398,6 +399,7 @@ class ContributionKind(models.Model):
 
 
 class ContributionWork(models.Model):
+    club = models.ForeignKey('Club', null=True, blank=True, on_delete=models.SET_NULL, related_name='point_works', verbose_name='Клуб')
     direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.SET_NULL, related_name='point_works', verbose_name='Направление')
     school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL, related_name='point_works', verbose_name='Школа')
 
@@ -467,10 +469,11 @@ class SchoolLesson(models.Model):
 
 
 class PointProposal(models.Model):
+    club = models.ForeignKey('Club', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Клуб')
     event = models.ForeignKey("events.Event", null=True, blank=True, on_delete=models.SET_NULL)
     direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.SET_NULL)
     school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL)
-    author = models.ForeignKey(User, on_delete=models.PROTECT, related_name='point_proposals')
+    author = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='point_proposals')
     title = models.CharField('За какую помощь', max_length=200)
     date = models.DateField('Дата помощи')
     description = models.TextField('Описание помощи', blank=True)
@@ -484,6 +487,7 @@ class PointProposal(models.Model):
 
 
 class PermissionOverride(models.Model):
+    clubs = models.ManyToManyField('Club', blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='permission_overrides')
     code = models.CharField(max_length=40)
     enabled = models.BooleanField(default=False)
@@ -514,3 +518,49 @@ class BalanceAdjustment(models.Model):
     note = models.TextField(blank=True)
     actor = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='+')
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class StaffApplication(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='staff_application')
+    requested_role = models.CharField(max_length=20, choices=[('worker','Работник'),('head_admin','Начальник отдела')])
+    status = models.CharField(max_length=12, default='pending', choices=[('pending','Ожидает решения'),('approved','Одобрена'),('rejected','Отклонена')])
+    note = models.TextField(blank=True)
+    reviewed_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+
+class Club(models.Model):
+    name = models.CharField('Название', max_length=100, unique=True)
+    intro = models.CharField('Коротко о клубе', max_length=240, blank=True)
+    description = models.TextField('О клубе', blank=True)
+    cover = models.ImageField('Обложка', upload_to='clubs/', blank=True)
+    active = models.BooleanField('Встречи проводятся', default=True)
+    direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.SET_NULL, related_name='clubs', verbose_name='Направление')
+    school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL, related_name='clubs', verbose_name='Школа')
+    leaders = models.ManyToManyField(User, blank=True, related_name='clubs_led', verbose_name='Ответственные')
+    members = models.ManyToManyField(User, blank=True, related_name='aya_clubs', verbose_name='Участники')
+    featured_members = models.ManyToManyField(User, blank=True, related_name='featured_in_clubs', verbose_name='Активная команда')
+    events = models.ManyToManyField('events.Event', blank=True, related_name='aya_clubs', verbose_name='Мероприятия')
+
+    def save(self, *args, **kwargs):
+        if self.school_id:
+            self.direction_id = self.school.direction_id
+        super().save(*args, **kwargs)
+
+    def __str__(self): return self.name
+
+
+class ClubMeeting(models.Model):
+    club = models.ForeignKey(Club, on_delete=models.CASCADE, related_name='meetings')
+    topic = models.CharField('Тема встречи', max_length=240)
+    starts_at = models.DateTimeField('Начало')
+    ends_at = models.DateTimeField('Окончание')
+    location = models.CharField('Место', max_length=240, blank=True)
+    description = models.TextField('Описание', blank=True)
+    cancelled = models.BooleanField('Встреча отменена', default=False)
+
+    class Meta:
+        ordering = ['starts_at','pk']
+
+    def __str__(self): return self.topic

@@ -18,7 +18,7 @@
                     {% portrait profile_user 'profile' %}
                     <h1 class="profile-name">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
                     {% role_badges profile_user %}
-                    <div class="d-flex flex-wrap justify-content-center gap-2 my-3">{% for direction in profile_user.directions.all %}<a class="badge bg-light text-primary border text-decoration-none" href="{% url 'direction_detail' direction.pk %}">{{ direction.name }}</a>{% endfor %}{% for school in profile_user.aya_schools.all %}<a class="badge bg-light text-primary border text-decoration-none" href="{% url 'school_detail' school.pk %}"><i class="fas fa-graduation-cap" aria-hidden="true"></i> {{ school.name }}</a>{% endfor %}</div>
+                    {% appointments profile_user %}
 <div class="d-grid gap-2 pt-3">
                         {% if request.user == profile_user %}
                             <a href="{% url 'profile_edit' %}" class="btn btn-primary rounded-pill fw-bold py-3 shadow-sm fs-5 hover-lift">
@@ -26,6 +26,7 @@
                             </a>
                         {% endif %}
                         
+                        {% deletion_allowed user profile_user as can_delete_account %}{% if can_delete_account %}<a href="{% url 'user_delete' profile_user.pk %}" class="btn btn-outline-danger">Удалить аккаунт</a>{% endif %}
                         {% if can_admin_edit %}
                             <a href="{% url 'admin_edit_user' profile_user.pk %}" class="btn btn-warning text-dark rounded-pill fw-bold py-3 shadow-sm fs-5 hover-lift">
                                 <i class="fas fa-gavel me-2"></i> Управление (Админ)
@@ -35,7 +36,7 @@
                 </div>
                 
                 <div class="bg-light p-3 border-top text-muted small">
-                    Участник с: {{ profile_user.date_joined|date:"d.m.Y" }}
+                    На сайте с: {{ profile_user.date_joined|date:"d.m.Y" }}{% if profile_user.birth_date %}<div class="mt-2">Дата рождения: {{ profile_user.birth_date|date:"d.m.Y" }}</div>{% endif %}
                 </div>
             </div>
         </div>
@@ -246,7 +247,7 @@
 
                         <div class="col-md-4">
                             {% if show.instagram and profile_user.instagram %}
-                                <a href="{{ profile_user.instagram }}" target="_blank" class="btn btn-outline-danger w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
+                                <a href="{{ profile_user.instagram|safe_social_url:"instagram" }}" rel="noopener noreferrer" target="_blank" class="btn btn-outline-danger w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
                                     <i class="fab fa-instagram fa-2x mb-1"></i> Instagram
                                 </a>
                             {% else %}
@@ -258,7 +259,7 @@
 
                          <div class="col-md-4">
                             {% if show.linkedin and profile_user.linkedin %}
-                                <a href="{{ profile_user.linkedin }}" target="_blank" class="btn btn-outline-primary w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
+                                <a href="{{ profile_user.linkedin|safe_social_url }}" rel="noopener noreferrer" target="_blank" class="btn btn-outline-primary w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
                                     <i class="fab fa-linkedin fa-2x mb-1"></i> LinkedIn
                                 </a>
                             {% else %}

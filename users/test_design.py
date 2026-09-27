@@ -24,7 +24,7 @@ class DesignIntegrationTests(TestCase):
 
     def test_combined_assignment_frame_and_unique_badges(self):
         content = render_to_string('users/partials/volunteer_card.html', {'volunteer': self.leader})
-        self.assertIn('frame-combined', content)
+        self.assertIn('frame-leader-teacher', content)
         self.assertEqual(content.count('>Руководитель направления<'), 1)
         self.assertEqual(content.count('>Учитель школы<'), 1)
         self.assertNotIn('>Волонтёр<', content)

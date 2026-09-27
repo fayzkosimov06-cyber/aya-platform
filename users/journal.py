@@ -27,6 +27,7 @@ def clean_payload(data):
 def emit(category,section,action,before=None,after=None,object_id='',actor=None,private=None):
  from .models import JournalEntry
  req=request_context.get()
+ if req and getattr(req,'aya_private_deletion',False):private=True
  actor=actor or (req.user if req and req.user.is_authenticated else None)
  JournalEntry.objects.create(actor=actor,private=bool(actor and actor.is_superuser) if private is None else private,category=category,section=section,action=action,before=clean_payload(before or {}),after=clean_payload(after or {}),object_id=str(object_id))
 

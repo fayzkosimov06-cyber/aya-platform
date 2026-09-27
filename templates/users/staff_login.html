@@ -1,0 +1,2 @@
+{% extends 'users/unit_base.html' %}
+{% block unit_content %}<div class="u-shell u-narrow"><header class="u-heading"><p>AYA · СОТРУДНИКИ</p><h1>Вход для сотрудников</h1><p>Используйте существующий аккаунт работника или начальника отдела.</p></header><form method="post" class="u-panel u-form">{% csrf_token %}{{ form.as_p }}<input type="hidden" name="next" value="{{ next }}"><button class="u-button u-primary">Войти</button></form><p><a href="{% url 'staff_signup' %}">Подать заявку сотрудника</a> · <a href="{% url 'login' %}">Вход для волонтёров</a></p></div>{% endblock %}

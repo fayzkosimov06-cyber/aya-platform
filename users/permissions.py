@@ -3,6 +3,8 @@ from contextvars import ContextVar
 from django.db.models import Q
 request_context=ContextVar('aya_request',default=None)
 CAPABILITIES={
+ 'users_delete':'Удалять пользователей','works_delete':'Удалять работы и все их баллы',
+ 'clubs':'Управлять клубами','club_appointments':'Назначать ответственных за клубы',
  'permissions':'Настраивать полномочия','people':'Профили, роли и составы',
  'visits':'Отмечать визиты','admissions':'Принимать кандидатов и открывать доступ',
  'events_edit':'Мероприятия: создание, редактор, участники и Excel',
@@ -13,24 +15,26 @@ CAPABILITIES={
  'points_rules':'Редактировать правила баллов','activity':'Периоды деятельности',
  'home':'Редактировать главную','about':'Редактировать «О нас»','audit':'Общий журнал',
  'contacts':'Просматривать закрытые контакты'}
-SCOPED={'events_edit','events_publish','events_delete','directions','schools','points_propose'}
+SCOPED={'events_edit','events_publish','events_delete','directions','schools','clubs','club_appointments','points_propose'}
 
 def rank(user):
  if not getattr(user,'is_authenticated',False):return 0
  if user.is_superuser:return 1000
- base={'head_admin':80,'worker':80,'president':60,'moderator':50,'volunteer':10}.get(user.role,10)
+ base={'head_admin':90,'worker':80,'president':60,'moderator':50,'volunteer':10}.get(user.role,10)
  if getattr(user,'pk',None) and hasattr(user,'directions_led'):
   if user.directions_led.exists():base=max(base,50)
   if user.school_leader_of.exists() or user.schoolteacher_set.exists():base=max(base,40)
+  if user.clubs_led.exists():base=max(base,30)
  return base
 
 def defaults(user,code):
  if user.role in {'president','head_admin','worker'}:return True
  if code=='visits' and user.role=='moderator':return True
- if code not in {'events_edit','points_propose','directions','schools'}:return False
+ if code not in {'events_edit','points_propose','directions','schools','clubs'}:return False
  if not getattr(user,'pk',None):return False
  leader=user.directions_led.exists();teacher=user.school_leader_of.exists() or user.schoolteacher_set.exists()
- return (code in {'events_edit','points_propose'} and (leader or teacher)) or (code=='directions' and leader) or (code=='schools' and (leader or teacher))
+ club=user.clubs_led.exists()
+ return (code in {'events_edit','points_propose'} and (leader or teacher or club)) or (code=='directions' and leader) or (code=='schools' and (leader or teacher)) or (code=='clubs' and (leader or teacher or club))
 
 def setting(user,code):
  from .models import PermissionOverride
@@ -52,13 +56,15 @@ def allowed(user,code,obj=None):
  if obj is None:return True
  if scope=='all':return True
  if not rule and code in {'events_edit','events_delete'} and getattr(obj,'organizer_id',None)==user.pk and user.role!='moderator':return True
- from .models import Direction,School
+ from .models import Direction,School,Club
  dirs=set(rule.directions.values_list('pk',flat=True)) if rule and scope=='selected' else set(user.directions_led.values_list('pk',flat=True))
  schools=set(rule.schools.values_list('pk',flat=True)) if rule and scope=='selected' else set(user.school_leader_of.values_list('pk',flat=True))|set(user.schoolteacher_set.values_list('school_id',flat=True))
+ clubs=set(rule.clubs.values_list('pk',flat=True)) if rule and scope=='selected' else set(user.clubs_led.values_list('pk',flat=True))
+ if isinstance(obj,Club):return obj.pk in clubs or obj.school_id in schools or obj.direction_id in dirs or (obj.school_id and obj.school.direction_id in dirs)
  if isinstance(obj,Direction):return obj.pk in dirs
  if isinstance(obj,School):return obj.pk in schools or obj.direction_id in dirs
  if hasattr(obj,'aya_directions'):
-  return obj.aya_directions.filter(pk__in=dirs).exists() or obj.aya_schools.filter(Q(pk__in=schools)|Q(direction_id__in=dirs)).exists()
+  return obj.aya_directions.filter(pk__in=dirs).exists() or obj.aya_schools.filter(Q(pk__in=schools)|Q(direction_id__in=dirs)).exists() or obj.aya_clubs.filter(Q(pk__in=clubs)|Q(school_id__in=schools)|Q(direction_id__in=dirs)|Q(school__direction_id__in=dirs)).exists()
  return False
 
 def can_change(actor,target):

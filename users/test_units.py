@@ -35,7 +35,7 @@ class UnitTests(TestCase):
         url=reverse('direction_detail',args=[self.direction.pk])
         self.assertContains(self.client.get(url),reverse('public_profile',args=[self.member.pk]))
         self.direction.featured_only=True;self.direction.save()
-        self.assertNotContains(self.client.get(url),reverse('public_profile',args=[self.member.pk]))
+        self.assertContains(self.client.get(url),reverse('public_profile',args=[self.member.pk]))
         self.direction.featured_members.add(self.member)
         self.assertContains(self.client.get(url),'Активная команда направления')
         self.assertContains(self.client.get(reverse('school_detail',args=[self.school.pk])),reverse('public_profile',args=[self.member.pk]))

@@ -40,13 +40,13 @@ class ManagementTests(TestCase):
         self.assertEqual(self.post('direction_edit',self.direction,{'leaders':[self.outsider.pk]},'leaders',self.student).status_code,403)
     def test_separate_forms_members_and_history(self):
         self.school.description='Keep';self.school.save()
-        response=self.post('school_edit',self.school,{'members':[self.outsider.pk]},'members',self.teacher)
+        response=self.post('school_edit',self.school,{'members':[self.outsider.pk,self.teacher.pk]},'members',self.teacher)
         self.assertEqual(response.status_code,302)
         self.assertTrue(self.outsider.directions.filter(pk=self.direction.pk).exists())
         self.school.refresh_from_db();self.assertEqual(self.school.description,'Keep')
         self.assertEqual(self.post('points_quick',data={'title':'Help','date':timezone.localdate(),'points':5,'volunteers':[self.outsider.pk],'school':self.school.pk,'token':uuid.uuid4()}).status_code,302)
-        self.post('school_edit',self.school,{},'members',self.teacher)
-        self.assertFalse(self.school.members.exists());self.assertEqual(ContributionAward.objects.get().points,5)
+        self.post('school_edit',self.school,{'members':[self.teacher.pk]},'members',self.teacher)
+        self.assertFalse(self.school.members.filter(pk=self.outsider.pk).exists());self.assertEqual(ContributionAward.objects.get().points,5)
     def test_teachers_appointment_and_account(self):
         self.assertEqual(self.post('teacher_create',self.school,{'member':self.outsider.pk},actor=self.student).status_code,403)
         self.assertEqual(self.post('teacher_create',self.school,{'member':''}).status_code,200)

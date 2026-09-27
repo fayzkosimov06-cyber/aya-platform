@@ -42,8 +42,14 @@ class FixedProfileChoicesMixin:
 
     def clean(self):
         data = super().clean()
+        from .social_links import social_url
+        for name in ('instagram','linkedin'):
+            if data.get(name):
+                normalized=social_url(data[name],name)
+                if normalized:data[name]=normalized
+                else:self.add_error(name,'Укажите ссылку с https:// (для Instagram можно @имя).')
         for name in self.legacy_profile_fields:
-            if name in data and data[name] in (None, ''):
+            if name in self.fields and name in data and data[name] in (None, ''):
                 self.add_error(name, 'Выберите значение из списка: прежнее значение не входит в справочник.')
         return data
 
@@ -52,6 +58,21 @@ class UserUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
     Форма для ВОЛОНТЕРА (редактирование своего профиля).
     Включает настройки приватности.
     """
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        if self.instance.role in {'worker','head_admin'} or self.instance.is_superuser:
+            for key in ('faculty','course','group'):
+                self.fields.pop(key,None)
+            self.fields['job_title']=forms.CharField(label='Должность',required=False,initial=self.instance.job_title)
+            self.fields['office_location']=forms.CharField(label='Кабинет',required=False,initial=self.instance.office_location)
+
+    def save(self,commit=True):
+        person=super().save(commit=False)
+        for key in ('job_title','office_location'):
+            if key in self.fields:setattr(person,key,self.cleaned_data.get(key,''))
+        if commit:person.save();self.save_m2m()
+        return person
+
     class Meta:
         model = User
         fields = [
@@ -69,7 +90,7 @@ class UserUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'patronymic': forms.TextInput(attrs={'class': 'form-control'}),
-            'birth_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'birth_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-select'}),
             'city': forms.Select(attrs={'class': 'form-select'}),
             'about_me': forms.Textarea(attrs={'rows': 4, 'class': 'form-control', 'placeholder': 'Расскажите о себе...'}),
@@ -96,6 +117,9 @@ class UserUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
 class AdminUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
     def __init__(self, *args, actor=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if self.instance.role in {'worker','head_admin'} or self.instance.is_superuser:
+            for name in ('faculty','course','group','is_active_volunteer_title'):
+                self.fields.pop(name,None)
         if actor is not None and not actor.is_superuser:
             from .views import get_user_power_level
             from types import SimpleNamespace
@@ -123,7 +147,7 @@ class AdminUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
             'username': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'role': forms.Select(attrs={'class': 'form-select'}),
-            'birth_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'birth_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-select'}),
             'city': forms.Select(attrs={'class': 'form-select'}),
             'about_me': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),

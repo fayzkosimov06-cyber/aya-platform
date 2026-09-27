@@ -25,7 +25,8 @@
     <link rel="stylesheet" href="{% static 'css/aya-unified.css' %}?v=9">
 <link rel="stylesheet" href="{% static 'css/aya-polish.css' %}?v=10">
 <link rel="stylesheet" href="{% static 'css/aya-design.css' %}?v=15">
-<link rel="stylesheet" href="{% static 'css/training.css' %}?v=1">
+<link rel="stylesheet" href="{% static 'css/training.css' %}?v=31">
+<link rel="stylesheet" href="{% static 'css/feedback.css' %}?v=31">
 </head>
 <body class="aya-site aya-design {% block body_class %}{% endblock %}">
 {% get_site_stats as site_stats %}
@@ -44,7 +45,7 @@
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'home' %} active{% endif %}" href="{% url 'home' %}"{% if request.resolver_match.url_name == 'home' %} aria-current="page"{% endif %}>Главная</a></li>
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'event_list' %} active{% endif %}" data-tour="nav-events" href="{% url 'event_list' %}"{% if request.resolver_match.url_name == 'event_list' %} aria-current="page"{% endif %}>Мероприятия</a></li>
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'volunteer_list' %} active{% endif %}" data-tour="nav-volunteers" href="{% url 'volunteer_list' %}"{% if request.resolver_match.url_name == 'volunteer_list' %} aria-current="page"{% endif %}>Волонтёры</a></li>
-<li class="nav-item"><a class="nav-link" data-tour="nav-directions" href="{% url 'unit_catalog' %}">Направления</a></li><li class="nav-item"><a class="nav-link" data-tour="nav-schools" href="{% url 'school_catalog' %}">Школы</a></li>
+<li class="nav-item"><a class="nav-link" data-tour="nav-directions" href="{% url 'unit_catalog' %}">Направления</a></li><li class="nav-item"><a class="nav-link" data-tour="nav-schools" href="{% url 'school_catalog' %}">Школы</a></li><li class="nav-item"><a class="nav-link" data-tour="nav-clubs" href="{% url 'club_catalog' %}">Клубы</a></li>
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'volunteer_rating' %} active{% endif %}" data-tour="nav-rating" href="{% url 'volunteer_rating' %}"{% if request.resolver_match.url_name == 'volunteer_rating' %} aria-current="page"{% endif %}>Рейтинг</a></li>
 {% if can_award_points %}<li class="nav-item"><a class="nav-link" href="{% url 'points_works' %}">Баллы</a></li>{% endif %}
                     <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'administration_page' %} active{% endif %}" href="{% url 'administration_page' %}"{% if request.resolver_match.url_name == 'administration_page' %} aria-current="page"{% endif %}>Администрация</a></li>
@@ -124,7 +125,7 @@
     <footer class="aya-footer">
         <div class="container aya-footer-inner">
             <a class="aya-footer-brand" href="{% url 'home' %}"><img src="{% static 'img/aya-logo-2026.png' %}" alt="AYA" width="64" height="58"><span>ASSOCIATION OF<br>YOUTH ATSMU</span></a>
-            <nav aria-label="Меню внизу страницы"><a href="{% url 'about_page' %}">О нас</a><a href="{% url 'volunteer_list' %}">Волонтёры</a><a href="{% url 'event_list' %}">Мероприятия</a><a href="{% url 'administration_page' %}">Администрация</a><a href="{% url 'home' %}#contacts">Контакты</a></nav>
+            <nav aria-label="Меню внизу страницы"><a href="{% url 'club_catalog' %}">Клубы</a><a href="{% url 'staff_login' %}">Вход сотрудника</a><a href="{% url 'about_page' %}">О нас</a><a href="{% url 'volunteer_list' %}">Волонтёры</a><a href="{% url 'event_list' %}">Мероприятия</a><a href="{% url 'administration_page' %}">Администрация</a><a href="{% url 'home' %}#contacts">Контакты</a></nav>
             <small>© {% now "Y" %} AYA</small>
         </div>
     </footer>
@@ -137,12 +138,14 @@
             $('.use-select2').select2({ width: '100%', dropdownParent: $('body') });
         });
     </script>
+    <script src="{% static 'js/photo-editor.js' %}?v=28" defer></script>
+    <script src="{% static 'js/selection.js' %}?v=28" defer></script>
     <script src="{% static 'js/design.js' %}?v=14" defer></script>
     {% if user.is_authenticated %}<span hidden data-activity-endpoint="{% url 'record_search' %}" data-section="{{ request.resolver_match.url_name }}" data-csrf="{{ csrf_token }}"></span>{% endif %}<script src="{% static 'js/control.js' %}?v=15" defer></script>
 {% block extra_js %}{% endblock %}
 {% if user.is_authenticated %}
 <span hidden id="aya-training-config" data-endpoint="{% url 'training_progress' %}" data-help="{% url 'training_help' %}" data-user="{{ user.pk }}" data-page="{{ request.resolver_match.url_name }}" data-csrf="{{ csrf_token }}"></span>
-<script src="{% static 'js/training.js' %}?v=4" defer></script>
+<script src="{% static 'js/training.js' %}?v=31" defer></script>
 {% endif %}
 </body>
 </html>
