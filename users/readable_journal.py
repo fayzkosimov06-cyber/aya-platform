@@ -14,6 +14,8 @@ from .journal import PRIVATE
 ROUTES={'public_profile':'Профиль','my_profile':'Свой профиль','profile_edit':'Редактирование профиля','event_detail':'Мероприятие','event_edit':'Редактор мероприятия','school_detail':'Школа','school_edit':'Редактор школы','direction_detail':'Направление','direction_edit':'Редактор направления','club_detail':'Клуб','club_edit':'Редактор клуба','home':'Главная','volunteer_list':'Волонтёры','event_list':'Мероприятия','unit_catalog':'Направления','school_catalog':'Школы','club_catalog':'Клубы','volunteer_rating':'Рейтинг','user_management':'Управление людьми','moderator_dashboard':'Кандидаты и визиты','training_progress':'Обучение','training_help':'Помощь','login':'Вход','logout':'Выход','staff_signup':'Регистрация сотрудника','staff_applications':'Заявки сотрудников','points_quick':'Начисление баллов','points_work':'Работа и баллы','rights_manage':'Полномочия'}
 MODELS={'users.User':'Профиль','users.Direction':'Направление','users.School':'Школа','users.Club':'Клуб','users.SchoolLesson':'Занятие','users.ClubMeeting':'Встреча клуба','users.SchoolTeacher':'Учитель','users.ContributionWork':'Работа','users.ContributionAward':'Начисление баллов','users.PermissionOverride':'Полномочия','users.StaffApplication':'Заявка сотрудника','users.TourProgress':'Обучение','events.Event':'Мероприятие','events.EventAttendance':'Присутствие','users.VolunteerVisit':'Вступительный визит'}
 FIELDS={'memberships':'Состав','status':'Статус','method':'Запрос','action':'Действие','path':'Страница','filters':'Условия поиска','results':'Найдено','error':'Ошибка','pk':'Запись','id':'Запись','username':'Логин','first_name':'Имя','last_name':'Фамилия','role':'Роль','is_approved':'Полный доступ','candidate_approved':'Кандидат принят','date_joined':'На сайте с','is_active':'Аккаунт активен','points':'Баллы','revoked':'Начисление отменено','created_at':'Дата создания','updated_at':'Дата изменения','query':'Поиск','q':'Поиск','title':'Название','name':'Название','member':'Участник','user':'Пользователь','organizer':'Организатор','created_by':'Автор','marked_by':'Отметил','confirmed_by':'Подтвердил','reviewer':'Рассмотрел','before':'Было','after':'Стало','description':'Описание','comment':'Комментарий','note':'Комментарий','enabled':'Разрешено','scope':'Область доступа','code':'Разрешение','cancelled':'Отменено','is_completed':'Завершено','is_public_for_guests':'Доступно гостям','volunteer_access':'Доступ волонтёра','new_volunteer_until':'Статус нового до','school':'Школа','direction':'Направление','club':'Клуб','event':'Мероприятие','work':'Работа','topic':'Тема','starts_at':'Начало','ends_at':'Окончание','visit_date':'Дата визита'}
+FIELDS.update({'result':'Результат','target_name':'К кому / к чему относится','target_type':'Раздел','network':'Контакт','birth_date':'Дата рождения','event_key':'Уведомление','is_read':'Прочитано','selected':'Выбранные','tab':'Вкладка','subject':'Объект','label':'Название'})
+ROUTES.update({'event_join':'Запись на мероприятие','event_finish':'Завершение мероприятия','event_report_edit':'Отчёт мероприятия','event_export':'Выгрузка участников','event_delete':'Удаление мероприятия','event_photo_delete':'Удаление фотографии','proposal_list':'Заявки на баллы','proposal_review':'Рассмотрение заявки','points_correct':'Корректировка баллов','points_kinds':'Правила баллов','points_works':'Работы и начисления','user_delete':'Удаление аккаунта','work_delete':'Удаление работы','mark_candidate_visit':'Отметка визита','delete_candidate_visit':'Удаление визита','grant_volunteer_access':'Открытие доступа волонтёру','approve_user':'Одобрение кандидата','reject_user':'Отклонение кандидата','mark_notification_as_read':'Чтение уведомления','mark_all_notifications_as_read':'Чтение всех уведомлений','admin_password_change':'Смена пароля','activity_period_edit':'Период активности','activity_periods_manage':'Периоды активности','activity_period_delete':'Удаление периода активности','update_user_role':'Изменение роли','toggle_active_volunteer':'Звание активного волонтёра','home_manage':'Редактор главной','about_manage':'Редактор сведений об AYA','open_contact':'Контакты профиля','reveal_phone':'Контакты профиля','birthday_calendar':'Дни рождения','staff_login':'Вход сотрудника','signup':'Регистрация','notifications':'Уведомления','teacher_edit':'Карточка учителя','teacher_create':'Назначение учителя','lesson_create':'Новое занятие','lesson_edit':'Редактор занятия','club_meeting_create':'Встреча клуба','club_meeting_edit':'Встреча клуба'})
 USER_KEYS={'user','member','actor','organizer','created_by','marked_by','confirmed_by','reviewer','author','volunteer_access_granted_by','volunteer','evaluator'}
 
 
@@ -37,6 +39,9 @@ class Display:
         if isinstance(value,list):return '\n'.join(self.value(key,v) for v in value) or 'Нет'
         if key in USER_KEYS:return self.label('users.User',value) if str(value).isdigit() else str(value)
         if key in {'school','direction','club','event','work'} and str(value).isdigit():return self.label({'school':'users.School','direction':'users.Direction','club':'users.Club','event':'events.Event','work':'users.ContributionWork'}[key],value)
+        if key=='network':return {'telegram':'Telegram','instagram':'Instagram','linkedin':'LinkedIn','phone':'Телефон'}.get(value,value)
+        if key=='target_type':return MODELS.get(value,value)
+        if key=='status' and str(value).isdigit():return {'200':'Успешно','302':'Переход выполнен','403':'Недостаточно прав','404':'Не найдено / недоступно','500':'Ошибка сервера'}.get(str(value),str(value))
         if key=='role':return dict(User.ROLE_CHOICES).get(value,value)
         if key=='scope':return {'all':'Все команды','own':'Свои команды','selected':'Выбранные команды'}.get(value,value)
         if key=='code':
@@ -57,23 +62,35 @@ class Display:
                 model=('events.Event' if section.startswith('event_') else 'users.School' if section.startswith('school_') else 'users.Direction' if section.startswith('direction_') else 'users.Club' if section.startswith('club_') else 'users.User' if section=='public_profile' else None)
                 if model and match.kwargs.get('pk'):target=self.label(model,match.kwargs['pk'])
             except Resolver404:pass
+        target=entry.after.get('target_name') or target
+        if entry.section=='public_profile' and entry.object_id and not target:target=self.label('users.User',entry.object_id)
         section_label=MODELS.get(section,ROUTES.get(section,'Действие на сайте'))
         verb={'view':'Открыл','search':'Выполнил поиск','failure':'Ошибка или отказ','action':'Выполнил действие','deletion':'Удалил'}.get(entry.category,entry.action)
+        if entry.category=='contact':verb=entry.action;section_label=self.value('network',entry.after.get('network'))
+        if entry.category=='action' and entry.action not in {'Выполнено действие','Действие'}:verb=entry.action
         if verb.startswith('Изменён состав:'):
             relation=verb.split(':',1)[1].strip()
             description='ответственные' if relation=='club_leaders' else 'учителя' if relation=='user_school_leader_of' else 'руководители' if relation=='direction_leaders' else 'активная команда' if 'featured' in relation else 'мероприятия' if 'events' in relation else 'участники'
             verb='Изменены '+description
         entry.readable_title=f'{verb} · {section_label}'+(f' «{target}»' if target else '')
-        entry.actor_name=str(entry.actor) if entry.actor else ('Гость' if entry.category in {'view','search'} else 'Система / аккаунт удалён')
+        entry.actor_name=str(entry.actor) if entry.actor else (entry.after.get('_actor_name') or ('Гость' if entry.category in {'view','search','contact'} else 'Система / аккаунт удалён'))
         fields={}
         if model:
             try:fields={f.name:str(f.verbose_name) for f in apps.get_model(model)._meta.fields}
             except LookupError:pass
         entry.differences=[]
         for key in sorted(set(entry.before)|set(entry.after)):
-            if key in {'id','path','method'} or key.startswith('_'):continue
+            if key in {'id','path','method','target_name','target_type'} or key.startswith('_'):continue
             a=entry.before.get(key);b=entry.after.get(key)
+            if key=='memberships' and isinstance(a,list) and isinstance(b,list):
+                removed=[row for row in a if row not in b];added=[row for row in b if row not in a]
+                if removed:entry.differences.append(('Убраны',self.value(key,removed),'—'))
+                if added:entry.differences.append(('Добавлены','—',self.value(key,added)))
+                continue
             if a!=b:entry.differences.append((FIELDS.get(key,fields.get(key,key)),self.value(key,a),self.value(key,b)))
+        entry.change_preview='; '.join(f'{field}: {before} → {after}' for field,before,after in entry.differences[:3]) if entry.category=='change' else ''
+        entry.is_observation=entry.category in {'view','search','contact','failure','action'}
+        entry.readable_details=[(field,after) for field,before,after in entry.differences if after!='—']
         return entry
 
 
@@ -82,9 +99,9 @@ def journal(request,mode='public'):
     if mode!='public' and not request.user.is_superuser:return HttpResponseForbidden('Недоступно.')
     if mode=='public' and not allowed(request.user,'audit'):return HttpResponseForbidden('Нет доступа к журналу.')
     qs=JournalEntry.objects.select_related('actor')
-    if mode=='activity':qs=qs.filter(category__in=['view','search'],created_at__gte=timezone.now()-timedelta(days=90))
-    elif mode=='private':qs=qs.filter(private=True).exclude(category__in=['view','search'])
-    else:qs=qs.filter(private=False).exclude(actor__is_superuser=True).exclude(category__in=['view','search'])
+    if mode=='activity':qs=qs.filter(category__in=['view','search','contact'])
+    elif mode=='private':qs=qs.all()
+    else:qs=qs.filter(private=False).exclude(actor__is_superuser=True).exclude(category__in=['view','search','contact'])
     q=request.GET.get('q','').strip()[:200]
     if q:
         search=Q(action__icontains=q)|Q(actor__first_name__icontains=q)|Q(actor__last_name__icontains=q)|Q(actor__username__icontains=q)
@@ -92,7 +109,7 @@ def journal(request,mode='public'):
             search |= Q(before__icontains=q)|Q(after__icontains=q)
         qs=qs.filter(search)
     category=request.GET.get('category','')
-    if category in {'change','action','failure','view','search','deletion'}:qs=qs.filter(category=category)
+    if category in {'change','action','failure','view','search','deletion','contact'}:qs=qs.filter(category=category)
     for key,lookup in [('start','created_at__date__gte'),('end','created_at__date__lte')]:
         try:d=date.fromisoformat(request.GET.get(key,''))
         except ValueError:continue
@@ -105,6 +122,7 @@ def journal(request,mode='public'):
     else:
         if actor=='none':qs=qs.filter(actor__isnull=True)
         elif actor.isdigit():qs=qs.filter(actor_id=actor)
+        if actor.isdigit():context['actor_person']=User.objects.filter(pk=actor).first()
         entries=Paginator(qs,30).get_page(request.GET.get('page'));display=Display(request.user)
         for entry in entries:display.entry(entry)
         context['entries']=entries

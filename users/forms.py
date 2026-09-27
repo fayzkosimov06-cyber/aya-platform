@@ -42,6 +42,9 @@ class FixedProfileChoicesMixin:
 
     def clean(self):
         data = super().clean()
+        from django.utils import timezone
+        if data.get('birth_date') and data['birth_date'] > timezone.localdate():
+            self.add_error('birth_date','Дата рождения не может быть в будущем.')
         from .social_links import social_url
         for name in ('instagram','linkedin'):
             if data.get(name):

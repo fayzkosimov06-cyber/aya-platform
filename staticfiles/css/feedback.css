@@ -1,0 +1,50 @@
+.aya-selection {border:1px solid #dce5f0;border-radius:14px;background:#fff;padding:12px;margin:8px 0 18px;min-width:0}
+.aya-selection-bar {display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.aya-selection-bar input {flex:1;min-width:150px!important;width:auto!important;margin:0!important;border:1px solid #dce5f0;border-radius:9px;padding:10px 12px}
+.aya-selection button,.aya-selection summary {border:1px solid #dce5f0;border-radius:8px;background:#f7faff;color:#214466;padding:9px 12px;cursor:pointer;font-size:13px}
+.aya-selection button[aria-pressed=true] {background:#e2f2ff;border-color:#75b7ed}
+.aya-selection details {position:relative}.aya-selection details[open] {display:flex;flex-wrap:wrap;gap:6px}
+.aya-selection-count {display:block;font-size:12px;color:#58718b;margin:10px 0}
+.aya-selection .member-picker,.aya-selection .selection-list {border:0!important;max-height:380px;overflow:auto;padding:0!important}
+.aya-selection [hidden] {display:none!important}.aya-selection-empty {color:#58718b;font-size:13px;padding:15px 0}
+.aya-selection input[type=checkbox] {width:19px!important;height:19px;accent-color:#087fdb;flex-shrink:0}
+.aya-selection .member-picker label {display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px}
+.u-shell{max-width:1120px;margin:auto}.u-narrow{max-width:660px}.club-cover{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px;margin-bottom:15px}
+.unit-studio .u-form p>input:not([type=checkbox]),.unit-studio .u-form p>select,.unit-studio .u-form p>textarea{width:100%;border:1px solid #dce5f0;border-radius:9px;padding:11px}
+.unit-studio .u-form p>label{display:block;margin-bottom:6px}.unit-studio .u-form .helptext{display:block;font-size:12px;color:#5b7086;margin-top:6px}
+.profile-appointments{display:grid;gap:8px;margin:18px 0;text-align:left}.profile-appointments a{padding:10px 12px;border:1px solid #e4eaf2;border-radius:10px;text-decoration:none;font-size:13px}.profile-appointments small{display:block;color:#61748b}
+.aya-design .frame-teacher{background:conic-gradient(from var(--aya-frame-angle),#df0963,#ff7d9d,#e5096c,#ffbbc8,#df0963)!important;animation:aya-frame-sheen 10s linear infinite}.aya-design .frame-club{background:conic-gradient(from var(--aya-frame-angle),#f65d0d,#ffc36a,#ff8400,#ffdb9b,#f65d0d)!important;animation:aya-frame-sheen 10s linear infinite}
+.aya-design .frame-leader-teacher{background:linear-gradient(125deg,#7735ec,#b80ac1,#ef1868)!important}
+.aya-design .frame-leader-club{background:linear-gradient(125deg,#7735ec,#d22398,#ff7d0b)!important}
+.aya-design .frame-teacher-club{background:linear-gradient(125deg,#e5096c,#f64b59,#ff8800)!important}
+.aya-design .frame-leader-teacher-club{background:linear-gradient(125deg,#7735ec,#b918b9,#ec1466,#ff8500)!important}
+.aya-design .frame-leader-teacher{background:conic-gradient(from var(--aya-frame-angle),#7735ec,#ef1868,#7735ec)!important}
+.aya-design .frame-leader-club{background:conic-gradient(from var(--aya-frame-angle),#7735ec,#ff7d0b,#7735ec)!important}
+.aya-design .frame-teacher-club{background:conic-gradient(from var(--aya-frame-angle),#e5096c,#ff8800,#e5096c)!important}
+.aya-design .frame-leader-teacher-club{background:conic-gradient(from var(--aya-frame-angle),#7735ec,#ec1466,#ff8500,#7735ec)!important}
+.aya-design .aya-portrait[class*='frame-leader-'],.aya-design .frame-teacher-club{animation:aya-frame-sheen 12s linear infinite}
+@keyframes aya-role-flow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@media(prefers-reduced-motion:reduce){.aya-design .aya-portrait{animation:none!important}}
+.aya-role-club{background:#fff1df;color:#a84604}.aya-role-teacher{background:#fff0f5;color:#b50b50}
+.journal-people{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}.journal-person{display:block;padding:20px;background:white;border:1px solid #dce5f0;border-radius:14px;text-decoration:none}.journal-person strong,.journal-person small{display:block;margin-bottom:6px}
+.journal-readable{padding:18px;background:#fff;border:1px solid #dce5f0;border-radius:12px;margin:10px 0}.journal-readable summary{cursor:pointer}.journal-readable time{font-size:12px;color:#657c95;display:block}.journal-readable table{width:100%;table-layout:fixed}.journal-readable td,.journal-readable th{padding:10px;text-align:left;overflow-wrap:anywhere;vertical-align:top;border-bottom:1px solid #edf1f6}
+.photo-editor{border:0;border-radius:20px;padding:24px;max-width:600px;width:calc(100% - 30px);max-height:92dvh;overflow:auto;color:#183351;box-shadow:0 20px 90px #14264b45}.photo-editor::backdrop{background:#10243acc}.photo-editor canvas{display:block;width:100%;max-height:45vh;object-fit:contain;background:#edf1f6;border-radius:12px;cursor:grab}.photo-controls label{display:grid;grid-template-columns:140px 1fr;align-items:center;gap:10px;font-size:13px;margin:12px 0}.photo-buttons{display:flex;flex-wrap:wrap;gap:10px}.photo-buttons button{border:1px solid #bfd6e9;border-radius:9px;padding:11px 15px;background:#f3f9ff;color:#135687}.photo-buttons button:first-child{background:#087fd6;color:white}.photo-hint{font-size:12px;color:#60748a;margin:7px 0}.aya-design .role-teacher{background:#ffe5ef;color:#ae1251}.aya-design .role-club{background:#ffecd5;color:#a34205}
+.aya-design .frame-active{animation:none!important;background:linear-gradient(130deg,#27b27a,#a1e8c5)!important}
+.aya-help{padding-top:24px;padding-bottom:40px}.aya-help h1{font-size:clamp(30px,4vw,46px)}.help-intro{font-size:20px;color:#25476c}.aya-help-card{box-shadow:0 5px 20px #214e7510;border-top:3px solid #168ccc}.aya-help-card p{font-size:14px;line-height:1.65}.aya-help-actions button{padding:10px 14px;border:1px solid #bfd6ea;background:#f2f8fd;border-radius:9px;color:#175585;cursor:pointer}.aya-help-actions .aya-tour-primary{background:#087ed8;color:white}
+.aya-design .aya-quote-grid{display:flex!important;flex-wrap:wrap;gap:18px;align-items:flex-start}.aya-design .aya-quote-card{flex:1 1 330px;max-width:680px;min-height:0!important;margin:0;padding:24px!important;border:1px solid #e1e9f2;background:linear-gradient(135deg,#fff,#f0f7ff);border-radius:18px}.aya-design .aya-quote-content{display:flex;align-items:center;gap:20px}.aya-design .aya-quote-photo{width:80px!important;height:80px!important;object-fit:cover;object-position:center;flex-shrink:0;border-radius:50%;image-rendering:auto!important}.aya-design .aya-quote-card blockquote{font-size:clamp(16px,2vw,20px);line-height:1.6;margin-bottom:14px;max-width:50ch}.aya-design .aya-quote-author span{font-size:12px}.aya-design .aya-quote-card[hidden]{display:none!important}.aya-design .aya-cta h2{color:white}.cookie-vault{text-align:center;max-width:760px;margin:30px auto}
+.aya-design .selection-list label.ops-person{display:flex!important;align-items:center;gap:12px;margin:0;padding:14px 8px;min-width:0;flex:1}
+.aya-design .selection-list .ops-person>.aya-portrait{min-width:48px!important;max-width:48px!important}
+.aya-design .selection-list .ops-person>span:not(.aya-portrait):not(.status-chip){min-width:0!important}
+.aya-design .selection-list .ops-person{flex-wrap:nowrap}
+.aya-design .selection-list .ops-person>.aya-portrait{display:inline-flex!important;flex:0 0 48px!important;width:48px!important;height:48px!important;min-width:48px;max-width:48px;aspect-ratio:1;padding:3px;border-radius:13px}
+.aya-design .selection-list .ops-person>.aya-portrait img{width:100%!important;height:100%!important;object-fit:cover;max-width:100%;margin:0;border-radius:10px!important}
+.aya-design .selection-list .ops-person>span:not(.aya-portrait):not(.status-chip){flex:1;min-width:0}.aya-design .selection-list .ops-person>.status-chip{flex:0 1 170px;white-space:normal;margin:0}
+.aya-design .selection-list [data-member-row]{display:flex;align-items:center;border-bottom:1px solid #e6edf5;gap:10px}.aya-design .selection-list .row-profile{position:static;flex-shrink:0;font-size:12px;padding:9px}.aya-design .selection-list label:has(input:disabled){opacity:.6;cursor:not-allowed}
+.aya-design .selection-form .aya-selection .selection-list{max-height:620px}.aya-design .selection-form .ops-bulk-bar{position:static}.aya-design .selection-form .ops-note{font-size:13px;line-height:1.6}
+.aya-design .frame-leader-teacher,.aya-design .frame-leader-club,.aya-design .frame-teacher-club,.aya-design .frame-leader-teacher-club{padding:4px;box-shadow:0 0 0 1px #dcd5e8}
+@media(max-width:650px){.aya-design .selection-list label.ops-person{display:grid!important;grid-template-columns:20px 44px minmax(0,1fr);gap:8px}.aya-design .selection-list .ops-person>.status-chip{grid-column:3}.aya-design .selection-list .ops-person>.aya-portrait{width:44px!important;height:44px!important;min-width:44px;max-width:44px}.aya-design .selection-list [data-member-row]{align-items:flex-start}.aya-design .selection-list .row-profile{margin-top:14px}.aya-selection-bar input{flex-basis:100%}}
+.aya-selection input[type=radio]{width:19px!important;height:19px;accent-color:#087fdb;flex-shrink:0}
+.u-public-layout{display:grid;grid-template-columns:minmax(240px,1fr) 2fr;gap:24px}
+.journal-readable td{white-space:pre-line}
+@media(max-width:700px){.u-public-layout{grid-template-columns:1fr}.aya-design .selection-list .ops-person>.aya-portrait{min-width:44px!important;max-width:44px!important}.aya-design .selection-list .row-profile{white-space:normal;max-width:65px}}
+@media(max-width:650px){.aya-design .selection-list [data-member-row]{display:block}.aya-design .selection-list label.ops-person{align-items:start}.aya-design .selection-list .row-profile{display:block;text-align:right;max-width:none;margin:0;padding:0 8px 12px}.aya-design .selection-list .ops-person>.status-chip{padding:0;background:transparent}.aya-design .selection-list .ops-person>input{margin-top:12px}.aya-design .selection-form{padding:12px}.aya-design .selection-form .aya-selection{padding:10px}}

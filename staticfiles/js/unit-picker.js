@@ -1,0 +1,1 @@
+/* Selection controls are initialized centrally by selection.js. */

@@ -166,6 +166,7 @@ class ActivityPeriod(models.Model):
         return f"{self.user}: {self.start_date} - {end}"
 
 class Notification(models.Model):
+    event_key = models.CharField(max_length=180, unique=True, null=True, blank=True)
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     message = models.TextField()
     link = models.CharField(max_length=255, blank=True, null=True)
@@ -564,3 +565,11 @@ class ClubMeeting(models.Model):
         ordering = ['starts_at','pk']
 
     def __str__(self): return self.topic
+
+
+class BirthdayGreeting(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    year = models.PositiveIntegerField()
+    seen_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user', 'year'], name='birthday_once_per_year')]

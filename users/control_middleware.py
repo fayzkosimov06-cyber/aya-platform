@@ -22,29 +22,34 @@ ROUTES={
 class ControlMiddleware:
  def __init__(self,get_response):self.get_response=get_response
  def __call__(self,request):
-  from django.core.cache import cache
-  if cache.add('aya_activity_cleanup',True,3600):
-   from datetime import timedelta
-   from .models import JournalEntry
-   JournalEntry.objects.filter(category__in=['view','search'],created_at__lt=timezone.now()-timedelta(days=90)).delete()
   token=request_context.set(request)
   try:
    response=self.get_response(request)
    if not request.path.startswith(('/static/','/media/')):
     from .journal import emit,safe_value
     name=getattr(getattr(request,'resolver_match',None),'url_name','') or ''
-    if name=='record_search':return response
-    if response.status_code>=400:emit('failure',name,'Отказ или ошибка',after={'status':response.status_code,'method':request.method})
+    if name in {'record_search','birthday_seen','reveal_phone','open_contact'} and response.status_code<400:return response
+    if name in {'login','staff_login','logout'} and response.status_code in {301,302,303}:return response
+    target={}
+    pk=getattr(getattr(request,'resolver_match',None),'kwargs',{}).get('pk')
+    if pk:
+     from .models import User,School,Direction,Club,ContributionWork
+     from events.models import Event
+     model=User if name in {'public_profile','admin_edit_user','user_delete'} else Event if name.startswith('event_') else School if name.startswith('school_') else Direction if name.startswith('direction_') else Club if name.startswith('club_') else ContributionWork if name in {'points_work','work_delete'} else None
+     obj=model.objects.filter(pk=pk).first() if model else None
+     if obj and not (isinstance(obj,User) and obj.is_superuser and not request.user.is_superuser):target={'target_name':str(obj),'target_type':model._meta.label}
+    if name=='my_profile':target={'target_name':str(request.user),'target_type':'users.User'}
+    if response.status_code>=400:emit('failure',name,'Отказ или ошибка',after={**target,'path':request.path,'status':response.status_code,'method':request.method},private=True)
     elif request.method not in {'GET','HEAD','OPTIONS'}:
      import re,html
      body=response.content.decode('utf-8',errors='replace') if not response.streaming and response.get('Content-Type','').startswith('text/html') else ''
      errors=re.findall(r'<ul[^>]*class=[\"\'][^\"\']*errorlist[^\"\']*[\"\'][^>]*>(.*?)</ul>',body,re.S)
      error='; '.join(html.unescape(re.sub('<[^>]+>',' ',x)).strip() for x in errors)
-     emit('failure' if errors else 'action',name,'Не сохранено: ошибка формы' if errors else 'Выполнено действие',after={'status':response.status_code,'action':safe_value('action',request.POST.get('action','сохранение')),'error':safe_value('error',error)})
-    elif response.status_code==200 and name not in {'journal_private','journal_activity','audit_log','record_search'}:
+     emit('failure' if errors else 'action',name,'Не сохранено: ошибка формы' if errors else 'Выполнено действие',after={**target,'path':request.path,'status':response.status_code,'action':safe_value('action',request.POST.get('action','сохранение')),'error':safe_value('error',error)})
+    elif response.status_code==200 and name not in {'journal_private','journal_activity','audit_log','record_search','training_progress'}:
      # Query text is retained only for known site search fields, never arbitrary URL credentials.
      query={k:safe_value(k,request.GET[k]) for k in ['q','query','status','state','direction','school','faculty','course','gender','city'] if k in request.GET}
-     emit('search' if query else 'view',name,'Поиск' if query else 'Просмотр',after={'path':request.path,'filters':query,'results':getattr(request,'aya_result_count',None)},private=True)
+     emit('search' if query else 'view',name,'Поиск' if query else 'Просмотр',after={**target,'path':request.path,'filters':query,'results':getattr(request,'aya_result_count',None)},private=True)
    return response
   finally:request_context.reset(token)
  def process_view(self,request,view,args,kwargs):

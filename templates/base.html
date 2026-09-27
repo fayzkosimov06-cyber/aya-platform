@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="{% static 'css/aya-design.css' %}?v=15">
 <link rel="stylesheet" href="{% static 'css/training.css' %}?v=31">
 <link rel="stylesheet" href="{% static 'css/feedback.css' %}?v=31">
+<link rel="stylesheet" href="{% static 'css/birthdays.css' %}?v=2">
 </head>
 <body class="aya-site aya-design {% block body_class %}{% endblock %}">
 {% get_site_stats as site_stats %}
@@ -73,7 +74,7 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                             {% if can_manage_rights %}<li><a class="dropdown-item" href="{% url 'rights_manage' %}">Права доступа</a></li>{% endif %}{% if can_view_audit %}<li><a class="dropdown-item" href="{% url 'audit_log' %}">Журнал действий</a></li>{% endif %}{% if user.is_superuser %}<li><a class="dropdown-item" href="{% url 'journal_private' %}">Закрытое управление</a></li>{% endif %}<li><a class="dropdown-item" href="{% url 'my_profile' %}">Мой профиль</a></li>
                             <li><a class="dropdown-item" href="{% url 'profile_edit' %}">Редактировать</a></li>
-<li><a class="dropdown-item" data-tour="help-link" href="{% url 'training_help' %}">Помощь и обучение</a></li>
+{% if can_view_birthdays %}<li><a class="dropdown-item" href="{% url 'birthday_calendar' %}">Дни рождения команды</a></li>{% endif %}{% if birthday_today %}<li><button type="button" class="dropdown-item" data-birthday-open>Моё поздравление 🎉</button></li>{% endif %}<li><a class="dropdown-item" data-tour="help-link" href="{% url 'training_help' %}">Помощь и обучение</a></li>
                             
                             {% if can_award_points %}<a class="dropdown-item" href="{% url 'points_works' %}">Центр баллов</a>{% endif %}
 {% if can_open_admin %}
@@ -145,7 +146,7 @@
 {% block extra_js %}{% endblock %}
 {% if user.is_authenticated %}
 <span hidden id="aya-training-config" data-endpoint="{% url 'training_progress' %}" data-help="{% url 'training_help' %}" data-user="{{ user.pk }}" data-page="{{ request.resolver_match.url_name }}" data-csrf="{{ csrf_token }}"></span>
-<script src="{% static 'js/training.js' %}?v=31" defer></script>
+<script src="{% static 'js/training.js' %}?v=32" defer></script>
 {% endif %}
-</body>
+{% include 'users/birthday_greeting.html' %}<script src="{% static 'js/birthdays.js' %}?v=1" defer></script></body>
 </html>

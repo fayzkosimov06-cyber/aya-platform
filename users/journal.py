@@ -29,10 +29,13 @@ def emit(category,section,action,before=None,after=None,object_id='',actor=None,
  req=request_context.get()
  if req and getattr(req,'aya_private_deletion',False):private=True
  actor=actor or (req.user if req and req.user.is_authenticated else None)
+ after=dict(after or {})
+ if actor:after.setdefault('_actor_name',str(actor))
+ if req:after.setdefault('_route',getattr(getattr(req,'resolver_match',None),'url_name',''))
  JournalEntry.objects.create(actor=actor,private=bool(actor and actor.is_superuser) if private is None else private,category=category,section=section,action=action,before=clean_payload(before or {}),after=clean_payload(after or {}),object_id=str(object_id))
 
 def tracked(sender):
- return sender._meta.app_label in {'users','events'} and sender.__name__ not in {'JournalEntry','AuditLog','Notification'} and not sender._meta.auto_created
+ return sender._meta.app_label in {'users','events'} and sender.__name__ not in {'JournalEntry','AuditLog','Notification','BirthdayGreeting'} and not sender._meta.auto_created
 
 @receiver(pre_save)
 def before_save(sender,instance,**kwargs):
@@ -71,3 +74,14 @@ def memberships(sender,instance,action,reverse,model,pk_set,**kwargs):
  elif action in {'post_add','post_remove','post_clear'}:
   before=getattr(instance,key,[]);after=rows()
   if before!=after:emit('change',instance._meta.label,'Изменён состав: '+sender._meta.model_name,{'memberships':before},{'memberships':after},instance.pk)
+
+
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+
+@receiver(user_logged_in)
+def logged_in(sender, request, user, **kwargs):
+ emit('action','login','Вошёл на сайт',actor=user,after={'result':'Успешный вход'},private=True)
+
+@receiver(user_logged_out)
+def logged_out(sender, request, user, **kwargs):
+ if user:emit('action','logout','Вышел с сайта',actor=user,after={'result':'Сеанс завершён'},private=True)

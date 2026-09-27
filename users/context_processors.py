@@ -10,8 +10,11 @@ def notifications_processor(request):
     в контекст каждого шаблона, чтобы колокольчик 🔔 работал на всех страницах.
     """
     if request.user.is_authenticated:
+        from .birthdays import notify, context
+        notify(request.user)
         unread_notifications = Notification.objects.filter(recipient=request.user, is_read=False)
         return {
+            **context(request),
             'unread_notifications': unread_notifications,
             'can_award_points': can_award(request.user),
             'can_open_admin': any(allowed(request.user,c) for c in CAPABILITIES if c not in {'contacts','visits'}),

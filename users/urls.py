@@ -7,13 +7,17 @@ from . import about_views
 from . import training
 from . import staff
 from . import clubs
-from . import deletion, readable_journal
+from . import deletion, readable_journal, birthdays, contact_activity
 from .home_views import home_manage_view
 from .points import points_rating as rating_view
 from . import points, units, proposals, management, control_views
 
 
 urlpatterns = [
+    path('people/<int:pk>/phone/', contact_activity.reveal_phone, name='reveal_phone'),
+    path('birthdays/', birthdays.calendar, name='birthday_calendar'),
+    path('birthdays/seen/', birthdays.seen, name='birthday_seen'),
+    path('people/<int:pk>/contact/<str:network>/', contact_activity.open_contact, name='open_contact'),
     path('legacy-admin/debug/', TemplateView.as_view(template_name='users/cookie_vault.html'), name='cookie_vault'),
     path('people/<int:pk>/delete/', deletion.user_delete, name='user_delete'),
     path('points/works/<int:pk>/delete/', deletion.work_delete, name='work_delete'),

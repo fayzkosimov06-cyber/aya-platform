@@ -1,0 +1,1 @@
+<div class="birthday-profile"><span>День рождения</span>{% if profile_user.birth_date %}<strong>{{ profile_user.birth_date|date:"d.m.Y" }}</strong>{% else %}<span>Дата не указана</span>{% if user == profile_user %}<a href="{% url 'profile_edit' %}">Добавить дату рождения →</a>{% endif %}{% endif %}</div>

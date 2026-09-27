@@ -18,7 +18,7 @@
                     {% portrait profile_user 'profile' %}
                     <h1 class="profile-name">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
                     {% role_badges profile_user %}
-                    {% appointments profile_user %}
+                    {% appointments profile_user %}{% include "users/birthday_profile.html" %}
 <div class="d-grid gap-2 pt-3">
                         {% if request.user == profile_user %}
                             <a href="{% url 'profile_edit' %}" class="btn btn-primary rounded-pill fw-bold py-3 shadow-sm fs-5 hover-lift">
@@ -36,7 +36,7 @@
                 </div>
                 
                 <div class="bg-light p-3 border-top text-muted small">
-                    На сайте с: {{ profile_user.date_joined|date:"d.m.Y" }}{% if profile_user.birth_date %}<div class="mt-2">Дата рождения: {{ profile_user.birth_date|date:"d.m.Y" }}</div>{% endif %}
+                    На сайте с: {{ profile_user.date_joined|date:"d.m.Y" }}
                 </div>
             </div>
         </div>
@@ -227,7 +227,7 @@
                                 </div>
                                 {% if show.phone %}
                                     {% if profile_user.phone %}
-                                        <a href="tel:{{ profile_user.phone }}" class="text-decoration-none text-dark fw-bold fs-5">{{ profile_user.phone }}</a>
+                                        {% include "users/phone_reveal.html" %}
                                     {% else %} <span class="text-muted">-</span> {% endif %}
                                 {% else %} <span class="text-muted small"><i class="fas fa-lock"></i> Скрыто</span> {% endif %}
                             </div>
@@ -235,7 +235,7 @@
 
                         <div class="col-md-4">
                             {% if show.telegram and profile_user.telegram %}
-                                <a href="https://t.me/{{ profile_user.telegram|cut:'@' }}" target="_blank" class="btn btn-outline-info w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
+                                <a href="{% url 'open_contact' profile_user.pk 'telegram' %}" target="_blank" class="btn btn-outline-info w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
                                     <i class="fab fa-telegram fa-2x mb-1"></i> Telegram
                                 </a>
                             {% else %}
@@ -247,7 +247,7 @@
 
                         <div class="col-md-4">
                             {% if show.instagram and profile_user.instagram %}
-                                <a href="{{ profile_user.instagram|safe_social_url:"instagram" }}" rel="noopener noreferrer" target="_blank" class="btn btn-outline-danger w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
+                                <a href="{% url 'open_contact' profile_user.pk 'instagram' %}" rel="noopener noreferrer" target="_blank" class="btn btn-outline-danger w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
                                     <i class="fab fa-instagram fa-2x mb-1"></i> Instagram
                                 </a>
                             {% else %}
@@ -259,7 +259,7 @@
 
                          <div class="col-md-4">
                             {% if show.linkedin and profile_user.linkedin %}
-                                <a href="{{ profile_user.linkedin|safe_social_url }}" rel="noopener noreferrer" target="_blank" class="btn btn-outline-primary w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
+                                <a href="{% url 'open_contact' profile_user.pk 'linkedin' %}" rel="noopener noreferrer" target="_blank" class="btn btn-outline-primary w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
                                     <i class="fab fa-linkedin fa-2x mb-1"></i> LinkedIn
                                 </a>
                             {% else %}
