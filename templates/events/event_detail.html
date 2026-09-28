@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static aya_media %}
 
 {% block title %}{{ event.title }}{% endblock %}
 
@@ -90,16 +90,7 @@
                             </div>
                         {% endif %}
 
-                        {% if event.videos.exists %}
-                            <h4 class="mb-3 fw-bold">Видео</h4>
-                            {% for video in event.videos.all %}
-                                <div class="mb-3">
-                                    <a href="{{ video.video_url }}" target="_blank" class="btn btn-outline-danger w-100 rounded-pill py-3 fw-bold">
-                                        <i class="fab fa-youtube me-2"></i> Смотреть видео #{{ forloop.counter }}
-                                    </a>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
+                        {% if event.videos.exists %}<section class="event-video-gallery"><h3>Видео: как это было</h3><div class="aya-video-grid">{% for video in event.videos.all %}{% video_card video.video_file video.video_url video.title video.poster %}{% endfor %}</div></section>{% endif %}
 
                     {% else %}
                         <h4 class="fw-bold mb-4">О мероприятии</h4>

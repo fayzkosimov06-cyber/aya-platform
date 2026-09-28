@@ -47,9 +47,15 @@ class AboutForm(forms.ModelForm):
 class MainForm(AboutForm):
     class Meta:
         model=AboutPage
-        fields=['title','description','mission_title','mission_text','video_url','email','address']
+        fields=['title','description','mission_title','mission_text','video_file','video_poster','video_url','email','address']
         labels={'title':'Заголовок страницы','description':'Об ассоциации','mission_title':'Заголовок миссии','mission_text':'Текст миссии','video_url':'Ссылка на видео','email':'Электронная почта','address':'Адрес'}
         widgets={'description':forms.Textarea(attrs={'rows':4}),'mission_text':forms.Textarea(attrs={'rows':5})}
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.fields['video_file'].help_text='MP4 (рекомендуется H.264) или WebM, до 100 МБ. Видео будет воспроизводиться прямо на странице.'
+        self.fields['video_file'].widget.attrs['accept']='video/mp4,video/webm'
+        self.fields['video_url'].help_text='YouTube/Vimeo встраиваются в страницу; для остальных сервисов появится кнопка перехода. Можно дополнить загруженный файл ссылкой.'
+
     def clean_video_url(self):
         value=self.cleaned_data['video_url']
         if value and urlsplit(value).scheme not in ['https','http']:raise forms.ValidationError('Укажите ссылку http:// или https://.')
@@ -122,7 +128,7 @@ def about_manage_view(request):
     model,formclass=(AboutPage,MainForm) if kind=='main' else SECTIONS[kind][:2]
     item_id=request.POST.get('id') if request.method=='POST' else request.GET.get('id')
     obj=about if kind=='main' else get_object_or_404(model,about=about,pk=item_id) if item_id else None
-    form=formclass(request.POST if request.method=='POST' else None,instance=obj)
+    form=formclass(request.POST if request.method=='POST' else None,request.FILES if request.method=='POST' else None,instance=obj)
     if request.method=='POST':
         action=request.POST.get('action')
         if action=='save':

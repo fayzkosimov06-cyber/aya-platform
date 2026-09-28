@@ -194,6 +194,10 @@ class VolunteerVisit(models.Model):
 
 
 class AboutPage(models.Model):
+    from .media_uploads import video_upload_path, validate_video
+    video_file = models.FileField('Видеофайл', upload_to=video_upload_path, validators=[validate_video], blank=True)
+    video_poster = models.ImageField('Обложка видео', upload_to='video_posters/', blank=True)
+
     title = models.CharField(max_length=255, default="О нас")
     description = models.TextField(blank=True)
     video_url = models.URLField(blank=True)

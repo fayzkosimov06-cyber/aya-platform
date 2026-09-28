@@ -85,9 +85,11 @@ class AssignmentFeedbackTests(TestCase):
         self.assertEqual(presentation(self.person)['frame'],'president')
 
     def test_birthday_visible_in_student_and_staff_profiles(self):
-        self.assertContains(self.client.get(reverse('public_profile',args=[self.person.pk])),'03.02.2001')
+        self.assertNotContains(self.client.get(reverse('public_profile',args=[self.person.pk])),'03.02.2001')
+        self.assertEqual(self.client.post(reverse('reveal_birthday',args=[self.person.pk])).json()['date'],'03.02.2001')
         self.person.role='worker';self.person.save()
-        self.assertContains(self.client.get(reverse('public_profile',args=[self.person.pk])),'03.02.2001')
+        self.assertNotContains(self.client.get(reverse('public_profile',args=[self.person.pk])),'03.02.2001')
+        self.assertEqual(self.client.post(reverse('reveal_birthday',args=[self.person.pk])).json()['date'],'03.02.2001')
         response=self.client.get(reverse('admin_edit_user',args=[self.person.pk]))
         self.assertNotContains(response,'name="faculty"');self.assertContains(response,'2001-02-03')
 

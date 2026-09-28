@@ -140,7 +140,9 @@ def participants(request,event):
 
 def report(request,event):
     action=request.POST.get('action','save_report');form=EventReportForm(request.POST if request.method=='POST' and action=='save_report' else None,request.FILES or None,instance=event)
-    video=EventVideoForm(request.POST if request.method=='POST' and action=='add_video' else None)
+    if request.method=='POST' and action in {'add_video','delete_video'} and not event.is_completed:
+        return HttpResponseForbidden('Видео отчёта доступны после завершения мероприятия.')
+    video=EventVideoForm(request.POST if request.method=='POST' and action=='add_video' else None, request.FILES if request.method=='POST' and action=='add_video' else None)
     if request.method=='POST':
         success=False
         if action=='save_report' and form.is_valid():
@@ -148,7 +150,9 @@ def report(request,event):
             for photo in request.FILES.getlist('photos'):EventPhoto.objects.create(event=event,image=photo)
             success=True
         elif action=='add_video' and video.is_valid():obj=video.save(commit=False);obj.event=event;obj.save();success=True
-        elif action=='delete_video':get_object_or_404(EventVideo,pk=request.POST.get('video_id'),event=event).delete();success=True
+        elif action=='delete_video':
+            if not request.POST.get('video_id','').isdigit():raise Http404
+            get_object_or_404(EventVideo,pk=request.POST['video_id'],event=event).delete();success=True
         elif action=='set_role':
             hero=EventHeroForm(request.POST,event=event)
             if hero.is_valid():EventHero.objects.update_or_create(event=event,user=hero.cleaned_data['user'],defaults={'role_name':hero.cleaned_data['role_name']});success=True

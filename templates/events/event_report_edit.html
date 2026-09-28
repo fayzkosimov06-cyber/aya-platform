@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %}{% load aya_media %}
 
 {% block title %}Редактирование отчёта{% endblock %}
 
@@ -75,33 +75,7 @@
 
     <!-- RIGHT: Tools -->
     <div class="col-lg-5">
-      <!-- Videos -->
-      <div class="card shadow-sm border-0 rounded-4 mb-4">
-        <div class="card-header bg-danger text-white rounded-top-4">
-          Добавить видео
-        </div>
-        <div class="card-body">
-          <form method="post" class="d-flex gap-2">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="add_video">
-            <input type="url" name="video_url" class="form-control" placeholder="YouTube / Instagram ссылка" required>
-            <button class="btn btn-danger" type="submit">Добавить</button>
-          </form>
-
-          {% if event.videos.count %}
-            <div class="mt-3">
-              <div class="fw-semibold mb-2">Добавленные видео:</div>
-              <ul class="list-unstyled mb-0">
-                {% for v in event.videos.all %}
-                  <li class="mb-2">
-                    <a href="{{ v.video_url }}" target="_blank" rel="noopener">{{ v.video_url }}</a>
-                  </li>
-                {% endfor %}
-              </ul>
-            </div>
-          {% endif %}
-        </div>
-      </div>
+      <section class="aya-video-editor mb-4" id="videos"><header><span class="media-eyebrow">ИСТОРИЯ В КАДРЕ</span><h2>Видео мероприятия</h2><p>Загрузите ролик или добавьте ссылку. Видео появятся в опубликованном отчёте после завершения мероприятия.</p></header>{% if event.is_completed %}<form method="post" enctype="multipart/form-data" class="media-upload-form">{% csrf_token %}<input type="hidden" name="action" value="add_video">{{ video_form.non_field_errors }}{% for field in video_form %}<div>{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}</div>{% endfor %}<button class="btn btn-primary" type="submit">Добавить видео</button></form>{% else %}<p class="media-info">Сначала завершите мероприятие — затем здесь можно будет добавить видео.</p>{% endif %}{% for video in event.videos.all %}<div class="media-editor-item">{% video_card video.video_file video.video_url video.title video.poster %}{% if event.is_completed %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="delete_video"><input type="hidden" name="video_id" value="{{ video.pk }}"><button type="submit" class="btn btn-sm btn-outline-danger">Убрать видео из отчёта</button></form>{% endif %}</div>{% endfor %}</section>
 
       <!-- Roles -->
       <div class="card shadow-sm border-0 rounded-4 mb-4" id="roles">

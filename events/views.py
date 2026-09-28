@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.db import models, transaction
-from django.http import Http404
+from django.http import Http404, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from .models import Event, EventPhoto, EventVideo, EventHero, EventEvaluation
@@ -135,6 +135,7 @@ def event_report_edit_view(request, pk):
         messages.error(request, "У вас нет прав редактировать отчёт этого мероприятия.")
         return redirect('event_detail', pk=event.pk)
 
+    video_form = None
     User = get_user_model()
     can_evaluate = can_evaluate_volunteers(request.user)
 
@@ -155,6 +156,16 @@ def event_report_edit_view(request, pk):
     if request.method == 'POST':
         action = request.POST.get('action', '').strip()
 
+        if action in {'add_video','delete_video'} and not event.is_completed:
+            return HttpResponseForbidden('Видео отчёта можно добавлять после завершения мероприятия.')
+        if action=='delete_video':
+            video_id=request.POST.get('video_id','')
+            if not video_id.isdigit():raise Http404
+            video=get_object_or_404(EventVideo,event=event,pk=video_id)
+            video.delete()
+            messages.success(request,'Видео убрано из отчёта.')
+            return redirect('event_report_edit',pk=event.pk)
+
         # --- 1) Сохранить отчёт ---
         if action == 'save_report':
             report_form = EventReportForm(request.POST, request.FILES, instance=event)
@@ -172,14 +183,15 @@ def event_report_edit_view(request, pk):
 
         # --- 2) Добавить видео (ссылка) ---
         if action == 'add_video':
-            video_form = EventVideoForm(request.POST)
+            video_form = EventVideoForm(request.POST, request.FILES)
             if video_form.is_valid():
-                EventVideo.objects.create(event=event, video_url=video_form.cleaned_data['video_url'])
+                video=video_form.save(commit=False)
+                video.event=event
+                video.save()
                 log_event_action(request.user, f"Добавил видео в отчёт '{event.title}'")
                 messages.success(request, "Видео добавлено.")
-            else:
-                messages.error(request, "Введите корректную ссылку на видео.")
-            return redirect('event_report_edit', pk=event.pk)
+                return redirect('event_report_edit', pk=event.pk)
+            action='invalid_video'
 
         # --- 3) Назначить роль участнику (бывш. 'герой') ---
         if action == 'set_role':
@@ -216,12 +228,13 @@ def event_report_edit_view(request, pk):
             return redirect('event_report_edit', pk=event.pk)
 
         # Если action неизвестен
-        messages.error(request, "Неизвестное действие.")
-        return redirect('event_report_edit', pk=event.pk)
+        if action!='invalid_video':
+            messages.error(request, 'Неизвестное действие.')
+            return redirect('event_report_edit', pk=event.pk)
 
     # GET
     report_form = EventReportForm(instance=event)
-    video_form = EventVideoForm()
+    video_form = video_form or EventVideoForm()
     hero_form = EventHeroForm(event=event)
 
     heroes = EventHero.objects.filter(event=event).select_related('user')

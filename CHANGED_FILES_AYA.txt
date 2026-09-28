@@ -3,11 +3,14 @@ Compared with supplied aya-platform-main.zip
 MODIFIED: aya_platform/settings.py.example
 MODIFIED: events/forms.py
 NEW: events/migrations/0012_preserve_deleted_authors.py
+NEW: events/migrations/0013_eventvideo_poster_eventvideo_title_and_more.py
 MODIFIED: events/models.py
+MODIFIED: events/views.py
 MODIFIED: events/workspace.py
 NEW: ROLES_AYA.md
 NEW: static/css/birthdays.css
 NEW: static/css/feedback.css
+NEW: static/css/media-story.css
 MODIFIED: static/css/training.css
 NEW: static/css/unit-studio.css
 NEW: static/js/birthdays.js
@@ -64,6 +67,7 @@ NEW: templates/users/partials/appointments.html
 MODIFIED: templates/users/partials/carousel_card.html
 MODIFIED: templates/users/partials/operations_nav.html
 MODIFIED: templates/users/partials/portrait.html
+NEW: templates/users/partials/video_card.html
 MODIFIED: templates/users/people_hub.html
 NEW: templates/users/phone_reveal.html
 MODIFIED: templates/users/point_filters.html
@@ -102,6 +106,7 @@ MODIFIED: templates/users/user_management.html
 MODIFIED: templates/users/volunteer_list.html
 NEW: TEST_REPORT_AYA.md
 MODIFIED: UPDATE_AYA.md
+MODIFIED: users/about_views.py
 MODIFIED: users/apps.py
 NEW: users/assignments.py
 NEW: users/birthdays.py
@@ -115,11 +120,13 @@ MODIFIED: users/forms.py
 MODIFIED: users/journal.py
 NEW: users/management/commands/send_birthday_notifications.py
 MODIFIED: users/management.py
+NEW: users/media_uploads.py
 MODIFIED: users/migrations/0043_tour_progress.py
 NEW: users/migrations/0044_clubs_and_staff.py
 NEW: users/migrations/0045_preserve_deleted_authors.py
 NEW: users/migrations/0046_reconcile_school_assignments.py
 NEW: users/migrations/0047_notification_event_key_birthdaygreeting.py
+NEW: users/migrations/0048_aboutpage_video_file_aboutpage_video_poster.py
 MODIFIED: users/models.py
 MODIFIED: users/permissions.py
 MODIFIED: users/points.py
@@ -127,6 +134,7 @@ MODIFIED: users/proposals.py
 NEW: users/readable_journal.py
 NEW: users/social_links.py
 NEW: users/staff.py
+NEW: users/templatetags/aya_media.py
 MODIFIED: users/templatetags/aya_people.py
 NEW: users/test_assignment_feedback.py
 NEW: users/test_birthday_contacts.py
@@ -134,6 +142,7 @@ MODIFIED: users/test_controls.py
 MODIFIED: users/test_design.py
 NEW: users/test_feedback.py
 NEW: users/test_feedback_features.py
+NEW: users/test_media_privacy.py
 MODIFIED: users/test_training.py
 MODIFIED: users/test_unit_management.py
 MODIFIED: users/test_units.py

@@ -48,9 +48,25 @@ class EventReportForm(forms.ModelForm):
         }
 
 class EventVideoForm(forms.ModelForm):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        for field in self.fields.values():field.widget.attrs['class']='form-control'
+        self.fields['video_file'].widget.attrs['accept']='video/mp4,video/webm'
+        self.fields['video_file'].help_text='MP4 (рекомендуется H.264) или WebM, до 100 МБ.'
+        self.fields['poster'].help_text='Необязательно: изображение перед запуском видео.'
+
+    def clean(self):
+        data=super().clean()
+        from users.social_links import social_url
+        if bool(data.get('video_url'))==bool(data.get('video_file')):
+            raise forms.ValidationError('Выберите один вариант: загрузите видеофайл или укажите ссылку. Несколько видео можно добавить по очереди.')
+        if data.get('video_url') and not social_url(data['video_url']):
+            self.add_error('video_url','Укажите ссылку http:// или https://.')
+        return data
+
     class Meta:
         model = EventVideo
-        fields = ['video_url']
+        fields = ['title','video_file','poster','video_url']
         widgets = {
             'video_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'YouTube/Instagram'}),
         }

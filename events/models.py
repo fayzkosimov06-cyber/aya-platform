@@ -86,7 +86,14 @@ class EventEvaluation(models.Model):
 
 class EventVideo(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='videos')
-    video_url = models.URLField(verbose_name="Ссылка на видео")
+    from users.media_uploads import video_upload_path, validate_video
+    title = models.CharField('Название видео', max_length=180, blank=True)
+    video_url = models.URLField(verbose_name="Ссылка на видео", blank=True)
+    video_file = models.FileField('Видеофайл', upload_to=video_upload_path, validators=[validate_video], blank=True)
+    poster = models.ImageField('Обложка видео', upload_to='video_posters/', blank=True)
+
+    def __str__(self): return self.title or 'Видео мероприятия'
+
 
 class EventHero(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='heroes')

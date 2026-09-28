@@ -14,6 +14,7 @@ from . import points, units, proposals, management, control_views
 
 
 urlpatterns = [
+    path('people/<int:pk>/birthday/', contact_activity.reveal_birthday, name='reveal_birthday'),
     path('people/<int:pk>/phone/', contact_activity.reveal_phone, name='reveal_phone'),
     path('birthdays/', birthdays.calendar, name='birthday_calendar'),
     path('birthdays/seen/', birthdays.seen, name='birthday_seen'),

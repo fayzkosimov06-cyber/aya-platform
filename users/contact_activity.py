@@ -44,3 +44,16 @@ def reveal_phone(request, pk):
     response=JsonResponse({'phone':person.phone})
     response['Cache-Control']='no-store, private'
     return response
+
+
+@never_cache
+@require_POST
+def reveal_birthday(request, pk):
+    person=get_object_or_404(User,pk=pk)
+    if person.is_superuser and not request.user.is_superuser: raise Http404
+    if not (person.is_approved or person.candidate_approved) and request.user!=person and not is_privileged_viewer(request.user): raise Http404
+    if not person.birth_date: raise Http404
+    emit('contact','public_profile','Раскрыл дату рождения',object_id=person.pk,after={'target_name':str(person),'network':'birthday'},private=True)
+    response=JsonResponse({'date':person.birth_date.strftime('%d.%m.%Y')})
+    response['Cache-Control']='no-store, private'
+    return response
