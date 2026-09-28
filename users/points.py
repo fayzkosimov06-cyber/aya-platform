@@ -88,7 +88,7 @@ def points_rating(request):
         row.update(place=place,works=counts.get(row['member'].pk,0),shared=ties[row['points']]-1)
         last=row['points']
     podium=[]
-    for n in (2,1,3):
+    for n in (1,2,3):
         group=[row for row in rows if row['place']==n]
         if group:podium.append({'place':n,'rows':group[:3],'extra':group[3:],'count':len(group),'points':group[0]['points']})
     my_rank=next((row for row in rows if row['member'].pk==request.user.pk),None)
