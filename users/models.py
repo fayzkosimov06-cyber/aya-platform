@@ -504,6 +504,8 @@ class PermissionOverride(models.Model):
 
 
 class JournalEntry(models.Model):
+    subject_key = models.CharField(max_length=240, blank=True, db_index=True)
+    actor_key = models.CharField(max_length=80, blank=True, db_index=True)
     actor = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='+')
     private = models.BooleanField(default=False, db_index=True)
     category = models.CharField(max_length=30, db_index=True)

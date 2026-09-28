@@ -56,21 +56,56 @@ def point_profile(request, member):
             'all_points':(ContributionAward.objects.filter(member=member,revoked=False).aggregate(n=Sum('points'))['n'] or 0)+adjustment_total(member=member,query={'period':'all'}),'can_award_points':can_award(request.user)}
 
 
+def team_awards(qs, query):
+    # Scope by the work itself, never by the volunteer's membership.
+    from django.db.models import Q
+    for field in ('direction','school','club'):
+        value=query.get(field,'')
+        if value:
+            if not value.isdigit(): return qs.none()
+            if field=='direction':qs=qs.filter(Q(work__direction_id=value)|Q(work__school__direction_id=value)|Q(work__club__direction_id=value)|Q(work__club__school__direction_id=value))
+            elif field=='school':qs=qs.filter(Q(work__school_id=value)|Q(work__club__school_id=value))
+            else:qs=qs.filter(work__club_id=value)
+    return qs
+
+
 def points_rating(request):
+    from collections import Counter
+    from urllib.parse import urlencode
     if not has_full_volunteer_access(request.user): return render(request,'users/points_rating.html',{'locked':True})
-    qs,info=selected_awards(request.GET)
+    qs,info=selected_awards(request.GET);qs=team_awards(qs,request.GET)
+    scoped=any(request.GET.get(k) for k in ('direction','school','club'))
     totals=dict(qs.values('member_id').annotate(total=Sum('points')).values_list('member_id','total'))
-    for mid,total in adjustment_rows(request.GET):totals[mid]=totals.get(mid,0)+total
-    rows=[{'member':m,'points':totals[m.pk]} for m in members().filter(pk__in=totals)]
-    rows.sort(key=lambda r:(-r['points'],r['member'].last_name,r['member'].first_name,r['member'].pk))
-    last=None;place=0
-    for i,row in enumerate(rows,1):
-        if row['points']!=last: place=i
-        row['place']=place;last=row['points']
-    work_counts=dict(qs.values('member_id').annotate(n=Count('work_id',distinct=True)).values_list('member_id','n'))
-    for row in rows: row['works']=work_counts.get(row['member'].pk,0)
-    page=Paginator(rows,30).get_page(request.GET.get('page'))
-    return render(request,'users/points_rating.html',{**info,'ranked_count':len(rows),'awarded_points':sum(r['points'] for r in rows),'my_rank':next((r for r in rows if r['member'].pk==request.user.pk),None),'rows':page,'leaders':[r for r in rows if r['place']<=3] if page.number==1 else [],'can_award_points':can_award(request.user)})
+    if not scoped:
+        for mid,total in adjustment_rows(request.GET):totals[mid]=totals.get(mid,0)+total
+    rows=[{'member':m,'points':totals[m.pk]} for m in members().filter(pk__in=totals).prefetch_related('directions_led','school_leader_of','schoolteacher_set','clubs_led') if totals[m.pk]>0]
+    rows.sort(key=lambda r:(-r['points'],r['member'].last_name.casefold(),r['member'].first_name.casefold(),r['member'].pk))
+    last=None;place=0;ties=Counter(row['points'] for row in rows)
+    counts=dict(qs.values('member_id').annotate(n=Count('work_id',distinct=True)).values_list('member_id','n'))
+    history_query=urlencode({k:request.GET[k] for k in ('period','year','direction','school','club') if request.GET.get(k)})
+    for row in rows:
+        if row['points']!=last:place+=1
+        row.update(place=place,works=counts.get(row['member'].pk,0),shared=ties[row['points']]-1)
+        last=row['points']
+    podium=[]
+    for n in (2,1,3):
+        group=[row for row in rows if row['place']==n]
+        if group:podium.append({'place':n,'rows':group[:3],'extra':group[3:],'count':len(group),'points':group[0]['points']})
+    my_rank=next((row for row in rows if row['member'].pk==request.user.pk),None)
+    q=request.GET.get('q','').strip()[:150]
+    filtered=[row for row in rows if q.casefold() in (str(row['member'])+' '+row['member'].username).casefold()] if q else rows
+    page=Paginator(filtered,30).get_page(request.GET.get('page'))
+    return render(request,'users/points_rating.html',{**info,'ranked_count':len(rows),'awarded_points':sum(row['points'] for row in rows),'my_rank':my_rank,'rows':page,'podium':podium,'leaders':[row for row in rows if row['place']<=3],'can_award_points':can_award(request.user),'q':q,'filters':request.GET,'directions':Direction.objects.order_by('name'),'schools':School.objects.order_by('name'),'clubs':Club.objects.order_by('name'),'history_query':history_query,'scoped':scoped,'found_count':len(filtered)})
+
+
+@login_required
+def rating_history(request,pk):
+    if not has_full_volunteer_access(request.user):return HttpResponseForbidden('История доступна после полного допуска.')
+    person=get_object_or_404(members(),pk=pk)
+    qs,info=selected_awards(request.GET,person);qs=team_awards(qs,request.GET)
+    extra=0 if any(request.GET.get(k) for k in ('direction','school','club')) else adjustment_total(person,request.GET)
+    total=(qs.aggregate(n=Sum('points'))['n'] or 0)+extra
+    return render(request,'users/rating_history.html',{'person':person,'awards':Paginator(qs.select_related('work','kind').order_by('-work__date','-pk'),25).get_page(request.GET.get('page')),'total':total,'extra':extra,'filters':request.GET,**info})
 
 
 class KindForm(forms.ModelForm):

@@ -10,12 +10,17 @@ MODIFIED: events/workspace.py
 NEW: ROLES_AYA.md
 NEW: static/css/birthdays.css
 NEW: static/css/feedback.css
+NEW: static/css/journal-ui.css
 NEW: static/css/media-story.css
+NEW: static/css/profile-photo.css
+NEW: static/css/ranking-honour.css
 MODIFIED: static/css/training.css
 NEW: static/css/unit-studio.css
 NEW: static/js/birthdays.js
+NEW: static/js/journal-ui.js
 MODIFIED: static/js/operations.js
 NEW: static/js/photo-editor.js
+NEW: static/js/profile-photo.js
 NEW: static/js/selection.js
 MODIFIED: static/js/training.js
 MODIFIED: static/js/unit-picker.js
@@ -59,6 +64,9 @@ MODIFIED: templates/users/evaluation_history.html
 MODIFIED: templates/users/home.html
 MODIFIED: templates/users/home_manage.html
 MODIFIED: templates/users/journal.html
+NEW: templates/users/journal_bundle_items.html
+NEW: templates/users/journal_entry.html
+NEW: templates/users/journal_page_items.html
 NEW: templates/users/journal_readable.html
 MODIFIED: templates/users/login.html
 MODIFIED: templates/users/moderator_dashboard.html
@@ -78,10 +86,13 @@ MODIFIED: templates/users/points_rating.html
 MODIFIED: templates/users/points_work.html
 MODIFIED: templates/users/profile.html
 MODIFIED: templates/users/profile_edit.html
+NEW: templates/users/profile_photo.html
 MODIFIED: templates/users/proposal_list.html
 MODIFIED: templates/users/proposal_review.html
 MODIFIED: templates/users/public_profile.html
+NEW: templates/users/ranking_person.html
 MODIFIED: templates/users/rating.html
+NEW: templates/users/rating_history.html
 MODIFIED: templates/users/rights.html
 MODIFIED: templates/users/school_management.html
 MODIFIED: templates/users/signup.html
@@ -118,6 +129,7 @@ MODIFIED: users/control_views.py
 NEW: users/deletion.py
 MODIFIED: users/forms.py
 MODIFIED: users/journal.py
+NEW: users/journal_keys.py
 NEW: users/management/commands/send_birthday_notifications.py
 MODIFIED: users/management.py
 NEW: users/media_uploads.py
@@ -127,6 +139,7 @@ NEW: users/migrations/0045_preserve_deleted_authors.py
 NEW: users/migrations/0046_reconcile_school_assignments.py
 NEW: users/migrations/0047_notification_event_key_birthdaygreeting.py
 NEW: users/migrations/0048_aboutpage_video_file_aboutpage_video_poster.py
+NEW: users/migrations/0049_journalentry_actor_key_journalentry_subject_key.py
 MODIFIED: users/models.py
 MODIFIED: users/permissions.py
 MODIFIED: users/points.py
@@ -143,6 +156,7 @@ MODIFIED: users/test_design.py
 NEW: users/test_feedback.py
 NEW: users/test_feedback_features.py
 NEW: users/test_media_privacy.py
+NEW: users/test_photo_journal_rating.py
 MODIFIED: users/test_training.py
 MODIFIED: users/test_unit_management.py
 MODIFIED: users/test_units.py

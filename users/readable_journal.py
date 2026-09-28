@@ -16,6 +16,7 @@ MODELS={'events.EventVideo':'Видео мероприятия','users.AboutPage
 FIELDS={'memberships':'Состав','status':'Статус','method':'Запрос','action':'Действие','path':'Страница','filters':'Условия поиска','results':'Найдено','error':'Ошибка','pk':'Запись','id':'Запись','username':'Логин','first_name':'Имя','last_name':'Фамилия','role':'Роль','is_approved':'Полный доступ','candidate_approved':'Кандидат принят','date_joined':'На сайте с','is_active':'Аккаунт активен','points':'Баллы','revoked':'Начисление отменено','created_at':'Дата создания','updated_at':'Дата изменения','query':'Поиск','q':'Поиск','title':'Название','name':'Название','member':'Участник','user':'Пользователь','organizer':'Организатор','created_by':'Автор','marked_by':'Отметил','confirmed_by':'Подтвердил','reviewer':'Рассмотрел','before':'Было','after':'Стало','description':'Описание','comment':'Комментарий','note':'Комментарий','enabled':'Разрешено','scope':'Область доступа','code':'Разрешение','cancelled':'Отменено','is_completed':'Завершено','is_public_for_guests':'Доступно гостям','volunteer_access':'Доступ волонтёра','new_volunteer_until':'Статус нового до','school':'Школа','direction':'Направление','club':'Клуб','event':'Мероприятие','work':'Работа','topic':'Тема','starts_at':'Начало','ends_at':'Окончание','visit_date':'Дата визита'}
 FIELDS.update({'result':'Результат','target_name':'К кому / к чему относится','target_type':'Раздел','network':'Контакт','birth_date':'Дата рождения','event_key':'Уведомление','is_read':'Прочитано','selected':'Выбранные','tab':'Вкладка','subject':'Объект','label':'Название'})
 ROUTES.update({'event_join':'Запись на мероприятие','event_finish':'Завершение мероприятия','event_report_edit':'Отчёт мероприятия','event_export':'Выгрузка участников','event_delete':'Удаление мероприятия','event_photo_delete':'Удаление фотографии','proposal_list':'Заявки на баллы','proposal_review':'Рассмотрение заявки','points_correct':'Корректировка баллов','points_kinds':'Правила баллов','points_works':'Работы и начисления','user_delete':'Удаление аккаунта','work_delete':'Удаление работы','mark_candidate_visit':'Отметка визита','delete_candidate_visit':'Удаление визита','grant_volunteer_access':'Открытие доступа волонтёру','approve_user':'Одобрение кандидата','reject_user':'Отклонение кандидата','mark_notification_as_read':'Чтение уведомления','mark_all_notifications_as_read':'Чтение всех уведомлений','admin_password_change':'Смена пароля','activity_period_edit':'Период активности','activity_periods_manage':'Периоды активности','activity_period_delete':'Удаление периода активности','update_user_role':'Изменение роли','toggle_active_volunteer':'Звание активного волонтёра','home_manage':'Редактор главной','about_manage':'Редактор сведений об AYA','open_contact':'Контакты профиля','reveal_phone':'Контакты профиля','birthday_calendar':'Дни рождения','staff_login':'Вход сотрудника','signup':'Регистрация','notifications':'Уведомления','teacher_edit':'Карточка учителя','teacher_create':'Назначение учителя','lesson_create':'Новое занятие','lesson_edit':'Редактор занятия','club_meeting_create':'Встреча клуба','club_meeting_edit':'Встреча клуба'})
+ROUTES.update({'about_page':'О нас','admin_about_manage':'Редактор сведений об AYA','about_page_edit':'Редактор сведений об AYA','rating_history':'История начислений','open_profile_photo':'Фотография профиля','reveal_birthday':'Дата рождения','audit_log':'Журнал действий','journal_private':'Закрытый журнал','journal_activity':'Просмотры и поиск'})
 USER_KEYS={'user','member','actor','organizer','created_by','marked_by','confirmed_by','reviewer','author','volunteer_access_granted_by','volunteer','evaluator'}
 
 
@@ -39,7 +40,7 @@ class Display:
         if isinstance(value,list):return '\n'.join(self.value(key,v) for v in value) or 'Нет'
         if key in USER_KEYS:return self.label('users.User',value) if str(value).isdigit() else str(value)
         if key in {'school','direction','club','event','work'} and str(value).isdigit():return self.label({'school':'users.School','direction':'users.Direction','club':'users.Club','event':'events.Event','work':'users.ContributionWork'}[key],value)
-        if key=='network':return {'telegram':'Telegram','instagram':'Instagram','linkedin':'LinkedIn','phone':'Телефон','birthday':'Дата рождения'}.get(value,value)
+        if key=='network':return {'telegram':'Telegram','instagram':'Instagram','linkedin':'LinkedIn','phone':'Телефон','birthday':'Дата рождения','photo':'Фотография'}.get(value,value)
         if key=='target_type':return MODELS.get(value,value)
         if key=='status' and str(value).isdigit():return {'200':'Успешно','302':'Переход выполнен','403':'Недостаточно прав','404':'Не найдено / недоступно','500':'Ошибка сервера'}.get(str(value),str(value))
         if key=='role':return dict(User.ROLE_CHOICES).get(value,value)
@@ -94,19 +95,14 @@ class Display:
         return entry
 
 
-@login_required
-def journal(request,mode='public'):
-    if mode!='public' and not request.user.is_superuser:return HttpResponseForbidden('Недоступно.')
-    if mode=='public' and not allowed(request.user,'audit'):return HttpResponseForbidden('Нет доступа к журналу.')
+def filtered_journal(request,mode):
     qs=JournalEntry.objects.select_related('actor')
     if mode=='activity':qs=qs.filter(category__in=['view','search','contact'])
-    elif mode=='private':qs=qs.all()
-    else:qs=qs.filter(private=False).exclude(actor__is_superuser=True).exclude(category__in=['view','search','contact'])
+    elif mode=='public':qs=qs.filter(private=False).exclude(actor__is_superuser=True).exclude(category__in=['view','search','contact'])
     q=request.GET.get('q','').strip()[:200]
     if q:
-        search=Q(action__icontains=q)|Q(actor__first_name__icontains=q)|Q(actor__last_name__icontains=q)|Q(actor__username__icontains=q)
-        if allowed(request.user,'contacts'):
-            search |= Q(before__icontains=q)|Q(after__icontains=q)
+        search=Q(action__icontains=q)|Q(actor__first_name__icontains=q)|Q(actor__last_name__icontains=q)|Q(actor__username__icontains=q)|Q(after__target_name__icontains=q)
+        if allowed(request.user,'contacts'):search|=Q(before__icontains=q)|Q(after__icontains=q)
         qs=qs.filter(search)
     category=request.GET.get('category','')
     if category in {'change','action','failure','view','search','deletion','contact'}:qs=qs.filter(category=category)
@@ -114,16 +110,77 @@ def journal(request,mode='public'):
         try:d=date.fromisoformat(request.GET.get(key,''))
         except ValueError:continue
         qs=qs.filter(**{lookup:d})
-    actor=request.GET.get('actor','');grouped=request.GET.get('view','people')=='people' and not actor
-    context={'mode':mode,'q':q,'filters':request.GET,'grouped':grouped,'total':qs.count()}
-    if grouped:
-        groups=qs.order_by().values('actor_id','actor__first_name','actor__last_name','actor__username').annotate(count=Count('pk'),last=Max('created_at')).order_by('-last')
+    actor=request.GET.get('actor','')
+    if actor=='none':qs=qs.filter(actor__isnull=True)
+    elif actor.isdigit():qs=qs.filter(actor_id=actor)
+    return qs
+
+
+def grouped_queryset(qs):
+    from django.db.models import Value, CharField
+    from django.db.models.functions import Coalesce,NullIf,Concat,Cast,TruncDate
+    return qs.annotate(subject=Coalesce(NullIf('subject_key',Value('')),Concat(Value('entry:'),Cast('pk',CharField()))),who=Coalesce(NullIf('actor_key',Value('')),Concat(Value('legacy:'),Cast('pk',CharField()))),day=TruncDate('created_at'))
+
+
+@login_required
+def journal(request,mode='public'):
+    from django.core import signing
+    from django.http import Http404
+    from django.db.models import Min
+    if mode!='public' and not request.user.is_superuser:return HttpResponseForbidden('Недоступно.')
+    if mode=='public' and not allowed(request.user,'audit'):return HttpResponseForbidden('Нет доступа к журналу.')
+    qs=filtered_journal(request,mode)
+    until=request.GET.get('until','')
+    until=int(until) if until.isdigit() else (qs.aggregate(n=Max('pk'))['n'] or 0)
+    qs=qs.filter(pk__lte=until);display=Display(request.user)
+    context={'mode':mode,'q':request.GET.get('q',''),'filters':request.GET,'total':qs.count(),'until':until}
+    if request.GET.get('bundle'):
+        try:
+            who,subject,day=signing.loads(request.GET['bundle'],salt='journal-group')
+            day=date.fromisoformat(day)
+        except (signing.BadSignature,ValueError,TypeError):raise Http404
+        items=grouped_queryset(qs).filter(who=who,subject=subject,day=day).order_by('-created_at','-pk')
+        entries=Paginator(items,40).get_page(request.GET.get('detail_page'))
+        for entry in entries:display.entry(entry)
+        return render(request,'users/journal_bundle_items.html',{**context,'entries':entries,'bundle':request.GET['bundle']})
+    actor=request.GET.get('actor','')
+    view=request.GET.get('view','people' if not actor else 'groups')
+    if view not in {'people','groups','timeline'}:view='groups'
+    if actor and view=='people':view='groups'
+    context['view']=view;context['grouped']=view=='people'
+    if actor.isdigit():context['actor_person']=User.objects.filter(pk=actor).first()
+    if view=='people':
+        groups=qs.order_by().values('actor_id','actor__first_name','actor__last_name','actor__username').annotate(count=Count('pk'),last=Max('created_at')).order_by('-last','actor_id')
         context['groups']=Paginator(groups,24).get_page(request.GET.get('page'))
-    else:
-        if actor=='none':qs=qs.filter(actor__isnull=True)
-        elif actor.isdigit():qs=qs.filter(actor_id=actor)
-        if actor.isdigit():context['actor_person']=User.objects.filter(pk=actor).first()
-        entries=Paginator(qs,30).get_page(request.GET.get('page'));display=Display(request.user)
+    elif view=='timeline':
+        entries=Paginator(qs.order_by('-created_at','-pk'),30).get_page(request.GET.get('page'))
         for entry in entries:display.entry(entry)
         context['entries']=entries
-    return render(request,'users/journal_readable.html',context)
+    else:
+        base=grouped_queryset(qs)
+        groups=base.order_by().values('who','subject','day').annotate(count=Count('pk'),first=Min('created_at'),last=Max('created_at'),last_id=Max('pk')).order_by('-last','-last_id')
+        page=Paginator(groups,20).get_page(request.GET.get('page'))
+        latest={e.pk:e for e in qs.filter(pk__in=[g['last_id'] for g in page])}
+        for group in page:
+            entry=latest[group['last_id']];display.entry(entry)
+            group['actor_name']=entry.actor_name
+            group['token']=signing.dumps([group['who'],group['subject'],group['day'].isoformat()],salt='journal-group')
+            key=group['subject'];model,sep,pk=key.rpartition(':')
+            group['title']=entry.readable_title;group['url']=''
+            if model in MODELS and pk.isdigit():
+                label=display.label(model,pk)
+                if label=='Удалённая запись':label=entry.after.get('target_name') or entry.before.get('name') or entry.before.get('title') or label
+                group['title']=MODELS[model]+' · '+label
+                routes={'users.User':'public_profile','events.Event':'event_detail','users.School':'school_detail','users.Direction':'direction_detail','users.Club':'club_detail'}
+                if model in routes and label not in {'Удалённая запись','Скрытый аккаунт'}:
+                    from django.urls import reverse
+                    group['url']=reverse(routes[model],args=[pk])
+            elif key.startswith('section:'):group['title']=ROUTES.get(key.split(':')[1],entry.readable_title)
+            subset=base.filter(who=group['who'],subject=key,day=group['day'])
+            counters=subset.order_by().values('category','after__network').annotate(n=Count('pk'))
+            names={'view':'Просмотры','contact':'Контакты','search':'Поиск','change':'Изменения','deletion':'Удаления','failure':'Ошибки','action':'Действия'}
+            group['counts']=[{'label':display.value('network',c['after__network']) if c['category']=='contact' and c['after__network'] else names.get(c['category'],'Действия'),'count':c['n'],'important':c['category'] in {'deletion','change','failure'}} for c in counters]
+            group['important']=subset.filter(Q(category='deletion')|Q(action__icontains='Удал')|Q(section__in=['users.ContributionAward','users.PermissionOverride'])|Q(after__role__isnull=False)).exists()
+        context['bundles']=page
+    template='users/journal_page_items.html' if request.GET.get('partial')=='1' else 'users/journal_readable.html'
+    return render(request,template,context)

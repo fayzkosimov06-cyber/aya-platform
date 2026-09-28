@@ -1,0 +1,1 @@
+{% for entry in entries %}{% include 'users/journal_entry.html' %}{% empty %}<p>Нет действий по выбранным условиям.</p>{% endfor %}{% if entries.has_next %}<a class="u-button journal-more" data-journal-more href="{% querystring bundle=bundle detail_page=entries.next_page_number until=until partial='1' %}">Ещё действия в этой карточке</a>{% endif %}

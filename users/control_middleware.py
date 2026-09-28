@@ -28,7 +28,7 @@ class ControlMiddleware:
    if not request.path.startswith(('/static/','/media/')):
     from .journal import emit,safe_value
     name=getattr(getattr(request,'resolver_match',None),'url_name','') or ''
-    if name in {'record_search','birthday_seen','reveal_phone','reveal_birthday','open_contact'} and response.status_code<400:return response
+    if name in {'record_search','birthday_seen','reveal_phone','reveal_birthday','open_contact','open_profile_photo'} and response.status_code<400:return response
     if name in {'login','staff_login','logout'} and response.status_code in {301,302,303}:return response
     target={}
     pk=getattr(getattr(request,'resolver_match',None),'kwargs',{}).get('pk')

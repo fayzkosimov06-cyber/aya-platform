@@ -1,0 +1,1 @@
+{% load aya_people %}<div class="honour-person"><a href="{% url 'public_profile' row.member.pk %}">{% portrait row.member 'small' %}<span>{{ row.member.get_full_name|default:row.member.username }}</span></a><a class="honour-points" href="{% url 'rating_history' row.member.pk %}?{{ history_query }}">{{ row.points }} баллов</a></div>

@@ -91,7 +91,7 @@ class BirthdayContactTests(TestCase):
         self.client.force_login(self.head)
         self.assertEqual(self.client.get(reverse('journal_private')).status_code,403)
         self.client.force_login(self.root)
-        response=self.client.get(reverse('journal_private'),{'actor':self.viewer.pk})
+        response=self.client.get(reverse('journal_private'),{'actor':self.viewer.pk,'view':'timeline'})
         self.assertContains(response,'Алина')
         self.assertContains(response,'Раскрыл номер телефона')
         self.assertContains(response,'Открыл')

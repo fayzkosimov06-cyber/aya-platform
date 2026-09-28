@@ -15,7 +15,7 @@
             <div class="card profile-identity border-0 text-center overflow-visible" style="border-radius: 20px;">
                 <div class="card-body p-4">
                     
-                    {% portrait profile_user 'profile' %}
+                    {% include 'users/profile_photo.html' %}
                     <h1 class="profile-name">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
                     {% role_badges profile_user %}
                     {% appointments profile_user %}{% include "users/birthday_profile.html" %}

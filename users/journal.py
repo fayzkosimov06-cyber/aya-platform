@@ -32,7 +32,15 @@ def emit(category,section,action,before=None,after=None,object_id='',actor=None,
  after=dict(after or {})
  if actor:after.setdefault('_actor_name',str(actor))
  if req:after.setdefault('_route',getattr(getattr(req,'resolver_match',None),'url_name',''))
- JournalEntry.objects.create(actor=actor,private=bool(actor and actor.is_superuser) if private is None else private,category=category,section=section,action=action,before=clean_payload(before or {}),after=clean_payload(after or {}),object_id=str(object_id))
+ from .journal_keys import subject_key
+ import uuid
+ if actor:actor_key='user:'+str(actor.pk)
+ elif req:
+  visitor=req.session.get('_journal_visitor')
+  if not visitor:visitor=uuid.uuid4().hex;req.session['_journal_visitor']=visitor
+  actor_key='guest:'+visitor
+ else:actor_key='system'
+ JournalEntry.objects.create(subject_key=subject_key(section,str(object_id),before or {},after,actor.pk if actor else None),actor_key=actor_key,actor=actor,private=bool(actor and actor.is_superuser) if private is None else private,category=category,section=section,action=action,before=clean_payload(before or {}),after=clean_payload(after or {}),object_id=str(object_id))
 
 def tracked(sender):
  return sender._meta.app_label in {'users','events'} and sender.__name__ not in {'JournalEntry','AuditLog','Notification','BirthdayGreeting'} and not sender._meta.auto_created
