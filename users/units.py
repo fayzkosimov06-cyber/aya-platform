@@ -96,7 +96,12 @@ def catalog(request, kind='direction'):
     objects = objects.annotate(extra_count=Count('lessons' if school else 'schools', distinct=True))
     page = Paginator(objects.order_by('name', 'pk'), 12).get_page(request.GET.get('page'))
     request.aya_result_count = page.paginator.count
-    for obj in page: obj.manage_allowed = can_edit_unit(request.user, obj)
+    for obj in page:
+        obj.manage_allowed = can_edit_unit(request.user, obj)
+        responsible=set(obj.leaders.values_list('pk',flat=True))
+        if school:responsible.update(obj.teachers.exclude(member=None).values_list('member_id',flat=True))
+        group=obj.members if school else obj.user_set
+        obj.people_count=group.filter(is_approved=True,is_superuser=False).exclude(role__in=['worker','head_admin']).exclude(pk__in=responsible).count()
     return render(request, 'users/unit_catalog.html', {
         'objects': page, 'kind': kind, 'is_school': school,
         'global_manager': global_manager(request.user, 'schools' if school else 'directions'),
@@ -109,6 +114,9 @@ def detail(request, pk, kind='direction'):
     school = kind == 'school'
     can_edit = can_edit_unit(request.user, obj)
     people = eligible_members().filter(aya_schools=obj) if school else eligible_members().filter(directions=obj)
+    responsible_ids = set(obj.leaders.values_list('pk',flat=True))
+    if school: responsible_ids.update(obj.teachers.exclude(member=None).values_list('member_id',flat=True))
+    people = people.exclude(pk__in=responsible_ids)
     count = people.count()
     featured=obj.featured_members.filter(pk__in=people.values('pk'))
     if featured.exists() and request.GET.get('team')!='all':people=people.filter(pk__in=featured.values('pk'))
@@ -154,11 +162,11 @@ def people_field(label,queryset=None):
 
 class AboutDirection(forms.ModelForm):
     class Meta:
-        model=Direction;fields=['name','intro','description','cover']
+        model=Direction;fields=['name','intro','description','cover','logo']
 
 class AboutSchool(forms.ModelForm):
     class Meta:
-        model=School;fields=['name','direction','active','intro','description','cover']
+        model=School;fields=['name','direction','active','intro','description','cover','logo']
     def __init__(self,*args,user,**kwargs):
         super().__init__(*args,**kwargs)
         self.fields['direction'].empty_label='Самостоятельная школа'

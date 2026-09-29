@@ -24,7 +24,7 @@ def all_clubs(user):
 class ClubForm(forms.ModelForm):
     class Meta:
         model=Club
-        fields=['name','intro','description','cover','active','school','direction']
+        fields=['name','intro','description','cover','logo','active','school','direction']
 
     def __init__(self,*args,user,**kwargs):
         super().__init__(*args,**kwargs)
@@ -89,16 +89,20 @@ class MeetingForm(forms.ModelForm):
 
 
 def catalog(request):
-    qs=Club.objects.select_related('school','direction').order_by('name');q=request.GET.get('q','').strip()[:200]
+    qs=Club.objects.select_related('school','direction').prefetch_related('leaders','meetings').order_by('name');q=request.GET.get('q','').strip()[:200]
     if q:qs=qs.filter(Q(name__icontains=q)|Q(intro__icontains=q))
     for field in ['school','direction']:
         if request.GET.get(field,'').isdigit():qs=qs.filter(**{field+'_id':request.GET[field]})
-    return render(request,'users/club_catalog.html',{'clubs':Paginator(qs,12).get_page(request.GET.get('page')),'q':q,'can_create':all_clubs(request.user)})
+    page=Paginator(qs,12).get_page(request.GET.get('page'))
+    for item in page:
+        item.public_leaders=[p for p in item.leaders.all() if p.is_approved and not p.is_superuser]
+        item.next_meeting=next((m for m in sorted(item.meetings.all(),key=lambda m:m.starts_at) if not m.cancelled and m.ends_at>=timezone.now()),None)
+    return render(request,'users/club_catalog.html',{'clubs':page,'q':q,'can_create':all_clubs(request.user)})
 
 
 def detail(request,pk):
     club=get_object_or_404(Club.objects.select_related('school','direction'),pk=pk)
-    people=members().filter(aya_clubs=club)
+    people=members().filter(aya_clubs=club).exclude(pk__in=club.leaders.values('pk'))
     featured=club.featured_members.filter(pk__in=people.values('pk'))
     if featured.exists() and request.GET.get('team')!='all':people=featured
     meetings=club.meetings.all();schedule=request.GET.get('schedule','upcoming')

@@ -17,6 +17,8 @@ FIELDS={'memberships':'Состав','status':'Статус','method':'Запр�
 FIELDS.update({'result':'Результат','target_name':'К кому / к чему относится','target_type':'Раздел','network':'Контакт','birth_date':'Дата рождения','event_key':'Уведомление','is_read':'Прочитано','selected':'Выбранные','tab':'Вкладка','subject':'Объект','label':'Название'})
 ROUTES.update({'event_join':'Запись на мероприятие','event_finish':'Завершение мероприятия','event_report_edit':'Отчёт мероприятия','event_export':'Выгрузка участников','event_delete':'Удаление мероприятия','event_photo_delete':'Удаление фотографии','proposal_list':'Заявки на баллы','proposal_review':'Рассмотрение заявки','points_correct':'Корректировка баллов','points_kinds':'Правила баллов','points_works':'Работы и начисления','user_delete':'Удаление аккаунта','work_delete':'Удаление работы','mark_candidate_visit':'Отметка визита','delete_candidate_visit':'Удаление визита','grant_volunteer_access':'Открытие доступа волонтёру','approve_user':'Одобрение кандидата','reject_user':'Отклонение кандидата','mark_notification_as_read':'Чтение уведомления','mark_all_notifications_as_read':'Чтение всех уведомлений','admin_password_change':'Смена пароля','activity_period_edit':'Период активности','activity_periods_manage':'Периоды активности','activity_period_delete':'Удаление периода активности','update_user_role':'Изменение роли','toggle_active_volunteer':'Звание активного волонтёра','home_manage':'Редактор главной','about_manage':'Редактор сведений об AYA','open_contact':'Контакты профиля','reveal_phone':'Контакты профиля','birthday_calendar':'Дни рождения','staff_login':'Вход сотрудника','signup':'Регистрация','notifications':'Уведомления','teacher_edit':'Карточка учителя','teacher_create':'Назначение учителя','lesson_create':'Новое занятие','lesson_edit':'Редактор занятия','club_meeting_create':'Встреча клуба','club_meeting_edit':'Встреча клуба'})
 ROUTES.update({'about_page':'О нас','admin_about_manage':'Редактор сведений об AYA','about_page_edit':'Редактор сведений об AYA','rating_history':'История начислений','open_profile_photo':'Фотография профиля','reveal_birthday':'Дата рождения','audit_log':'Журнал действий','journal_private':'Закрытый журнал','journal_activity':'Просмотры и поиск'})
+ROUTES['journal_cleanup']='Очистка журнала'
+FIELDS.update({'deleted_count':'Удалено записей','filters':'Условия очистки'})
 USER_KEYS={'user','member','actor','organizer','created_by','marked_by','confirmed_by','reviewer','author','volunteer_access_granted_by','volunteer','evaluator'}
 
 
@@ -104,6 +106,7 @@ def filtered_journal(request,mode):
         search=Q(action__icontains=q)|Q(actor__first_name__icontains=q)|Q(actor__last_name__icontains=q)|Q(actor__username__icontains=q)|Q(after__target_name__icontains=q)
         if allowed(request.user,'contacts'):search|=Q(before__icontains=q)|Q(after__icontains=q)
         qs=qs.filter(search)
+    if request.GET.get('section'):qs=qs.filter(section=request.GET['section'][:200])
     category=request.GET.get('category','')
     if category in {'change','action','failure','view','search','deletion','contact'}:qs=qs.filter(category=category)
     for key,lookup in [('start','created_at__date__gte'),('end','created_at__date__lte')]:
@@ -133,7 +136,7 @@ def journal(request,mode='public'):
     until=request.GET.get('until','')
     until=int(until) if until.isdigit() else (qs.aggregate(n=Max('pk'))['n'] or 0)
     qs=qs.filter(pk__lte=until);display=Display(request.user)
-    context={'mode':mode,'q':request.GET.get('q',''),'filters':request.GET,'total':qs.count(),'until':until}
+    context={'sections':[(value,MODELS.get(value,ROUTES.get(value,'Другие действия'))) for value in JournalEntry.objects.order_by('section').values_list('section',flat=True).distinct()], 'mode':mode,'q':request.GET.get('q',''),'filters':request.GET,'total':qs.count(),'until':until}
     if request.GET.get('bundle'):
         try:
             who,subject,day=signing.loads(request.GET['bundle'],salt='journal-group')

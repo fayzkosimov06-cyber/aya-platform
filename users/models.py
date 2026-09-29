@@ -6,8 +6,10 @@ from io import BytesIO
 from django.core.files import File
 from django.utils import timezone
 import qrcode
+from .logo_validation import validate_logo
 
 class Direction(models.Model):
+    logo = models.ImageField('Логотип', upload_to='directions/logos/', blank=True, validators=[validate_logo], help_text='PNG, JPEG или WebP, до 8 МБ. Логотип показывается целиком, без обрезки.')
     intro = models.CharField('Коротко о направлении', max_length=240, blank=True)
     description = models.TextField('О направлении', blank=True)
     cover = models.ImageField('Обложка', upload_to='directions/', blank=True)
@@ -25,6 +27,7 @@ class Direction(models.Model):
     def __str__(self): return self.name
 
 class School(models.Model):
+    logo = models.ImageField('Логотип', upload_to='schools/logos/', blank=True, validators=[validate_logo], help_text='PNG, JPEG или WebP, до 8 МБ. Логотип показывается целиком, без обрезки.')
     featured_members = models.ManyToManyField('User', blank=True, related_name='featured_in_schools', verbose_name='Активная команда')
     active = models.BooleanField('Занятия проводятся', default=True)
     direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.SET_NULL, related_name='schools', verbose_name='Направление')
@@ -538,6 +541,7 @@ class StaffApplication(models.Model):
 
 
 class Club(models.Model):
+    logo = models.ImageField('Логотип', upload_to='clubs/logos/', blank=True, validators=[validate_logo], help_text='PNG, JPEG или WebP, до 8 МБ. Логотип показывается целиком, без обрезки.')
     name = models.CharField('Название', max_length=100, unique=True)
     intro = models.CharField('Коротко о клубе', max_length=240, blank=True)
     description = models.TextField('О клубе', blank=True)

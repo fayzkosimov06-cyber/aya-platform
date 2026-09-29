@@ -2,6 +2,7 @@
 from django.urls import path
 from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
+from . import journal_cleanup
 from . import views
 from . import about_views
 from . import training
@@ -14,6 +15,7 @@ from . import points, units, proposals, management, control_views
 
 
 urlpatterns = [
+    path('administration/private-log/cleanup/', journal_cleanup.cleanup, name='journal_cleanup'),
     path('people/<int:pk>/photo/', contact_activity.open_photo, name='open_profile_photo'),
     path('rating/<int:pk>/history/', points.rating_history, name='rating_history'),
     path('people/<int:pk>/birthday/', contact_activity.reveal_birthday, name='reveal_birthday'),
