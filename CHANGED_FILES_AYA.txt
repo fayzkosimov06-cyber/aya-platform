@@ -13,6 +13,7 @@ NEW: static/css/birthdays.css
 NEW: static/css/feedback.css
 NEW: static/css/journal-ui.css
 NEW: static/css/media-story.css
+NEW: static/css/podium.css
 NEW: static/css/profile-photo.css
 NEW: static/css/ranking-honour.css
 MODIFIED: static/css/training.css
@@ -21,6 +22,7 @@ NEW: static/js/birthdays.js
 NEW: static/js/journal-ui.js
 MODIFIED: static/js/operations.js
 NEW: static/js/photo-editor.js
+NEW: static/js/podium.js
 NEW: static/js/profile-photo.js
 NEW: static/js/selection.js
 MODIFIED: static/js/training.js
@@ -81,6 +83,7 @@ MODIFIED: templates/users/partials/portrait.html
 NEW: templates/users/partials/video_card.html
 MODIFIED: templates/users/people_hub.html
 NEW: templates/users/phone_reveal.html
+NEW: templates/users/podium_person.html
 MODIFIED: templates/users/point_filters.html
 MODIFIED: templates/users/points_form.html
 MODIFIED: templates/users/points_kinds.html
