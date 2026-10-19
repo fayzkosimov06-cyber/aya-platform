@@ -233,7 +233,7 @@
                             </div>
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             {% if show.telegram and profile_user.telegram %}
                                 <a href="{% url 'open_contact' profile_user.pk 'telegram' %}" target="_blank" class="btn btn-outline-info w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
                                     <i class="fab fa-telegram fa-2x mb-1"></i> Telegram
@@ -245,7 +245,7 @@
                             {% endif %}
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             {% if show.instagram and profile_user.instagram %}
                                 <a href="{% url 'open_contact' profile_user.pk 'instagram' %}" rel="noopener noreferrer" target="_blank" class="btn btn-outline-danger w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
                                     <i class="fab fa-instagram fa-2x mb-1"></i> Instagram
@@ -257,17 +257,6 @@
                             {% endif %}
                         </div>
 
-                         <div class="col-md-4">
-                            {% if show.linkedin and profile_user.linkedin %}
-                                <a href="{% url 'open_contact' profile_user.pk 'linkedin' %}" rel="noopener noreferrer" target="_blank" class="btn btn-outline-primary w-100 py-3 rounded-3 fw-bold shadow-sm h-100 d-flex flex-column justify-content-center align-items-center hover-lift">
-                                    <i class="fab fa-linkedin fa-2x mb-1"></i> LinkedIn
-                                </a>
-                            {% else %}
-                                <div class="btn btn-light w-100 py-3 rounded-3 text-muted border h-100 d-flex flex-column justify-content-center align-items-center">
-                                    <i class="fab fa-linkedin fa-2x mb-1 opacity-50"></i> <small>Скрыто</small>
-                                </div>
-                            {% endif %}
-                        </div>
                     </div>
                 </div>
             </div>

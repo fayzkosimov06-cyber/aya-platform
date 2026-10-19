@@ -33,7 +33,7 @@ class FixedProfileChoicesMixin:
         super().__init__(*args, **kwargs)
         self.legacy_profile_fields = set()
         self.legacy_social_fields = set()
-        self.original_social_values = {name: getattr(self.instance, name, '') or '' for name in ('instagram','linkedin')}
+        self.original_social_values = {name: getattr(self.instance, name, '') or '' for name in ('instagram',)}
         from .social_links import social_url
         for name, previous in self.original_social_values.items():
             if previous.strip() and not social_url(previous, name):
@@ -53,7 +53,7 @@ class FixedProfileChoicesMixin:
         if data.get('birth_date') and data['birth_date'] > timezone.localdate():
             self.add_error('birth_date',forms.ValidationError('Дата рождения не может быть в будущем.',code='future_date'))
         from .social_links import social_url
-        for name in ('instagram','linkedin'):
+        for name in ('instagram',):
             if data.get(name):
                 normalized=social_url(data[name],name)
                 if normalized:data[name]=normalized
@@ -98,7 +98,6 @@ class UserUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
             'phone', 'phone_privacy', 
             'telegram', 'telegram_privacy',
             'instagram', 'instagram_privacy', # Новое
-            'linkedin', 'linkedin_privacy',   # Новое
         ]
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -116,13 +115,11 @@ class UserUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+992 XX XXX XX XX'}),
             'telegram': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '@username'}),
             'instagram': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '@username или ссылка'}),
-            'linkedin': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ссылка на профиль'}),
             
             # Приватность (стилизуем как небольшие селекты)
             'phone_privacy': forms.Select(attrs={'class': 'form-select form-select-sm border-info'}),
             'telegram_privacy': forms.Select(attrs={'class': 'form-select form-select-sm border-info'}),
             'instagram_privacy': forms.Select(attrs={'class': 'form-select form-select-sm border-info'}),
-            'linkedin_privacy': forms.Select(attrs={'class': 'form-select form-select-sm border-info'}),
             'about_me_privacy': forms.Select(attrs={'class': 'form-select form-select-sm border-info'}),
             
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
@@ -151,7 +148,7 @@ class AdminUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
             'birth_date', 'gender', 'city', 'about_me',
             'faculty', 'course', 'group',
             'job_title', 'office_location',
-            'phone', 'telegram', 'instagram', 'linkedin',
+            'phone', 'telegram', 'instagram',
             'is_active_volunteer_title'
         ]
         widgets = {
@@ -173,7 +170,6 @@ class AdminUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'telegram': forms.TextInput(attrs={'class': 'form-control'}),
             'instagram': forms.TextInput(attrs={'class': 'form-control'}),
-            'linkedin': forms.TextInput(attrs={'class': 'form-control'}),
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 

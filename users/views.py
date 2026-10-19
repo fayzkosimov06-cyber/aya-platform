@@ -320,7 +320,7 @@ def my_profile_view(request):
     
     # Для своего профиля все поля "открыты" для показа самому себе
     show_fields = {
-        'phone': True, 'telegram': True, 'instagram': True, 'linkedin': True, 'about_me': True
+        'phone': True, 'telegram': True, 'instagram': True, 'about_me': True
     }
     
     context = {
@@ -394,7 +394,6 @@ def public_profile_view(request, pk):
         'phone': can_view_field(request.user, profile_user, profile_user.phone_privacy),
         'telegram': can_view_field(request.user, profile_user, profile_user.telegram_privacy),
         'instagram': can_view_field(request.user, profile_user, profile_user.instagram_privacy),
-        'linkedin': can_view_field(request.user, profile_user, profile_user.linkedin_privacy),
         'about_me': can_view_field(request.user, profile_user, profile_user.about_me_privacy),
     }
 

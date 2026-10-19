@@ -6,6 +6,8 @@ from django.utils import timezone
 from .permissions import request_context
 SECRET=re.compile(r'password|passwd|secret|token|cookie|session|authorization|csrf|api.?key|reset|credential',re.I)
 PRIVATE={'phone','telegram','instagram','linkedin','about_me','birth_date','email'}
+# Keep old journal entries readable and private, but stop collecting retired profile fields.
+RETIRED_PROFILE_FIELDS={'linkedin','linkedin_privacy'}
 
 def safe_value(key,value):
  if SECRET.search(str(key)):return '[скрыто]'
@@ -16,7 +18,7 @@ def safe_value(key,value):
  return text[:4000] if text else text
 
 def snapshot(obj):
- return {f.name:safe_value(f.name,getattr(obj,f.attname,None)) for f in obj._meta.concrete_fields if not SECRET.search(f.name)}
+ return {f.name:safe_value(f.name,getattr(obj,f.attname,None)) for f in obj._meta.concrete_fields if not SECRET.search(f.name) and not (obj._meta.label=='users.User' and f.name in RETIRED_PROFILE_FIELDS)}
 
 def clean_payload(data):
  if isinstance(data,dict):return {str(k):('[скрыто]' if SECRET.search(str(k)) else clean_payload(v)) for k,v in data.items()}

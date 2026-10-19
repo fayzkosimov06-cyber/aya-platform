@@ -73,7 +73,8 @@ class User(AbstractUser):
     # --- НОВЫЕ ПОЛЯ ---
     about_me = models.TextField(blank=True, verbose_name="О себе (Bio)")
     instagram = models.CharField(max_length=100, blank=True, verbose_name="Instagram")
-    linkedin = models.CharField(max_length=100, blank=True, verbose_name="LinkedIn")
+    # Retired contact: keep existing data/audit compatibility, never expose it in forms.
+    linkedin = models.CharField(max_length=100, blank=True, editable=False, verbose_name="LinkedIn")
     
     job_title = models.CharField(max_length=200, blank=True, verbose_name="Должность (для сотрудников)")
     office_location = models.CharField(max_length=100, blank=True, verbose_name="Кабинет/Местоположение")
@@ -110,7 +111,7 @@ class User(AbstractUser):
     phone_privacy = models.CharField(max_length=15, choices=PRIVACY_CHOICES, default='volunteers', verbose_name="Кто видит телефон?")
     telegram_privacy = models.CharField(max_length=15, choices=PRIVACY_CHOICES, default='volunteers', verbose_name="Кто видит Telegram?")
     instagram_privacy = models.CharField(max_length=15, choices=PRIVACY_CHOICES, default='volunteers', verbose_name="Кто видит Instagram?")
-    linkedin_privacy = models.CharField(max_length=15, choices=PRIVACY_CHOICES, default='volunteers', verbose_name="Кто видит LinkedIn?")
+    linkedin_privacy = models.CharField(max_length=15, choices=PRIVACY_CHOICES, default='volunteers', editable=False, verbose_name="Кто видит LinkedIn?")
     about_me_privacy = models.CharField(max_length=15, choices=PRIVACY_CHOICES, default='volunteers', verbose_name="Кто видит Био?")
 
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, verbose_name="QR-код")

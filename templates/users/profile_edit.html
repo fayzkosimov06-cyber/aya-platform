@@ -198,22 +198,6 @@
                             {% endif %}
                         </div>
 
-                        <div class="row align-items-end mb-4">
-                            <div class="col-md-7">
-                                <label class="form-label fw-bold"><i class="fab fa-linkedin text-primary"></i> LinkedIn</label>
-                                {{ form.linkedin }}{{ form.linkedin.errors }}{% if form.linkedin.help_text %}<small class="text-muted d-block">{{ form.linkedin.help_text }}</small>{% endif %}
-                            </div>
-                            {% if request.user == user_to_edit %}
-                            <div class="col-md-5">
-                                <label class="form-label small text-muted">Кто видит?</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
-                                    {{ form.linkedin_privacy }}{{ form.linkedin_privacy.errors }}
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-
                         <hr class="text-muted my-4">
 
                         <h5 class="text-primary mb-3"><i class="fas fa-pen-nib"></i> О себе (Bio)</h5>

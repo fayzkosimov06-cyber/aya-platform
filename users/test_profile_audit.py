@@ -20,7 +20,7 @@ class ProfileAuditTests(TestCase):
 
     def test_invalid_profile_fields_visible_in_both_editors(self):
         for route,actor,admin in [("profile_edit",self.member,False),("admin_edit_user",self.root,True)]:
-            for field,value in [("instagram","javascript:alert(1)"),("linkedin","not a URL"),("birth_date","2999-01-01"),("phone","1"*21)]:
+            for field,value in [("instagram","javascript:alert(1)"),("birth_date","2999-01-01"),("phone","1"*21)]:
                 with self.subTest(route=route,field=field):
                     self.client.force_login(actor)
                     response=self.client.post(reverse(route,args=[self.member.pk] if admin else []),{**self.data(admin=admin),field:value})
@@ -102,13 +102,13 @@ class ProfileAuditTests(TestCase):
 
     def test_stock_model_form_and_web_validation_difference_is_reproducible(self):
         # Django's default admin uses model validation, not the site's additional rules.
-        stock=forms.modelform_factory(User,fields=['birth_date','instagram','linkedin'])
-        data={'birth_date':'2999-01-01','instagram':'javascript:synthetic','linkedin':'not a URL'}
+        stock=forms.modelform_factory(User,fields=['birth_date','instagram'])
+        data={'birth_date':'2999-01-01','instagram':'javascript:synthetic'}
         from copy import copy
         self.assertTrue(stock(data,instance=copy(self.member)).is_valid())
         form=UserUpdateForm({**self.data(),**data},instance=self.member)
         self.assertFalse(form.is_valid())
-        self.assertTrue({'birth_date','instagram','linkedin'}.issubset(form.errors))
+        self.assertTrue({'birth_date','instagram'}.issubset(form.errors))
 
     def test_staff_custom_fields_respect_database_lengths(self):
         self.member.role='worker';self.member.save()
@@ -179,14 +179,17 @@ class ProfileAuditTests(TestCase):
         for cls,admin in [(UserUpdateForm,False),(AdminUpdateForm,True)]:
             form=cls({**self.data(admin=admin),'instagram':'javascript:new-value','linkedin':'другое'},instance=self.member)
             self.assertFalse(form.is_valid())
-            self.assertIn('instagram',form.errors);self.assertIn('linkedin',form.errors)
+            self.assertIn('instagram',form.errors);self.assertNotIn('linkedin',form.fields)
 
-    def test_legacy_contact_can_be_replaced_with_valid_url_or_removed(self):
+    def test_active_legacy_contact_can_be_corrected_while_retired_field_ignored(self):
         self.member.instagram='старое';self.member.linkedin='старое';self.member.save()
         form=UserUpdateForm({**self.data(),'instagram':'@synthetic_handle','linkedin':''},instance=self.member)
         self.assertTrue(form.is_valid(),form.errors);form.save();self.member.refresh_from_db()
         self.assertEqual(self.member.instagram,'https://www.instagram.com/synthetic_handle/')
-        self.assertEqual(self.member.linkedin,'')
+        self.assertEqual(self.member.linkedin,'старое')
+        form=UserUpdateForm({**self.data(),'instagram':''},instance=self.member)
+        self.assertTrue(form.is_valid(),form.errors);form.save();self.member.refresh_from_db()
+        self.assertEqual(self.member.instagram,'')
 
     def test_unchanged_unsafe_contact_is_preserved_but_never_linked(self):
         from .contact_activity import destination

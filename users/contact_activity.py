@@ -9,8 +9,11 @@ from .views import can_view_field, is_privileged_viewer
 from .social_links import social_url
 from .journal import emit
 
+PROFILE_CONTACT_NETWORKS = {'telegram', 'instagram'}
+
 
 def destination(person, network):
+    if network not in PROFILE_CONTACT_NETWORKS: return ''
     value=getattr(person,network,'').strip()
     if network=='telegram':
         if re.fullmatch(r'@?[A-Za-z0-9_]{3,64}',value): return 'https://t.me/'+value.lstrip('@')
@@ -22,7 +25,7 @@ def destination(person, network):
 @never_cache
 @require_GET
 def open_contact(request, pk, network):
-    if network not in {'telegram','instagram','linkedin'}: raise Http404
+    if network not in PROFILE_CONTACT_NETWORKS: raise Http404
     person=get_object_or_404(User,pk=pk)
     if person.is_superuser and not request.user.is_superuser: raise Http404
     if not (person.is_approved or person.candidate_approved) and request.user!=person and not is_privileged_viewer(request.user): raise Http404
