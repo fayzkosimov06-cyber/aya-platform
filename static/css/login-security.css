@@ -1,0 +1,40 @@
+.login-pause {
+    display: flex;
+    gap: 13px;
+    margin: 0 0 24px;
+    padding: 18px;
+    border: 1px solid #cbdff0;
+    border-radius: 16px;
+    background: #f0f7fc;
+    color: #173656;
+    text-align: left;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+.login-pause .login-pause__icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #deedf9;
+    color: #1365a0;
+}
+.login-pause h2 {
+    margin: 0 0 6px !important;
+    color: inherit !important;
+    font-size: 15px !important;
+    font-weight: 750;
+    line-height: 1.4;
+}
+.login-pause p {
+    margin: 0 0 9px !important;
+    color: #45617a;
+    font-size: 13px;
+}
+.login-pause strong { color: #104f86; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.login-pause a { color: #095da1; font-size: 13px; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+.login-pause a:focus-visible { outline: 2px solid #095da1; outline-offset: 4px; border-radius: 3px; }
+.login-pause--ready { background: #f0f9f6; border-color: #bfe1d5; }
+.login-pause__sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@media (max-width: 400px) { .login-pause { padding: 14px; gap: 10px; } }

@@ -1,0 +1,4 @@
+{% extends 'admin/login.html' %}{% load static %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/login-security.css' %}?v=1">{% endblock %}
+{% block extrahead %}{{ block.super }}<script src="{% static 'js/login-security.js' %}?v=1" defer></script>{% endblock %}
+{% block content %}{% include 'users/partials/login_pause.html' %}{{ block.super }}{% endblock %}

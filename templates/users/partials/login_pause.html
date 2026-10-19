@@ -1,0 +1,10 @@
+{% if login_pause %}
+<section class="login-pause" data-login-pause data-retry-after="{{ login_pause.seconds }}" role="status" aria-live="polite">
+    <span class="login-pause__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v5c0 5 8 10 8 10s8-5 8-10V6Z"/><path d="M12 8v4l3 2"/></svg></span>
+    <div>
+        <h2 data-pause-title>Небольшая пауза для безопасности</h2>
+        <p data-pause-message>После нескольких неудачных попыток вход временно приостановлен. Попробуйте снова через <strong data-pause-countdown aria-hidden="true">{{ login_pause.display }}</strong><span class="login-pause__sr">{{ login_pause.seconds }} секунд</span>.</p>
+        <a href="{{ login_again_url }}">Войти другим аккаунтом <span aria-hidden="true">→</span></a>
+    </div>
+</section>
+{% endif %}

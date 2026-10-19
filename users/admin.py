@@ -2,6 +2,8 @@
 from django.contrib import admin
 from .models import User, Direction, School, ActivityPeriod, Notification, AboutPage, AuditLog
 
+admin.site.login_template = 'admin/aya_login.html'
+
 # Регистрируем все модели, чтобы Суперадмин мог управлять ими
 admin.site.register(User)
 admin.site.register(Direction)

@@ -45,7 +45,7 @@ class Display:
         if key in {'school','direction','club','event','work'} and str(value).isdigit():return self.label({'school':'users.School','direction':'users.Direction','club':'users.Club','event':'events.Event','work':'users.ContributionWork'}[key],value)
         if key=='network':return {'telegram':'Telegram','instagram':'Instagram','linkedin':'LinkedIn','phone':'Телефон','birthday':'Дата рождения','photo':'Фотография'}.get(value,value)
         if key=='target_type':return MODELS.get(value,value)
-        if key=='status' and str(value).isdigit():return {'200':'Успешно','302':'Переход выполнен','403':'Недостаточно прав','404':'Не найдено / недоступно','500':'Ошибка сервера'}.get(str(value),str(value))
+        if key=='status' and str(value).isdigit():return {'200':'Успешно','302':'Переход выполнен','403':'Недостаточно прав','404':'Не найдено / недоступно','429':'Временная пауза: слишком много попыток','500':'Ошибка сервера'}.get(str(value),str(value))
         if key=='role':return dict(User.ROLE_CHOICES).get(value,value)
         if key=='scope':return {'all':'Все команды','own':'Свои команды','selected':'Выбранные команды'}.get(value,value)
         if key=='code':

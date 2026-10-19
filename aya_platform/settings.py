@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     # Наши приложения
     'users.apps.UsersConfig',
     'events.apps.EventsConfig',
+    'axes',
 ]
 
 MIDDLEWARE = [
@@ -37,6 +38,7 @@ MIDDLEWARE = [
     'users.control_middleware.ControlMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'aya_platform.urls'
@@ -112,3 +114,5 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
+from .login_protection import *  # Shared DB-backed login throttling.

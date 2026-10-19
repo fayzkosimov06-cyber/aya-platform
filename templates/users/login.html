@@ -4,7 +4,7 @@
 {% block title %}Вход - AYA{% endblock %}
 
 {% block extra_css %}
-
+<link rel="stylesheet" href="{% static 'css/login-security.css' %}?v=1">
 {% endblock %}
 
 {% block body_class %}aya-unified aya-auth{% endblock %}
@@ -20,8 +20,10 @@
 
         <h4 class="fw-bold text-dark mb-4">С возвращением!</h4>
 
-        <form method="post" class="text-start">
+        {% include 'users/partials/login_pause.html' %}
+        <form method="post" class="text-start" data-login-form>
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
             
             {% if form.non_field_errors %}
                 <div class="alert alert-danger rounded-4 text-center small">
@@ -50,3 +52,4 @@
     </div>
 </div>
 {% endblock %}
+{% block extra_js %}<script src="{% static 'js/login-security.js' %}?v=1" defer></script>{% endblock %}

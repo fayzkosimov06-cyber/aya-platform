@@ -39,7 +39,9 @@ class ControlMiddleware:
      obj=model.objects.filter(pk=pk).first() if model else None
      if obj and not (isinstance(obj,User) and obj.is_superuser and not request.user.is_superuser):target={'target_name':str(obj),'target_type':model._meta.label}
     if name in {'my_profile','profile_edit'}:target={'target_name':str(request.user),'target_type':'users.User'}
-    if response.status_code>=400:emit('failure',name,'Отказ или ошибка',after={**target,'path':request.path,'status':response.status_code,'method':request.method},private=True)
+    if getattr(request,'aya_login_failed',False):
+     emit('failure',name,'Временная пауза входа' if response.status_code==429 else 'Неудачная попытка входа',after={'path':request.path,'status':response.status_code,'method':request.method,'result':'Слишком много попыток входа' if response.status_code==429 else 'Данные входа не приняты'},private=True)
+    elif response.status_code>=400:emit('failure',name,'Отказ или ошибка',after={**target,'path':request.path,'status':response.status_code,'method':request.method},private=True)
     elif request.method not in {'GET','HEAD','OPTIONS'}:
      import re,html
      body=response.content.decode('utf-8',errors='replace') if not response.streaming and response.get('Content-Type','').startswith('text/html') else ''

@@ -84,7 +84,13 @@ def memberships(sender,instance,action,reverse,model,pk_set,**kwargs):
   if before!=after:emit('change',instance._meta.label,'Изменён состав: '+sender._meta.model_name,{'memberships':before},{'memberships':after},instance.pk)
 
 
-from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
+
+
+@receiver(user_login_failed)
+def login_failed(sender, credentials, request=None, **kwargs):
+ # Only a result flag is needed; credentials must not enter AYA's journal.
+ if request is not None:request.aya_login_failed = True
 
 @receiver(user_logged_in)
 def logged_in(sender, request, user, **kwargs):
