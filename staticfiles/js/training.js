@@ -25,11 +25,11 @@
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
     try {
-      const response = await fetch(cfg.endpoint, {
+      const response = await window.AyaCSRF.fetch(cfg.endpoint, {
         credentials: 'same-origin', signal: controller.signal,
         ...(data ? {method:'POST', headers:{'Content-Type':'application/json', 'X-CSRFToken':cfg.csrf}, body:JSON.stringify(data)} : {})
       });
-      if (!response.ok) throw new Error(response.status === 409 ? 'Прогресс изменился в другой вкладке. Обновите страницу помощи.' : 'Не удалось сохранить прогресс. Проверьте соединение и повторите.');
+      if (!response.ok) throw new Error(await window.AyaCSRF.errorMessage(response, response.status === 409 ? 'Прогресс изменился в другой вкладке. Обновите страницу помощи.' : 'Не удалось сохранить прогресс. Проверьте соединение и повторите.'));
       return await response.json();
     } finally { clearTimeout(timer); }
   }
