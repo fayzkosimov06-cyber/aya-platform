@@ -22,6 +22,23 @@ def can_preview_card(actor, card):
                                      and card.status == 'issued' and eligible_person(card.user))
 
 
+def profile_card_context(actor, person):
+    """A visible profile entry without exposing card data to other volunteers."""
+    manager = can_manage_cards(actor)
+    if actor.is_authenticated and actor.pk == person.pk and manager:
+        return {'profile_card_management': True}
+    if not eligible_person(person) or not (manager or (actor.is_authenticated and actor.pk == person.pk)):
+        return {}
+    from .card_models import current_card_year
+    cards = person.volunteer_cards.select_related('user', 'edition')
+    if not manager:
+        cards = cards.filter(status='issued')
+    card = cards.order_by('-edition__start_year', '-updated_at').first()
+    return {'profile_card_visible': True, 'profile_card_manager': manager,
+            'profile_volunteer_card': card,
+            'profile_card_has_current': bool(card and card.edition.start_year == current_card_year())}
+
+
 def filter_cards(cards, query):
     text = query.get('q', '').strip()[:150]
     if text:

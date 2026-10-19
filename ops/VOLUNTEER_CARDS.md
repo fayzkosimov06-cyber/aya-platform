@@ -1,10 +1,21 @@
 # Volunteer cards
 
 Staff and the department head manage annual cards under `/administration/cards/`.
-The account menu contains the link. Ordinary members, including the president,
+The management dashboard, the first sidebar item and the account menu link to
+the card workspace. Staff profiles also link to it; eligible volunteer profiles
+offer card preparation to staff. Ordinary members, including the president,
 can view only their own issued cards under `/my-card/`; they cannot use print,
 export, source-image, edition or approval endpoints. Delegated profile permissions
 do not change these restrictions.
+
+The initial workspace shows both sides of the actual renderer's design proof,
+even before the first edition exists. Its name and AI-generated portrait are
+fictional, it contains no seal/signature, and its QR opens the volunteer list.
+Opening the sample creates no user, card, edition or private uploaded file.
+It cannot be used to issue a demo identity. A member's own profile shows the
+issued card, or explains that issuance is still pending; other members cannot
+view that card section. Once cards exist, the design proof is collapsed by
+default so filtering and bulk printing remain convenient.
 
 1. Add an academic year and upload its genuine seal and director signature.
    Default logos come from the existing AYA/university assets; annual overrides
@@ -29,6 +40,9 @@ do not change these restrictions.
 - Noto Sans regular/bold are embedded with Tajik Cyrillic support. Font binaries
   and their SIL OFL license are in `users/card_assets/fonts/`, sourced from
   `https://github.com/notofonts/noto-fonts/tree/main/hinted/ttf/NotoSans`.
+- PDF and PNG use identical capital-height baselines and rounded portrait
+  placement. The three name components share a fitted font size; missing
+  components leave no blank rows. The course value sits beneath its label.
 - QR modules are vectors in pure K black with a four-module white quiet zone;
   payload is the same configured canonical profile URL as existing profile QRs.
 - Images retain their available resolution up to 600 dpi at final placed size.
@@ -60,4 +74,6 @@ can leave the additive tables in place without restoring an older live database.
 QA dependencies (`pypdf`, `pypdfium2`, `zxing-cpp`) are isolated from production.
 Regression tests decode real rendered PDF QRs, verify trim/bleed/fonts, partial
 duplex sheets, missing name parts, private storage, CSRF, role checks and the
-create/issue/view/download/revoke workflow on synthetic accounts only.
+create/issue/view/download/revoke workflow on synthetic accounts only. They
+also compare actual PDF/PNG name baselines, decode both QR renderers and verify
+initial setup, navigation, sample read-only behavior and profile-card isolation.

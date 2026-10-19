@@ -23,7 +23,7 @@ from reportlab.lib.units import mm
 from .profile_qr import profile_url
 
 W, H, BLEED, MARK = 86, 54, 3, 3
-NAVY, MUTED, PALE, WHITE = '#153858', '#566F88', '#E8F0F6', '#FFFFFF'
+NAVY, MUTED, PALE, WHITE = '#0C2F62', '#60758E', '#E6F0F7', '#FFFFFF'
 FONTS = Path(__file__).parent / 'card_assets' / 'fonts'
 _font_lock = threading.Lock()
 
@@ -45,10 +45,18 @@ def font_size(text, width, preferred, bold=False):
 
 def opened_image(value, *, trim=False):
     if hasattr(value, 'storage'):
-        with value.open('rb') as stream:
-            with Image.open(stream) as source:
-                source.load()
-                image = ImageOps.exif_transpose(source).convert('RGBA')
+        if getattr(value, '_committed', True):
+            with value.storage.open(value.name, 'rb') as stream:
+                data = stream.read()
+        else:
+            # The bundled proof (and an unsaved upload) can be rendered on both
+            # sides without closing the caller's in-memory file after the front.
+            value.file.seek(0)
+            data = value.file.read()
+            value.file.seek(0)
+        with Image.open(BytesIO(data)) as source:
+            source.load()
+            image = ImageOps.exif_transpose(source).convert('RGBA')
     else:
         with Image.open(value) as source:
             source.load()
@@ -84,11 +92,11 @@ def preflight(card):
         errors.append('Учебный год карты уже закончился.')
     if not card.name_lines:
         errors.append('Заполните ФИО.')
-    if any(font_size(line.upper(), 50, 10, True) < 5.3 for line in card.name_lines):
+    if any(font_size(line.upper(), 47.5, 13.2, True) < 5.3 for line in card.name_lines):
         errors.append('Одна из частей ФИО слишком длинная для читаемой печати. Проверьте её в редакторе карты.')
     if any(ord(char) not in pdfmetrics.getFont('AYA-Bold').face.charWidths for line in card.name_lines + [card.number] for char in line.upper()):
         errors.append('В ФИО есть символы, которые не поддерживает печатный шрифт. Проверьте написание.')
-    if font_size(card.number, 43, 7, True) < 4.5:
+    if font_size(card.number, 40, 7.8, True) < 4.5:
         errors.append('Номер слишком длинный для карты. Используйте более короткий номер.')
     if not card.photo:
         errors.append('Добавьте фотографию.')
@@ -108,7 +116,7 @@ def photo_dpi(card):
     try:
         with card.photo.open('rb') as stream:
             with Image.open(stream) as image:
-                return round(min(image.width / (22 / 25.4), image.height / (28 / 25.4)))
+                return round(min(image.width / (24 / 25.4), image.height / (28.7 / 25.4)))
     except (OSError, ValueError):
         return None
 
@@ -142,14 +150,19 @@ class PDFPainter:
     def __init__(self, document, x=0, y=0):
         self.c, self.x, self.y = document, x * mm, y * mm
 
-    def rect(self, x, y, w, h, fill):
+    def rect(self, x, y, w, h, fill, *, radius=0):
         self.c.setFillColor(HexColor(fill))
-        self.c.rect(self.x + x*mm, self.y + (H-y-h)*mm, w*mm, h*mm, stroke=0, fill=1)
+        args = (self.x + x*mm, self.y + (H-y-h)*mm, w*mm, h*mm)
+        if radius:
+            self.c.roundRect(*args, radius*mm, stroke=0, fill=1)
+        else:
+            self.c.rect(*args, stroke=0, fill=1)
 
-    def line(self, x, y, w, color=PALE):
+    def line(self, x, y, w, color=PALE, *, vertical=False):
         self.c.setStrokeColor(HexColor(color))
         self.c.setLineWidth(.12*mm)
-        self.c.line(self.x+x*mm, self.y+(H-y)*mm, self.x+(x+w)*mm, self.y+(H-y)*mm)
+        self.c.line(self.x+x*mm, self.y+(H-y)*mm,
+                    self.x+(x if vertical else x+w)*mm, self.y+(H-y-w if vertical else H-y)*mm)
 
     def text(self, text, x, y, size, *, bold=False, color=NAVY, align='left', width=None):
         if width is not None:
@@ -157,18 +170,28 @@ class PDFPainter:
         self.c.setFillColor(HexColor(color))
         self.c.setFont('AYA-Bold' if bold else 'AYA-Regular', size)
         method = {'left': self.c.drawString, 'right': self.c.drawRightString, 'center': self.c.drawCentredString}[align]
-        method(self.x+x*mm, self.y+(H-y)*mm-size*.78, text)
+        # Both painters use the font's capital height to position the baseline.
+        # An estimated baseline here and an ink-top anchor in Pillow used to make
+        # the on-site preview differ noticeably from the downloaded PDF.
+        cap = pdfmetrics.getFont('AYA-Bold' if bold else 'AYA-Regular').face.capHeight / 1000
+        method(self.x+x*mm, self.y+(H-y)*mm-size*cap, text)
 
-    def image(self, image, x, y, w, h, *, crop=False):
+    def image(self, image, x, y, w, h, *, crop=False, radius=0):
         image, x, y, w, h = image_placement(image, x, y, w, h, crop)
         # Bound memory and file size in large jobs; 600 dpi is ample at card scale.
         image = image.copy()
         image.thumbnail((max(1, round(w/25.4*600)), max(1, round(h/25.4*600))), Image.Resampling.LANCZOS)
+        self.c.saveState()
+        if radius:
+            clip = self.c.beginPath()
+            clip.roundRect(self.x+x*mm, self.y+(H-y-h)*mm, w*mm, h*mm, radius*mm)
+            self.c.clipPath(clip, stroke=0)
         self.c.drawImage(ImageReader(image), self.x+x*mm, self.y+(H-y-h)*mm,
                          w*mm, h*mm, mask='auto')
+        self.c.restoreState()
 
     def qr(self, matrix, x, y, size):
-        self.rect(x, y, size, size, WHITE)
+        self.rect(x, y, size, size, WHITE, radius=1.5)
         # QR is vector and pure black, avoiding four-colour registration problems.
         self.c.setFillColor(CMYKColor(0, 0, 0, 1))
         unit = size / len(matrix)
@@ -191,29 +214,42 @@ class RasterPainter:
         self.im = Image.new('RGB', (round(W*self.scale), round(H*self.scale)), 'white')
         self.draw = ImageDraw.Draw(self.im)
 
-    def rect(self, x, y, w, h, fill):
+    def rect(self, x, y, w, h, fill, *, radius=0):
         s = self.scale
-        self.draw.rectangle([round(x*s), round(y*s), round((x+w)*s)-1, round((y+h)*s)-1], fill=fill)
+        box = [round(x*s), round(y*s), round((x+w)*s)-1, round((y+h)*s)-1]
+        if radius:
+            self.draw.rounded_rectangle(box, radius=round(radius*s), fill=fill)
+        else:
+            self.draw.rectangle(box, fill=fill)
 
-    def line(self, x, y, w, color=PALE):
+    def line(self, x, y, w, color=PALE, *, vertical=False):
         s = self.scale
-        self.draw.line([x*s, y*s, (x+w)*s, y*s], fill=color, width=max(1, round(.12*s)))
+        self.draw.line([x*s, y*s, (x if vertical else x+w)*s,
+                        (y+w if vertical else y)*s], fill=color, width=max(1, round(.12*s)))
 
     def text(self, text, x, y, size, *, bold=False, color=NAVY, align='left', width=None):
         if width is not None:
             size = font_size(text, width, size, bold)
         font = ImageFont.truetype(str(FONTS / ('NotoSans-Bold.ttf' if bold else 'NotoSans-Regular.ttf')),
                                   max(1, round(size*self.dpi/72)))
-        anchor = {'left': 'lt', 'right': 'rt', 'center': 'mt'}[align]
-        self.draw.text((x*self.scale, y*self.scale), text, font=font, fill=color, anchor=anchor)
+        anchor = {'left': 'ls', 'right': 'rs', 'center': 'ms'}[align]
+        cap = pdfmetrics.getFont('AYA-Bold' if bold else 'AYA-Regular').face.capHeight / 1000
+        self.draw.text((x*self.scale, y*self.scale + size*self.dpi/72*cap),
+                       text, font=font, fill=color, anchor=anchor)
 
-    def image(self, image, x, y, w, h, *, crop=False):
+    def image(self, image, x, y, w, h, *, crop=False, radius=0):
         image, x, y, w, h = image_placement(image, x, y, w, h, crop)
         image = image.resize((max(1, round(w*self.scale)), max(1, round(h*self.scale))), Image.Resampling.LANCZOS)
-        self.im.paste(image, (round(x*self.scale), round(y*self.scale)), image.getchannel('A') if image.mode == 'RGBA' else None)
+        mask = image.getchannel('A') if image.mode == 'RGBA' else None
+        if radius:
+            corners = Image.new('L', image.size, 0)
+            ImageDraw.Draw(corners).rounded_rectangle((0, 0, image.width-1, image.height-1),
+                                                     radius=round(radius*self.scale), fill=255)
+            mask = ImageChops.multiply(mask, corners) if mask else corners
+        self.im.paste(image, (round(x*self.scale), round(y*self.scale)), mask)
 
     def qr(self, matrix, x, y, size):
-        self.rect(x, y, size, size, WHITE)
+        self.rect(x, y, size, size, WHITE, radius=1.5)
         unit = size / len(matrix)
         for row, values in enumerate(matrix):
             for col, dark in enumerate(values):
@@ -221,57 +257,63 @@ class RasterPainter:
                     self.rect(x+col*unit, y+row*unit, unit, unit, '#000000')
 
 
-def paint_card(p, card, side, assets=None):
+def paint_card(p, card, side, assets=None, *, qr_url=None):
     fonts()
     a = assets or artwork(card)
     p.rect(-BLEED, -BLEED, W+2*BLEED, H+2*BLEED, WHITE)
     year = card.edition.academic_year
     if side == 'front':
-        p.image(a['aya'], 4.5, 3, 16.5, 10)
-        p.image(a['university'], 74, 2.5, 7.8, 10.5)
-        p.text('КОРТИ ВОЛОНТЁР', 25, 3.2, 7.6, bold=True, width=46)
-        p.text('Карта волонтёра', 25, 7.3, 5.8, color=MUTED)
-        p.text('Volunteer card', 25, 10.2, 5.8, color=MUTED)
+        p.image(a['aya'], 5, 2.8, 20, 10.7)
+        p.line(28.6, 4.5, 8.5, '#92A8BF', vertical=True)
+        p.image(a['university'], 70, 2.8, 10.5, 13.1)
+        p.text('КОРТИ ВОЛОНТЁР', 31.7, 4.7, 8.0, bold=True, width=35.5)
+        p.text('Карта волонтёра', 31.7, 8.5, 6.3, color=MUTED)
+        p.text('Volunteer card', 31.7, 11.5, 6.3, color=MUTED)
         if a['photo']:
-            p.image(a['photo'], 4.5, 17, 22, 28, crop=True)
+            p.image(a['photo'], 5, 16.2, 24, 28.7, crop=True, radius=1.5)
         else:
-            p.rect(4.5, 17, 22, 28, PALE)
-            p.text('Фото', 15.5, 29, 8, color=MUTED, align='center')
+            p.rect(5, 16.2, 24, 28.7, PALE)
+            p.text('Фото', 17, 29, 8, color=MUTED, align='center')
         names = card.name_lines
-        first_y = {1: 26, 2: 22, 3: 18.5}.get(len(names), 18.5)
+        first_y = {1: 26, 2: 23, 3: 20}.get(len(names), 20)
+        # Keep all name components at one size; long names still fit the card.
+        name_size = min((font_size(value.upper(), 47.5, 13.2, True) for value in names), default=13.2)
         for i, value in enumerate(names):
-            p.text(value.upper(), 31, first_y+i*7.0, 10, bold=True, width=50)
+            p.text(value.upper(), 33, first_y+i*5.8, name_size, bold=True)
         if card.course:
-            p.text('Курс · Year', 31, 41, 5.5, color=MUTED)
-            p.text(str(card.course), 48, 39.8, 10, bold=True)
-        p.rect(-BLEED, 47, W+2*BLEED, 7+BLEED, PALE)
-        p.text('№ '+card.number, 4.5, 49.3, 7, bold=True, width=43)
-        p.text(year, 81.5, 49.1, 7.8, bold=True, align='right')
+            p.text('Курс · Year', 33, 37.5, 6.0)
+            p.text(str(card.course), 33, 40.7, 12.5, bold=True)
+        p.rect(-BLEED, 46.5, W+2*BLEED, 7.5+BLEED, PALE)
+        p.text('№ '+card.number, 5.5, 49.5, 7.8, bold=True, width=40)
+        p.text(year, 81, 48.0, 7.2, bold=True, align='right')
+        p.text('Соли таҳсил · Учебный год · Academic year', 81, 51.5, 3.7, color=MUTED, align='right')
     else:
-        p.rect(57, -BLEED, 29+BLEED, H+2*BLEED, PALE)
-        p.image(a['aya'], 4.5, 3.5, 12, 8)
-        p.image(a['university'], 19.5, 3, 6.6, 8.8)
-        p.text(year, 53, 4.2, 7.1, bold=True, align='right')
+        p.rect(54, -BLEED, 32+BLEED, H+2*BLEED, PALE)
+        p.image(a['aya'], 4, 3.7, 11.7, 9)
+        p.line(17.5, 4.5, 8.5, '#92A8BF', vertical=True)
+        p.image(a['university'], 19.4, 3.3, 8.2, 10.1)
+        p.text(year, 51, 4.7, 7.0, bold=True, align='right')
         for i, text in enumerate(['Соли таҳсил', 'Учебный год', 'Academic year']):
-            p.text(text, 53, 8.2+i*2.15, 4.2, color=MUTED, align='right')
-        p.text('Тасдиқ', 4.5, 17, 8.1, bold=True)
-        p.text('Подтверждение · Approval', 4.5, 21.4, 5.0, color=MUTED, width=48)
+            p.text(text, 51, 8.4+i*2.15, 4.4, color=MUTED, align='right')
+        p.text('Тасдиқ', 4, 17.6, 9.0, bold=True)
+        p.text('Подтверждение / Approval', 4, 22, 5.6, color=MUTED, width=46)
         if a['stamp']:
-            p.image(a['stamp'], 7, 26, 20, 16)
+            p.image(a['stamp'], 6, 27, 18, 14)
         if a['signature']:
-            p.image(a['signature'], 28, 30, 23, 9)
-        p.line(4.5, 43.5, 48, '#7890A7')
+            p.image(a['signature'], 27, 30, 22, 10)
+        p.line(4, 42, 45.5, '#91A2B7')
         for i, text in enumerate(['Имзои роҳбар', 'Подпись руководителя', 'Director’s signature']):
-            p.text(text, 4.5, 45+i*2.25, 4.3, color=MUTED)
+            p.text(text, 4, 44+i*2.35, 4.8, color=MUTED)
         for i, text in enumerate(['ПРОФИЛ', 'ПРОФИЛЬ', 'PROFILE']):
-            p.text(text, 71.5, 6.5+i*3.4, 5.8, bold=True, color=MUTED, align='center')
-        p.qr(qr_matrix(profile_url(card.user)), 60, 20, 23)
-        p.text(card.number, 71.5, 47.3, 6.3, bold=True, align='center', width=25)
+            p.text(text, 70, 6.8+i*3.4, 6.1 if i == 0 else 5.6,
+                   bold=True, color=NAVY if i == 0 else MUTED, align='center')
+        p.qr(qr_matrix(qr_url or profile_url(card.user)), 57.5, 18, 25)
+        p.text(card.number, 70, 45.8, 7.4, bold=True, align='center', width=28)
 
 
-def preview_png(card, side, *, viewer=False, dpi=180):
+def preview_png(card, side, *, viewer=False, dpi=240, qr_url=None):
     painter = RasterPainter(dpi)
-    paint_card(painter, card, side)
+    paint_card(painter, card, side, qr_url=qr_url)
     if viewer or card.status != 'issued':
         label = 'ДЛЯ ПРОСМОТРА' if viewer else 'ЧЕРНОВИК'
         overlay = Image.new('RGBA', painter.im.size, (255, 255, 255, 0))
@@ -309,7 +351,7 @@ def imposed_slots(cards, binding='long'):
         yield front, back
 
 
-def make_pdf(cards, *, layout='press'):
+def make_pdf(cards, *, layout='press', qr_url=None):
     cards = list(cards)
     if not cards or len(cards) > 100:
         raise ValueError('Выгрузка должна содержать от 1 до 100 карт.')
@@ -328,7 +370,7 @@ def make_pdf(cards, *, layout='press'):
                 c.setTrimBox((6*mm, 6*mm, 92*mm, 60*mm))
                 c.setBleedBox((3*mm, 3*mm, 95*mm, 63*mm))
                 c.setCropBox((0, 0, 98*mm, 66*mm))
-                paint_card(PDFPainter(c, 6, 6), card, side, a)
+                paint_card(PDFPainter(c, 6, 6), card, side, a, qr_url=qr_url)
                 crop_marks(c, 6, 6)
                 c.showPage()
     else:
@@ -337,7 +379,7 @@ def make_pdf(cards, *, layout='press'):
             for side, slots in [('front', front), ('back', back)]:
                 for row, col, card in slots:
                     x, y = 7 + col*98 + 6, 297 - 16.5 - (row+1)*66 + 6
-                    paint_card(PDFPainter(c, x, y), card, side)
+                    paint_card(PDFPainter(c, x, y), card, side, qr_url=qr_url)
                     crop_marks(c, x, y)
                 c.showPage()
     c.save()

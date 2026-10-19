@@ -80,7 +80,8 @@ class VolunteerCardTests(TestCase):
         urls = [reverse('card_list'), reverse('card_create'), reverse('card_edit', args=[self.card.pk]),
             reverse('card_edition_edit', args=[self.edition.pk]),
             reverse('card_edition_asset', args=[self.edition.pk, 'stamp']),
-            reverse('card_profile_data', args=[self.member.pk]), reverse('card_download', args=[self.card.pk])]
+            reverse('card_profile_data', args=[self.member.pk]), reverse('card_download', args=[self.card.pk]),
+            reverse('card_sample_preview', args=['front'])]
         for actor in [self.member, self.other, self.president, self.pending_worker]:
             self.login(actor)
             for url in urls:
@@ -336,3 +337,91 @@ class VolunteerCardTests(TestCase):
         self.assertEqual(self.client.get(reverse('card_preview',args=[card.pk,'back'])).status_code,200)
         self.assertEqual(self.client.get(reverse('card_download',args=[card.pk])).status_code,403)
         person.refresh_from_db();self.assertFalse(person.is_superuser)
+
+    def test_cards_are_discoverable_in_staff_dashboard_sidebar_and_profile(self):
+        self.login()
+        dashboard = self.client.get(reverse('admin_dashboard'))
+        self.assertContains(dashboard, 'data-card-management-entry')
+        self.assertContains(dashboard, reverse('card_list'))
+        self.assertContains(self.client.get(reverse('my_profile')), 'Управлять картами')
+        listing = self.client.get(reverse('card_list'))
+        self.assertContains(listing, 'aria-current="page"')
+        self.assertContains(listing, reverse('card_sample_preview', args=['front']))
+        self.assertContains(listing, reverse('card_sample_preview', args=['back']))
+        self.assertContains(listing, 'Вымышленные имя и фотография')
+        self.assertContains(self.client.get(reverse('public_profile', args=[self.member.pk])),
+                            reverse('card_detail', args=[self.card.pk]))
+        self.login(self.president)
+        self.assertNotContains(self.client.get(reverse('admin_dashboard')), 'data-card-management-entry')
+
+    def test_profile_card_is_visible_to_owner_and_staff_only_and_draft_is_not_exposed(self):
+        detail = reverse('card_detail', args=[self.card.pk])
+        self.login(self.member)
+        self.assertContains(self.client.get(reverse('my_profile')), detail)
+        self.assertContains(self.client.get(reverse('my_profile')), 'Моя волонтёрская карта')
+        self.card.status = 'draft'
+        self.card.save(update_fields=['status'])
+        response = self.client.get(reverse('my_profile'))
+        self.assertContains(response, 'после выдачи сотрудниками отдела')
+        self.assertNotContains(response, detail)
+        self.login(self.other)
+        response = self.client.get(reverse('public_profile', args=[self.member.pk]))
+        self.assertNotContains(response, 'data-profile-card-entry')
+        self.assertNotContains(response, self.card.number)
+        self.login()
+        response = self.client.get(reverse('public_profile', args=[self.member.pk]))
+        self.assertContains(response, detail)
+
+    def test_first_visit_has_live_design_proof_and_setup_without_creating_records(self):
+        self.card.delete()
+        self.edition.delete()
+        self.login()
+        response = self.client.get(reverse('card_list'))
+        self.assertContains(response, 'Начать первый выпуск')
+        self.assertContains(response, '<details class="vc-design" open>')
+        self.assertNotContains(response, 'data-card-selection')
+        self.assertContains(response, reverse('card_edition_create'))
+        counts = (User.objects.count(), CardEdition.objects.count(), VolunteerCard.objects.count(), JournalEntry.objects.count())
+        files = set(Path(settings.CARD_PRIVATE_ROOT).rglob('*'))
+        for side in ['front', 'back']:
+            response = self.client.get(reverse('card_sample_preview', args=[side]))
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('no-store', response['Cache-Control'])
+            if side == 'back':
+                decoded = zxingcpp.read_barcode(Image.open(BytesIO(response.content)))
+                self.assertIsNotNone(decoded)
+                self.assertEqual(decoded.text, 'https://aya.test' + reverse('volunteer_list'))
+        self.assertEqual(counts, (User.objects.count(), CardEdition.objects.count(), VolunteerCard.objects.count(), JournalEntry.objects.count()))
+        self.assertEqual(files, set(Path(settings.CARD_PRIVATE_ROOT).rglob('*')))
+        self.assertEqual(self.client.get(reverse('card_sample_preview', args=['invalid'])).status_code, 404)
+
+    def test_preview_and_print_name_baselines_match_and_both_qr_codes_scan(self):
+        dpi = 300
+        scale = dpi / 25.4
+        pdf = pdfium.PdfDocument(make_pdf([self.card]))
+        rendered = pdf[0].render(scale=dpi/72).to_pil().crop(
+            (round(6*scale), round(6*scale), round(92*scale), round(60*scale)))
+        preview = Image.open(BytesIO(preview_png(self.card, 'front', dpi=dpi))).convert('RGB')
+        def text_rows(image):
+            rows = []
+            for y in range(round(17*scale), round(36*scale)):
+                ink = sum(1 for x in range(round(32*scale), round(81*scale))
+                          if all(c < 160 for c in image.getpixel((x,y))[:3]))
+                if ink > 5:
+                    if not rows or y-rows[-1][-1] > 8:
+                        rows.append([y])
+                    else:
+                        rows[-1].append(y)
+            return rows
+        print_rows, preview_rows = text_rows(rendered), text_rows(preview)
+        self.assertEqual(len(print_rows), 3)
+        self.assertEqual(len(preview_rows), 3)
+        for left, right in zip(print_rows, preview_rows):
+            self.assertLessEqual(abs(left[0]-right[0]), 3)
+            self.assertLessEqual(abs(left[-1]-right[-1]), 3)
+        for image in [pdf[1].render(scale=dpi/72).to_pil(),
+                      Image.open(BytesIO(preview_png(self.card, 'back', dpi=dpi)))]:
+            decoded = zxingcpp.read_barcode(image)
+            self.assertIsNotNone(decoded)
+            self.assertEqual(decoded.text, profile_url(self.member))
+        pdf.close()

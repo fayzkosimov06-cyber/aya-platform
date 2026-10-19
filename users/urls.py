@@ -22,6 +22,7 @@ urlpatterns = [
     path('cards/<uuid:pk>/preview/<str:side>/', cards.preview, name='card_preview'),
     path('cards/<uuid:pk>/download/', cards.download, name='card_download'),
     path('administration/cards/', cards.listing, name='card_list'),
+    path('administration/cards/sample/<str:side>/', cards.sample_preview, name='card_sample_preview'),
     path('administration/cards/new/', cards.edit, name='card_create'),
     path('administration/cards/export/', cards.export, name='card_export'),
     path('administration/cards/people/<int:pk>/', cards.profile_data, name='card_profile_data'),

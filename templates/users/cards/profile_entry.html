@@ -1,0 +1,22 @@
+{% if profile_card_management %}
+<div class="mt-4 p-3 rounded-3 border bg-light" data-profile-card-entry>
+  <h2 class="h6"><i class="far fa-id-card me-2" aria-hidden="true"></i>Волонтёрские карты</h2>
+  <p class="small text-muted mb-3">Подготовка, выдача и массовая печать карт команды.</p>
+  <a class="btn btn-primary w-100" href="{% url 'card_list' %}">Управлять картами →</a>
+</div>
+{% elif profile_card_visible %}
+<section class="card mt-4 p-3" data-profile-card-entry>
+  <h2 class="h6 mb-3"><i class="far fa-id-card me-2" aria-hidden="true"></i>{% if profile_card_manager %}Волонтёрская карта{% else %}Моя волонтёрская карта{% endif %}</h2>
+  {% if profile_volunteer_card %}
+    <a href="{% url 'card_detail' profile_volunteer_card.pk %}" aria-label="Открыть волонтёрскую карту">
+      <img class="img-fluid w-100 rounded-3" style="height:auto;aspect-ratio:86/54;object-fit:contain" draggable="false" src="{% url 'card_preview' profile_volunteer_card.pk 'front' %}" alt="Карта {{ profile_volunteer_card.edition.academic_year }}">
+    </a>
+    <p class="small text-muted mt-3 mb-2">{{ profile_volunteer_card.edition.academic_year }} · {{ profile_volunteer_card.get_status_display }}</p>
+    <a class="btn btn-outline-primary w-100" href="{% url 'card_detail' profile_volunteer_card.pk %}">Открыть обе стороны →</a>
+  {% else %}
+    <p class="small text-muted">{% if profile_card_manager %}Карта ещё не подготовлена. Данные и фото можно заполнить из этого профиля.{% else %}Карта появится здесь после выдачи сотрудниками отдела.{% endif %}</p>
+    {% if not profile_card_manager %}<a class="btn btn-outline-primary w-100" href="{% url 'my_cards' %}">Мои карты →</a>{% endif %}
+  {% endif %}
+  {% if profile_card_manager and not profile_card_has_current %}<a class="btn btn-primary w-100 mt-2" href="{% url 'card_create' %}?user={{ profile_user.pk }}">Подготовить карту на этот год</a>{% endif %}
+</section>
+{% endif %}

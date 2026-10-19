@@ -56,7 +56,20 @@ def listing(request):
         'editions': CardEdition.objects.all(), 'filters': request.GET,
         'directions': Direction.objects.all(), 'schools': School.objects.all(), 'clubs': Club.objects.all(),
         'export_form': CardExportForm(), 'query_string': query.urlencode(),
+        'has_cards': VolunteerCard.objects.filter(user__is_superuser=False).exists(),
     })
+
+
+@never_cache
+@staff_only
+@require_GET
+def sample_preview(request, side):
+    if side not in {'front', 'back'}:
+        raise Http404
+    from .card_samples import sample_card, sample_qr_url
+    # This preview uses only packaged demo data, never a real account or seal.
+    return private_response(HttpResponse(preview_png(sample_card(), side, qr_url=sample_qr_url()),
+                                         content_type='image/png'))
 
 
 @never_cache

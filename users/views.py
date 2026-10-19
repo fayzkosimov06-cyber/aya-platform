@@ -1,4 +1,5 @@
 from .profile_choices import filter_profiles, filter_choices
+from .card_access import profile_card_context
 # users/views.py
 
 import json
@@ -339,6 +340,7 @@ def my_profile_view(request):
     if context['show_evaluations']:
         from .points import point_profile
         context.update(point_profile(request, context['profile_user']))
+    context.update(profile_card_context(request.user, context['profile_user']))
     return render(request, 'users/staff_profile.html' if profile_user_is_staff(context['profile_user']) else 'users/profile.html', context)
 
 
@@ -435,6 +437,7 @@ def public_profile_view(request, pk):
     if context['show_evaluations']:
         from .points import point_profile
         context.update(point_profile(request, context['profile_user']))
+    context.update(profile_card_context(request.user, context['profile_user']))
     return render(request, 'users/staff_profile.html' if profile_user_is_staff(context['profile_user']) else 'users/profile.html', context)
 
 
