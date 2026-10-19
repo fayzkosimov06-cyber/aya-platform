@@ -24,7 +24,7 @@ def selection(request, data):
 @login_required
 @never_cache
 def cleanup(request):
-    if not request.user.is_superuser:return HttpResponseForbidden('Очистка доступна только суперадминистратору.')
+    if not request.user.is_superuser:return HttpResponseForbidden('Очистка журнала недоступна для вашей учётной записи.')
     error=''
     if request.method=='POST':
         try:payload=signing.loads(request.POST.get('token',''),salt='journal-cleanup',max_age=900)

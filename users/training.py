@@ -138,7 +138,7 @@ def topics_for(user):
         topics['events']['steps']=events[:2]
         topics['main']['steps']=[s for s in main if s['target']!='nav-rating']
     if user.is_superuser or user.role=='head_admin':
-        text='Проверьте имя, должность и заявку. Сотрудников подтверждает начальник или суперадминистратор, начальника — только суперадминистратор. До подтверждения вход и служебные права недоступны.'
+        text='Проверьте имя, должность и заявку. Сотрудников подтверждает начальник отдела. Заявки на должность начальника проходят отдельную проверку. До подтверждения вход и служебные права недоступны.'
         topics['staff_applications']={'title':'Заявки сотрудников','description':text,'steps':[step('staff_applications','staff-applications','Подтверждение сотрудников',text,fallback=text)]}
     return organize(topics)
 

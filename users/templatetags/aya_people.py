@@ -10,7 +10,7 @@ def presentation(person):
     roles = []
     frame = 'volunteer'
     if person.is_superuser:
-        roles = [('staff', 'Суперадминистратор')]
+        roles = [('staff', 'Управление сайтом')]
     elif person.role in ('worker', 'head_admin'):
         roles = [('staff', 'Начальник отдела' if person.role == 'head_admin' else 'Сотрудник отдела')]
     else:

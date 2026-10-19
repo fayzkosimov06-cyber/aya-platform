@@ -136,7 +136,7 @@ class ControlMiddleware:
     if name=='event_edit' and obj:
      old_work=ContributionWork.objects.filter(event=obj).first()
      if old_work:d=old_work.date.isoformat()
-    if d and d!=timezone.localdate().isoformat():return HttpResponseForbidden('Задним числом начисляет только суперадминистратор.')
+    if d and d!=timezone.localdate().isoformat():return HttpResponseForbidden('Можно начислять баллы только за сегодняшний день.')
    if code in {'events_edit','directions','schools','points_propose'}:
     for key,model in [('directions',Direction),('schools',School),('clubs',Club)]:
      ids=request.POST.getlist(key)

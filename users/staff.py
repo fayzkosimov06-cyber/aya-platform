@@ -56,7 +56,7 @@ def signup(request):
 @transaction.atomic
 def applications(request):
     if not (request.user.is_superuser or request.user.role == 'head_admin'):
-        return HttpResponseForbidden('Заявки сотрудников рассматривает начальник отдела или суперадминистратор.')
+        return HttpResponseForbidden('Недостаточно прав для рассмотрения заявок сотрудников.')
     qs = StaffApplication.objects.select_related('user').filter(status='pending')
     if not request.user.is_superuser:
         qs = qs.filter(requested_role='worker')

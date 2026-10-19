@@ -118,7 +118,7 @@ class User(AbstractUser):
 
     def get_full_name(self): return f"{self.last_name} {self.first_name} {self.patronymic}".strip()
     def get_role_display_custom(self):
-        if self.is_superuser: return 'Суперадминистратор'
+        if self.is_superuser: return 'Управление сайтом'
         if self.role in {'volunteer','leader'} and self.pk:
             if self.directions_led.exists(): return 'Руководитель направления'
             if self.school_leader_of.exists(): return 'Учитель школы'

@@ -21,6 +21,7 @@ ROUTES.update({'about_page':'О нас','admin_about_manage':'Редактор �
 ROUTES['journal_cleanup']='Очистка журнала'
 FIELDS.update({'deleted_count':'Удалено записей','filters':'Условия очистки'})
 FIELDS.update({'failure_kind':'Проверка','failure_code':'Причина отказа','reason':'Пояснение'})
+FIELDS['is_superuser']='Полный доступ'
 FAILURE_CODES={'browser_cookie_missing':'Браузер не передал защитные cookie','form_check_missing':'Нет кода проверки формы','form_check_mismatch':'Код формы устарел или не совпал','origin_mismatch':'Не совпал адрес отправки','referrer_missing':'Браузер не передал адрес формы','referrer_mismatch':'Не совпал адрес формы'}
 FAILURE_CODES.update({'browser_cookie_invalid':'Повреждены защитные cookie','form_check_failed':'Не пройдена проверка формы'})
 USER_KEYS={'user','member','actor','organizer','created_by','marked_by','confirmed_by','reviewer','author','volunteer_access_granted_by','volunteer','evaluator'}
