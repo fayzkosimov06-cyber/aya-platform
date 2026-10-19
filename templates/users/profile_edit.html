@@ -185,7 +185,7 @@
                         <div class="row align-items-end mb-3">
                             <div class="col-md-7">
                                 <label class="form-label fw-bold"><i class="fab fa-instagram text-danger"></i> Instagram</label>
-                                {{ form.instagram }}{{ form.instagram.errors }}
+                                {{ form.instagram }}{{ form.instagram.errors }}{% if form.instagram.help_text %}<small class="text-muted d-block">{{ form.instagram.help_text }}</small>{% endif %}
                             </div>
                             {% if request.user == user_to_edit %}
                             <div class="col-md-5">
@@ -201,7 +201,7 @@
                         <div class="row align-items-end mb-4">
                             <div class="col-md-7">
                                 <label class="form-label fw-bold"><i class="fab fa-linkedin text-primary"></i> LinkedIn</label>
-                                {{ form.linkedin }}{{ form.linkedin.errors }}
+                                {{ form.linkedin }}{{ form.linkedin.errors }}{% if form.linkedin.help_text %}<small class="text-muted d-block">{{ form.linkedin.help_text }}</small>{% endif %}
                             </div>
                             {% if request.user == user_to_edit %}
                             <div class="col-md-5">

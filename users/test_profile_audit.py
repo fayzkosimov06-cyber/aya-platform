@@ -104,7 +104,8 @@ class ProfileAuditTests(TestCase):
         # Django's default admin uses model validation, not the site's additional rules.
         stock=forms.modelform_factory(User,fields=['birth_date','instagram','linkedin'])
         data={'birth_date':'2999-01-01','instagram':'javascript:synthetic','linkedin':'not a URL'}
-        self.assertTrue(stock(data,instance=self.member).is_valid())
+        from copy import copy
+        self.assertTrue(stock(data,instance=copy(self.member)).is_valid())
         form=UserUpdateForm({**self.data(),**data},instance=self.member)
         self.assertFalse(form.is_valid())
         self.assertTrue({'birth_date','instagram','linkedin'}.issubset(form.errors))
@@ -119,12 +120,13 @@ class ProfileAuditTests(TestCase):
 
     def test_diagnostic_is_read_only_and_omits_personal_values(self):
         from .profile_diagnostics import diagnose_profile
-        self.member.phone='synthetic-private-phone';self.member.instagram='javascript:synthetic-private-value';self.member.save()
+        self.member.phone='synthetic-private';self.member.instagram='javascript:synthetic-private-value';self.member.save()
         before=User.objects.values().get(pk=self.member.pk)
         journals=JournalEntry.objects.count()
         result=diagnose_profile(self.member.username)
         self.assertTrue(result['read_only'])
-        self.assertIn('instagram',result['current_self_form']['codes'])
+        self.assertTrue(result['current_self_form']['valid'])
+        self.assertIn('instagram',result['current_self_form']['legacy_social_fields'])
         self.assertNotIn('synthetic-private',json.dumps(result))
         self.assertEqual(before,User.objects.values().get(pk=self.member.pk))
         self.assertEqual(journals,JournalEntry.objects.count())
@@ -158,3 +160,47 @@ class ProfileAuditTests(TestCase):
             nodes=[node.value for node in tree.body if isinstance(node,ast.Assign) and any(isinstance(target,ast.Name) and target.id=='AUTH_PASSWORD_VALIDATORS' for target in node.targets)]
             self.assertTrue(nodes)
             self.assertGreaterEqual(len(ast.literal_eval(nodes[-1])),4)
+
+    def test_unchanged_legacy_social_values_do_not_block_unrelated_edits(self):
+        self.member.instagram='синтетическое';self.member.linkedin='старое_значение';self.member.save()
+        for admin,actor in [(False,self.member),(True,self.root)]:
+            with self.subTest(admin=admin):
+                self.client.force_login(actor)
+                url=reverse('admin_edit_user',args=[self.member.pk]) if admin else reverse('profile_edit')
+                response=self.client.post(url,{**self.data(admin=admin),'first_name':'Legacy edit'})
+                self.assertEqual(response.status_code,302)
+                self.member.refresh_from_db()
+                self.assertEqual(self.member.first_name,'Legacy edit')
+                self.assertEqual(self.member.instagram,'синтетическое')
+                self.assertEqual(self.member.linkedin,'старое_значение')
+
+    def test_existing_bad_social_value_does_not_allow_a_different_bad_value(self):
+        self.member.instagram='старое';self.member.linkedin='старое';self.member.save()
+        for cls,admin in [(UserUpdateForm,False),(AdminUpdateForm,True)]:
+            form=cls({**self.data(admin=admin),'instagram':'javascript:new-value','linkedin':'другое'},instance=self.member)
+            self.assertFalse(form.is_valid())
+            self.assertIn('instagram',form.errors);self.assertIn('linkedin',form.errors)
+
+    def test_legacy_contact_can_be_replaced_with_valid_url_or_removed(self):
+        self.member.instagram='старое';self.member.linkedin='старое';self.member.save()
+        form=UserUpdateForm({**self.data(),'instagram':'@synthetic_handle','linkedin':''},instance=self.member)
+        self.assertTrue(form.is_valid(),form.errors);form.save();self.member.refresh_from_db()
+        self.assertEqual(self.member.instagram,'https://www.instagram.com/synthetic_handle/')
+        self.assertEqual(self.member.linkedin,'')
+
+    def test_unchanged_unsafe_contact_is_preserved_but_never_linked(self):
+        from .contact_activity import destination
+        self.member.instagram='javascript:synthetic';self.member.linkedin='javascript:synthetic';self.member.save()
+        form=UserUpdateForm({**self.data(),'first_name':'Safe edit'},instance=self.member)
+        self.assertTrue(form.is_valid(),form.errors);form.save();self.member.refresh_from_db()
+        self.assertEqual(destination(self.member,'instagram'),'')
+        self.assertEqual(destination(self.member,'linkedin'),'')
+        self.client.force_login(self.other)
+        for network in ('instagram','linkedin'):
+            self.assertEqual(self.client.get(reverse('open_contact',args=[self.member.pk,network])).status_code,404)
+
+    def test_legacy_social_warning_visible_in_editor(self):
+        self.member.instagram='старое';self.member.save()
+        self.client.force_login(self.member)
+        response=self.client.get(reverse('profile_edit'))
+        self.assertContains(response,'Остальной профиль сохранится.')

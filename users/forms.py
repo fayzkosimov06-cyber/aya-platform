@@ -32,6 +32,13 @@ class FixedProfileChoicesMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.legacy_profile_fields = set()
+        self.legacy_social_fields = set()
+        self.original_social_values = {name: getattr(self.instance, name, '') or '' for name in ('instagram','linkedin')}
+        from .social_links import social_url
+        for name, previous in self.original_social_values.items():
+            if previous.strip() and not social_url(previous, name):
+                self.legacy_social_fields.add(name)
+                self.fields[name].help_text = 'Текущее значение не является корректной ссылкой. Его можно оставить без изменения, заменить ссылкой или очистить. Остальной профиль сохранится.'
         for name in ('course', 'faculty', 'city'):
             field = self.fields[name]
             previous = getattr(self.instance, name, None)
@@ -50,6 +57,10 @@ class FixedProfileChoicesMixin:
             if data.get(name):
                 normalized=social_url(data[name],name)
                 if normalized:data[name]=normalized
+                elif name in self.legacy_social_fields and data[name] == self.original_social_values[name].strip():
+                    # Preserve only the existing legacy value. New invalid input is still rejected.
+                    # Social-link rendering and contact redirects independently validate the URL.
+                    data[name] = self.original_social_values[name]
                 else:self.add_error(name,forms.ValidationError('Укажите ссылку с https:// (для Instagram можно @имя).',code='invalid_url'))
         for name in self.legacy_profile_fields:
             if name in self.fields and name in data and data[name] in (None, ''):

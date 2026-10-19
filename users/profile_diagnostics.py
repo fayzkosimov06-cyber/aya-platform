@@ -14,7 +14,7 @@ def validation_result(person, form_type):
     data={name:initial[name].value() for name in initial.fields if name!='photo' and initial[name].value() is not None}
     form=form_type(data=data,instance=detached)
     form.is_valid()
-    return {'valid':not bool(form.errors), 'codes':{name:[error.code or 'invalid' for error in errors] for name,errors in form.errors.as_data().items()}}
+    return {'valid':not bool(form.errors), 'legacy_social_fields':sorted(form.legacy_social_fields), 'codes':{name:[error.code or 'invalid' for error in errors] for name,errors in form.errors.as_data().items()}}
 
 
 def diagnose_profile(username, day='2026-09-29', start='13:26', end='13:39'):
