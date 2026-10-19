@@ -147,7 +147,7 @@
             $('.use-select2').select2({ width: '100%', dropdownParent: $('body') });
         });
     </script>
-    <script src="{% static 'js/photo-editor.js' %}?v=28" defer></script>
+    <script src="{% static 'js/photo-editor.js' %}?v=29" defer></script>
     <script src="{% static 'js/selection.js' %}?v=28" defer></script>
     <script src="{% static 'js/design.js' %}?v=14" defer></script>
     {% if user.is_authenticated %}<span hidden data-activity-endpoint="{% url 'record_search' %}" data-section="{{ request.resolver_match.url_name }}" data-csrf="{{ csrf_token }}"></span>{% endif %}<script src="{% static 'js/control.js' %}?v=16" defer></script>
