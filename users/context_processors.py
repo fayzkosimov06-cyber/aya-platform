@@ -1,4 +1,5 @@
 # users/context_processors.py
+from django.conf import settings
 from .models import Notification
 from .permissions import CAPABILITIES,allowed
 from .points import can_award
@@ -14,6 +15,7 @@ def notifications_processor(request):
         notify(request.user)
         unread_notifications = Notification.objects.filter(recipient=request.user, is_read=False)
         return {
+            'csrf_cookie_name': settings.CSRF_COOKIE_NAME,
             **context(request),
             'unread_notifications': unread_notifications,
             'can_award_points': can_award(request.user),
@@ -24,4 +26,4 @@ def notifications_processor(request):
             'can_open_moderation': allowed(request.user,'visits') or allowed(request.user,'admissions'),
             'unread_notifications_count': unread_notifications.count(),
         }
-    return {}
+    return {'csrf_cookie_name': settings.CSRF_COOKIE_NAME}

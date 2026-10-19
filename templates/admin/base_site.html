@@ -1,0 +1,2 @@
+{% extends 'admin/base_site.html' %}{% load static %}
+{% block extrahead %}{{ block.super }}<meta name="aya-csrf-cookie" content="{{ csrf_cookie_name|default:'csrftoken' }}"><meta name="aya-csrf-token" content="{{ csrf_token }}"><script src="{% static 'js/csrf.js' %}?v=1" defer></script><link rel="icon" type="image/png" href="{% static 'img/aya-logo-2026.png' %}">{% endblock %}

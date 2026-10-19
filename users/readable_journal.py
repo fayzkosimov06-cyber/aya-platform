@@ -20,7 +20,32 @@ ROUTES.update({'event_join':'Запись на мероприятие','event_fi
 ROUTES.update({'about_page':'О нас','admin_about_manage':'Редактор сведений об AYA','about_page_edit':'Редактор сведений об AYA','rating_history':'История начислений','open_profile_photo':'Фотография профиля','reveal_birthday':'Дата рождения','audit_log':'Журнал действий','journal_private':'Закрытый журнал','journal_activity':'Просмотры и поиск'})
 ROUTES['journal_cleanup']='Очистка журнала'
 FIELDS.update({'deleted_count':'Удалено записей','filters':'Условия очистки'})
+FIELDS.update({'failure_kind':'Проверка','failure_code':'Причина отказа','reason':'Пояснение'})
+FAILURE_CODES={'browser_cookie_missing':'Браузер не передал защитные cookie','form_check_missing':'Нет кода проверки формы','form_check_mismatch':'Код формы устарел или не совпал','origin_mismatch':'Не совпал адрес отправки','referrer_missing':'Браузер не передал адрес формы','referrer_mismatch':'Не совпал адрес формы'}
+FAILURE_CODES.update({'browser_cookie_invalid':'Повреждены защитные cookie','form_check_failed':'Не пройдена проверка формы'})
 USER_KEYS={'user','member','actor','organizer','created_by','marked_by','confirmed_by','reviewer','author','volunteer_access_granted_by','volunteer','evaluator'}
+
+
+def failure_description(entry):
+    data=entry.after
+    status=data.get('status')
+    if data.get('failure_kind')=='csrf':
+        return 'Защита формы (403)',data.get('reason') or 'Запрос не прошёл проверку безопасности формы.'
+    if str(status)=='404':
+        if data.get('path')=='/favicon.ico':
+            return 'Не найден значок вкладки (404)','Браузер запросил значок вкладки /favicon.ico. Это служебный запрос, а не ошибка сохранения данных пользователя.'
+        return 'Не найдено (404)','Страница или объект отсутствуют либо недоступны по этому адресу.'
+    if str(status)=='403':
+        return 'Запрос отклонён (403)','Сервер отклонил запрос. Точная причина в этой записи не сохранена.'
+    if str(status)=='405':
+        return 'Способ запроса не поддерживается (405)','Этот адрес не принимает такой способ запроса.'
+    if str(status)=='429':
+        return 'Временная пауза (429)',data.get('result') or 'Слишком много запросов. Нужно подождать перед повторной попыткой.'
+    if str(status).isdigit() and int(status)>=500:
+        return 'Ошибка сервера ('+str(status)+')','Сервер не смог обработать запрос. Требуется проверка технического журнала.'
+    if data.get('validation_fields') or data.get('error'):
+        return 'Форма не сохранена',data.get('result') or 'Нужно исправить отмеченные поля формы.'
+    return entry.action or 'Запрос не выполнен',data.get('result') or 'Подробности доступны ниже.'
 
 
 class Display:
@@ -45,7 +70,9 @@ class Display:
         if key in {'school','direction','club','event','work'} and str(value).isdigit():return self.label({'school':'users.School','direction':'users.Direction','club':'users.Club','event':'events.Event','work':'users.ContributionWork'}[key],value)
         if key=='network':return {'telegram':'Telegram','instagram':'Instagram','linkedin':'LinkedIn','phone':'Телефон','birthday':'Дата рождения','photo':'Фотография'}.get(value,value)
         if key=='target_type':return MODELS.get(value,value)
-        if key=='status' and str(value).isdigit():return {'200':'Успешно','302':'Переход выполнен','403':'Недостаточно прав','404':'Не найдено / недоступно','429':'Временная пауза: слишком много попыток','500':'Ошибка сервера'}.get(str(value),str(value))
+        if key=='status' and str(value).isdigit():return {'200':'Страница обработана (200)','302':'Переход выполнен (302)','403':'Запрос отклонён (403)','404':'Не найдено / недоступно (404)','405':'Способ запроса не поддерживается (405)','429':'Временная пауза: слишком много попыток (429)','500':'Ошибка сервера (500)'}.get(str(value),str(value))
+        if key=='failure_kind':return {'csrf':'Защита формы'}.get(value,value)
+        if key=='failure_code':return FAILURE_CODES.get(value,value)
         if key=='role':return dict(User.ROLE_CHOICES).get(value,value)
         if key=='scope':return {'all':'Все команды','own':'Свои команды','selected':'Выбранные команды'}.get(value,value)
         if key=='code':
@@ -69,6 +96,8 @@ class Display:
         target=entry.after.get('target_name') or target
         if entry.section=='public_profile' and entry.object_id and not target:target=self.label('users.User',entry.object_id)
         section_label=MODELS.get(section,ROUTES.get(section,'Действие на сайте'))
+        path=entry.after.get('path','').split('?',1)[0][:180]
+        if section_label=='Действие на сайте' and path:section_label='Адрес '+path
         verb={'view':'Открыл','search':'Выполнил поиск','failure':'Ошибка или отказ','action':'Выполнил действие','deletion':'Удалил'}.get(entry.category,entry.action)
         if entry.category=='contact':verb=entry.action;section_label=self.value('network',entry.after.get('network'))
         if entry.category=='action' and entry.action not in {'Выполнено действие','Действие'}:verb=entry.action
@@ -77,6 +106,10 @@ class Display:
             description='ответственные' if relation=='club_leaders' else 'учителя' if relation=='user_school_leader_of' else 'руководители' if relation=='direction_leaders' else 'активная команда' if 'featured' in relation else 'мероприятия' if 'events' in relation else 'участники'
             verb='Изменены '+description
         entry.readable_title=f'{verb} · {section_label}'+(f' «{target}»' if target else '')
+        entry.failure_summary=''
+        if entry.category=='failure':
+            title,entry.failure_summary=failure_description(entry)
+            entry.readable_title=f'{title} · {section_label}'+(f' «{target}»' if target else '')
         entry.actor_name=str(entry.actor) if entry.actor else (entry.after.get('_actor_name') or ('Гость' if entry.category in {'view','search','contact'} else 'Система / аккаунт удалён'))
         fields={}
         if model:
@@ -95,6 +128,9 @@ class Display:
         entry.change_preview='; '.join(f'{field}: {before} → {after}' for field,before,after in entry.differences[:3]) if entry.category=='change' else ''
         entry.is_observation=entry.category in {'view','search','contact','failure','action'}
         entry.readable_details=[(field,after) for field,before,after in entry.differences if after!='—']
+        if entry.category=='failure':
+            if path:entry.readable_details.append(('Адрес запроса',path))
+            if entry.after.get('method'):entry.readable_details.append(('Способ запроса',entry.after['method']))
         return entry
 
 
@@ -168,6 +204,7 @@ def journal(request,mode='public'):
         for group in page:
             entry=latest[group['last_id']];display.entry(entry)
             group['actor_name']=entry.actor_name
+            group['failure_summary']=entry.failure_summary
             group['token']=signing.dumps([group['who'],group['subject'],group['day'].isoformat()],salt='journal-group')
             key=group['subject'];model,sep,pk=key.rpartition(':')
             group['title']=entry.readable_title;group['url']=''

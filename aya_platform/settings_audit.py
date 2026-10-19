@@ -32,3 +32,4 @@ AUTH_PASSWORD_VALIDATORS = [{"NAME":"django.contrib.auth.password_validation.Use
 INSTALLED_APPS += ["axes"]
 MIDDLEWARE += ["axes.middleware.AxesMiddleware"]
 from .login_protection import *
+CSRF_FAILURE_VIEW = 'users.request_security.csrf_failure'

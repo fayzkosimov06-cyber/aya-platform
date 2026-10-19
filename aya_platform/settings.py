@@ -116,3 +116,4 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 from .login_protection import *  # Shared DB-backed login throttling.
+CSRF_FAILURE_VIEW = 'users.request_security.csrf_failure'
