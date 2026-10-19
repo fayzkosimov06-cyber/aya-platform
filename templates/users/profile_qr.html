@@ -1,0 +1,4 @@
+{% load static %}{% if not profile_user.is_superuser %}
+<link rel="stylesheet" href="{% static 'css/profile-qr.css' %}?v=1">
+<details class="profile-qr"><summary><i class="fas fa-qrcode" aria-hidden="true"></i><span>QR-код профиля</span><span class="profile-qr-chevron" aria-hidden="true">⌄</span></summary><div class="profile-qr-content"><img src="{% url 'profile_qr' profile_user.pk %}" alt="QR-код для открытия этого профиля" width="240" height="240" loading="lazy"><p>Отсканируйте код камерой телефона, чтобы открыть этот профиль.</p><a class="profile-qr-download" href="{% url 'profile_qr' profile_user.pk %}?download=1"><i class="fas fa-download" aria-hidden="true"></i> Скачать PNG</a></div></details>
+{% endif %}

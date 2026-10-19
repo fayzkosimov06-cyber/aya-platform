@@ -9,12 +9,14 @@ from . import training
 from . import staff
 from . import clubs
 from . import deletion, readable_journal, birthdays, contact_activity
+from .profile_qr import profile_qr
 from .home_views import home_manage_view
 from .points import points_rating as rating_view
 from . import points, units, proposals, management, control_views
 
 
 urlpatterns = [
+    path('people/<int:pk>/qr/', profile_qr, name='profile_qr'),
     path('administration/private-log/cleanup/', journal_cleanup.cleanup, name='journal_cleanup'),
     path('people/<int:pk>/photo/', contact_activity.open_photo, name='open_profile_photo'),
     path('rating/<int:pk>/history/', points.rating_history, name='rating_history'),

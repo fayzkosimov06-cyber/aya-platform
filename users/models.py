@@ -2,10 +2,9 @@ from .profile_choices import CITY_CHOICES, FACULTY_CHOICES, COURSE_CHOICES
 # users/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from io import BytesIO
-from django.core.files import File
+from django.core.files.base import ContentFile
 from django.utils import timezone
-import qrcode
+import logging
 from .logo_validation import validate_logo
 
 class Direction(models.Model):
@@ -125,21 +124,16 @@ class User(AbstractUser):
         return dict(self.ROLE_CHOICES).get(self.role,self.role.capitalize())
     
     def save(self, *args, **kwargs):
-        from django.urls import reverse
         is_new = self.pk is None
         super().save(*args, **kwargs)
-        if is_new and not self.qr_code:
+        if is_new and not self.qr_code and not self.is_superuser:
             try:
-                public_profile_url = reverse('public_profile', kwargs={'pk': self.pk})
-                # Замените домен на реальный при деплое
-                domain = "http://aya1.pythonanywhere.com" 
-                full_url = f"{domain}{public_profile_url}"
-                qr_image = qrcode.make(full_url)
-                qr_offset = BytesIO()
-                qr_image.save(qr_offset, format='PNG')
-                file_name = f'qr_code_{self.username}.png'
-                self.qr_code.save(file_name, File(qr_offset), save=True)
-            except Exception: pass
+                from .profile_qr import png_for_profile
+                self.qr_code.save(f'profile-{self.pk}.png', ContentFile(png_for_profile(self)), save=False)
+                super().save(update_fields=['qr_code'])
+            except Exception:
+                # QR storage must not break account registration; the download endpoint can generate it on demand.
+                logging.getLogger(__name__).exception('Не удалось сохранить QR-код профиля %s.', self.pk)
 
     def __str__(self): return self.get_full_name() or self.username
 
