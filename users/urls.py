@@ -10,12 +10,26 @@ from . import staff
 from . import clubs
 from . import deletion, readable_journal, birthdays, contact_activity
 from .profile_qr import profile_qr
+from . import cards
 from .home_views import home_manage_view
 from .points import points_rating as rating_view
 from . import points, units, proposals, management, control_views
 
 
 urlpatterns = [
+    path('my-card/', cards.mine, name='my_cards'),
+    path('cards/<uuid:pk>/', cards.detail, name='card_detail'),
+    path('cards/<uuid:pk>/preview/<str:side>/', cards.preview, name='card_preview'),
+    path('cards/<uuid:pk>/download/', cards.download, name='card_download'),
+    path('administration/cards/', cards.listing, name='card_list'),
+    path('administration/cards/new/', cards.edit, name='card_create'),
+    path('administration/cards/export/', cards.export, name='card_export'),
+    path('administration/cards/people/<int:pk>/', cards.profile_data, name='card_profile_data'),
+    path('administration/cards/editions/new/', cards.edition_edit, name='card_edition_create'),
+    path('administration/cards/editions/<int:pk>/', cards.edition_edit, name='card_edition_edit'),
+    path('administration/cards/editions/<int:pk>/asset/<str:kind>/', cards.edition_asset, name='card_edition_asset'),
+    path('administration/cards/<uuid:pk>/edit/', cards.edit, name='card_edit'),
+    path('administration/cards/<uuid:pk>/status/', cards.change_status, name='card_status'),
     path('people/<int:pk>/qr/', profile_qr, name='profile_qr'),
     path('administration/private-log/cleanup/', journal_cleanup.cleanup, name='journal_cleanup'),
     path('people/<int:pk>/photo/', contact_activity.open_photo, name='open_profile_photo'),

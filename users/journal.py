@@ -45,7 +45,7 @@ def emit(category,section,action,before=None,after=None,object_id='',actor=None,
  JournalEntry.objects.create(subject_key=subject_key(section,str(object_id),before or {},after,actor.pk if actor else None),actor_key=actor_key,actor=actor,private=bool(actor and actor.is_superuser) if private is None else private,category=category,section=section,action=action,before=clean_payload(before or {}),after=clean_payload(after or {}),object_id=str(object_id))
 
 def tracked(sender):
- return sender._meta.app_label in {'users','events'} and sender.__name__ not in {'JournalEntry','AuditLog','Notification','BirthdayGreeting'} and not sender._meta.auto_created
+ return sender._meta.app_label in {'users','events'} and sender.__name__ not in {'JournalEntry','AuditLog','Notification','BirthdayGreeting','CardEdition','VolunteerCard'} and not sender._meta.auto_created
 
 @receiver(pre_save)
 def before_save(sender,instance,**kwargs):

@@ -1,3 +1,5 @@
 -r requirements.txt
 # Independent QR decoding for regression and print-readability checks; not needed by production.
 zxing-cpp==3.1.1
+pypdf==6.12.1
+pypdfium2==5.14.0

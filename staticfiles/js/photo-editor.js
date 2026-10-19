@@ -12,7 +12,7 @@
       const dialog=document.createElement('dialog');dialog.className='photo-editor';
       const title=document.createElement('h2');title.textContent='Выберите удачный кадр';
       const canvas=document.createElement('canvas');canvas.width=640;canvas.height=640;canvas.setAttribute('aria-label','Предпросмотр кадрирования');
-      const ctx=canvas.getContext('2d');let ratio=input.name.includes('cover')?16/9:1,zoom=1,x=.5,y=.5;
+      const ctx=canvas.getContext('2d');const desiredRatio=Number(input.dataset.photoRatio);let ratio=desiredRatio>0&&desiredRatio<4?desiredRatio:(input.name.includes('cover')?16/9:1),zoom=1,x=.5,y=.5;
       const help=document.createElement('p');help.textContent='Перемещайте фотографию мышью или пальцем. Ползунки доступны с клавиатуры.';
       const controls=document.createElement('div');controls.className='photo-controls';
       const source=()=>{

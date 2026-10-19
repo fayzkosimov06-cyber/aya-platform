@@ -81,6 +81,7 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                             {% if can_manage_rights %}<li><a class="dropdown-item" href="{% url 'rights_manage' %}">Права доступа</a></li>{% endif %}{% if can_view_audit %}<li><a class="dropdown-item" href="{% url 'audit_log' %}">Журнал действий</a></li>{% endif %}{% if user.is_superuser %}<li><a class="dropdown-item" href="{% url 'journal_private' %}">Закрытое управление</a></li>{% endif %}<li><a class="dropdown-item" href="{% url 'my_profile' %}">Мой профиль</a></li>
                             <li><a class="dropdown-item" href="{% url 'profile_edit' %}">Редактировать</a></li>
+                            {% if can_manage_cards %}<li><a class="dropdown-item" href="{% url 'card_list' %}">Волонтёрские карты</a></li>{% elif can_have_card %}<li><a class="dropdown-item" href="{% url 'my_cards' %}">Моя волонтёрская карта</a></li>{% endif %}
 {% if can_view_birthdays %}<li><a class="dropdown-item" href="{% url 'birthday_calendar' %}">Дни рождения команды</a></li>{% endif %}{% if birthday_today %}<li><button type="button" class="dropdown-item" data-birthday-open>Моё поздравление 🎉</button></li>{% endif %}<li><a class="dropdown-item" data-tour="help-link" href="{% url 'training_help' %}">Помощь и обучение</a></li>
                             
                             {% if can_award_points %}<a class="dropdown-item" href="{% url 'points_works' %}">Центр баллов</a>{% endif %}

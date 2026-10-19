@@ -4,6 +4,7 @@ from .models import Notification
 from .permissions import CAPABILITIES,allowed
 from .points import can_award
 from .access import can_manage_members, can_record_visits
+from .card_access import can_manage_cards, eligible_person
 
 def notifications_processor(request):
     """
@@ -16,6 +17,8 @@ def notifications_processor(request):
         unread_notifications = Notification.objects.filter(recipient=request.user, is_read=False)
         return {
             'csrf_cookie_name': settings.CSRF_COOKIE_NAME,
+            'can_manage_cards': can_manage_cards(request.user),
+            'can_have_card': eligible_person(request.user),
             **context(request),
             'unread_notifications': unread_notifications,
             'can_award_points': can_award(request.user),

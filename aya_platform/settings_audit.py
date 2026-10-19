@@ -34,3 +34,4 @@ MIDDLEWARE += ["axes.middleware.AxesMiddleware"]
 from .login_protection import *
 CSRF_FAILURE_VIEW = 'users.request_security.csrf_failure'
 PUBLIC_SITE_URL = 'https://aya.test'
+CARD_PRIVATE_ROOT = AUDIT_RUNTIME / 'private-cards'

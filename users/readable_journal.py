@@ -20,6 +20,9 @@ ROUTES.update({'event_join':'Запись на мероприятие','event_fi
 ROUTES.update({'about_page':'О нас','admin_about_manage':'Редактор сведений об AYA','about_page_edit':'Редактор сведений об AYA','rating_history':'История начислений','open_profile_photo':'Фотография профиля','reveal_birthday':'Дата рождения','audit_log':'Журнал действий','journal_private':'Закрытый журнал','journal_activity':'Просмотры и поиск'})
 ROUTES['journal_cleanup']='Очистка журнала'
 ROUTES['profile_qr']='QR-код профиля'
+ROUTES.update({'card_list':'Волонтёрские карты','card_edit':'Редактор волонтёрской карты','card_create':'Подготовка волонтёрской карты','card_detail':'Волонтёрская карта','my_cards':'Моя волонтёрская карта','card_status':'Выдача и отзыв карты','card_download':'Печать волонтёрской карты','card_export':'Массовая печать карт','card_edition_edit':'Оформление карт','card_edition_create':'Новый учебный год карт'})
+MODELS.update({'users.VolunteerCard':'Волонтёрская карта','users.CardEdition':'Учебный год карт'})
+FIELDS.update({'count':'Количество карт','format':'Формат','year':'Учебный год','approval_ready':'Печать и подпись загружены','cards':'Карты'})
 FIELDS.update({'deleted_count':'Удалено записей','filters':'Условия очистки'})
 FIELDS.update({'failure_kind':'Проверка','failure_code':'Причина отказа','reason':'Пояснение'})
 FIELDS['is_superuser']='Полный доступ'

@@ -115,7 +115,7 @@ class User(AbstractUser):
 
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, verbose_name="QR-код")
 
-    def get_full_name(self): return f"{self.last_name} {self.first_name} {self.patronymic}".strip()
+    def get_full_name(self): return ' '.join(p.strip() for p in (self.last_name, self.first_name, self.patronymic) if p and p.strip())
     def get_role_display_custom(self):
         if self.is_superuser: return 'Управление сайтом'
         if self.role in {'volunteer','leader'} and self.pk:
@@ -578,3 +578,6 @@ class BirthdayGreeting(models.Model):
     seen_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         constraints = [models.UniqueConstraint(fields=['user', 'year'], name='birthday_once_per_year')]
+
+
+from .card_models import CardEdition, VolunteerCard

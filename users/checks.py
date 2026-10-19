@@ -19,3 +19,14 @@ def profile_qr_url_check(app_configs, **kwargs):
     except ImproperlyConfigured as error:
         return [Error(str(error), id='aya.E016')]
     return []
+
+
+@register()
+def private_card_storage_check(app_configs, **kwargs):
+    from pathlib import Path
+    private = Path(settings.CARD_PRIVATE_ROOT).resolve()
+    roots = [Path(settings.MEDIA_ROOT).resolve(), Path(settings.STATIC_ROOT).resolve()]
+    roots += [Path(p).resolve() for p in settings.STATICFILES_DIRS]
+    if any(private == root or private.is_relative_to(root) or root.is_relative_to(private) for root in roots):
+        return [Error('CARD_PRIVATE_ROOT должен находиться вне публичных media и static.', id='aya.E017')]
+    return []

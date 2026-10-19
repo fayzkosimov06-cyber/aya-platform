@@ -119,3 +119,4 @@ from .login_protection import *  # Shared DB-backed login throttling.
 CSRF_FAILURE_VIEW = 'users.request_security.csrf_failure'
 # One canonical HTTPS origin: QR codes must never depend on a request's Host header.
 PUBLIC_SITE_URL = os.environ.get('AYA_PUBLIC_SITE_URL', 'https://185-81-167-190.sslip.io')
+CARD_PRIVATE_ROOT = Path(os.environ.get('AYA_CARD_PRIVATE_ROOT', BASE_DIR / 'private' / 'volunteer_cards'))

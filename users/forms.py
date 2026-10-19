@@ -5,12 +5,13 @@ from .models import User, AboutPage, ActivityPeriod
 
 class UserRegisterForm(UserCreationForm):
     first_name = forms.CharField(max_length=150, required=True, label="Имя", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ваше имя'}))
-    last_name = forms.CharField(max_length=150, required=True, label="Фамилия", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ваша фамилия'}))
+    last_name = forms.CharField(max_length=150, required=False, label="Фамилия", help_text='Если фамилии нет, оставьте поле пустым.', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ваша фамилия'}))
+    patronymic = forms.CharField(max_length=100, required=False, label='Отчество', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Если есть'}))
     email = forms.EmailField(required=True, label="Электронная почта", widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@example.com'}))
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("username", "first_name", "last_name", "email")
+        fields = ("username", "first_name", "last_name", "patronymic", "email")
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Придумайте логин'}),
         }
