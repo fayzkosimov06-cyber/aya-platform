@@ -347,6 +347,14 @@ def profile_user_is_staff(person):
     return person.role in {'worker','head_admin'} or person.is_superuser
 
 
+def record_profile_form_errors(request, form):
+    # Codes and labels are sufficient for diagnosis; submitted values never enter this record.
+    request.aya_form_validation = {
+        'validation_fields': [str(form.fields[name].label) if name in form.fields else 'Форма целиком' for name in form.errors],
+        'validation_codes': {name: [error.code or 'invalid' for error in errors] for name, errors in form.errors.as_data().items()},
+    }
+
+
 @login_required
 def profile_edit_view(request):
     if request.method == 'POST':
@@ -355,6 +363,7 @@ def profile_edit_view(request):
             form.save()
             messages.success(request, 'Ваш профиль успешно обновлен.')
             return redirect('my_profile')
+        record_profile_form_errors(request, form)
     else:
         form = UserUpdateForm(instance=request.user)
     return render(request, 'users/staff_profile_edit.html' if profile_user_is_staff(request.user) else 'users/profile_edit.html', {'form': form, 'user_to_edit': request.user})
@@ -762,6 +771,7 @@ def admin_edit_user_view(request, pk):
                 Notification.objects.create(recipient=target, message=f"Модератор {request.user} изменил ваш профиль.")
             messages.success(request, "Профиль обновлен.")
             return redirect('public_profile', pk=pk)
+        record_profile_form_errors(request, form)
     else:
         form = AdminUpdateForm(instance=target, actor=request.user)
     return render(request, 'users/staff_profile_edit.html' if profile_user_is_staff(target) else 'users/profile_edit.html', {'form': form, 'user_to_edit': target})

@@ -44,16 +44,16 @@ class FixedProfileChoicesMixin:
         data = super().clean()
         from django.utils import timezone
         if data.get('birth_date') and data['birth_date'] > timezone.localdate():
-            self.add_error('birth_date','Дата рождения не может быть в будущем.')
+            self.add_error('birth_date',forms.ValidationError('Дата рождения не может быть в будущем.',code='future_date'))
         from .social_links import social_url
         for name in ('instagram','linkedin'):
             if data.get(name):
                 normalized=social_url(data[name],name)
                 if normalized:data[name]=normalized
-                else:self.add_error(name,'Укажите ссылку с https:// (для Instagram можно @имя).')
+                else:self.add_error(name,forms.ValidationError('Укажите ссылку с https:// (для Instagram можно @имя).',code='invalid_url'))
         for name in self.legacy_profile_fields:
             if name in self.fields and name in data and data[name] in (None, ''):
-                self.add_error(name, 'Выберите значение из списка: прежнее значение не входит в справочник.')
+                self.add_error(name, forms.ValidationError('Выберите значение из списка: прежнее значение не входит в справочник.',code='invalid_choice'))
         return data
 
 class UserUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
@@ -66,8 +66,8 @@ class UserUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
         if self.instance.role in {'worker','head_admin'} or self.instance.is_superuser:
             for key in ('faculty','course','group'):
                 self.fields.pop(key,None)
-            self.fields['job_title']=forms.CharField(label='Должность',required=False,initial=self.instance.job_title)
-            self.fields['office_location']=forms.CharField(label='Кабинет',required=False,initial=self.instance.office_location)
+            self.fields['job_title']=forms.CharField(label='Должность',required=False,max_length=User._meta.get_field('job_title').max_length,initial=self.instance.job_title)
+            self.fields['office_location']=forms.CharField(label='Кабинет',required=False,max_length=User._meta.get_field('office_location').max_length,initial=self.instance.office_location)
 
     def save(self,commit=True):
         person=super().save(commit=False)

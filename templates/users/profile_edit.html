@@ -47,6 +47,7 @@
                     </div>
 
                     <div class="card-body p-5">
+                        {% include "users/partials/profile_errors.html" %}
                         
                         <h5 class="text-primary mb-3"><i class="fas fa-user-circle"></i> Основное</h5>
                         <div class="row g-3 mb-4">
@@ -57,55 +58,55 @@
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold text-dark">Логин (Username)</label>
-                                        {{ form.username }}
+                                        {{ form.username }}{{ form.username.errors }}
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold text-dark">Email</label>
-                                        {{ form.email }}
+                                        {{ form.email }}{{ form.email.errors }}
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold text-dark">Роль</label>
-                                        {{ form.role }}
+                                        {{ form.role }}{{ form.role.errors }}
                                     </div>
                                     <div class="col-md-6 d-flex align-items-end">
                                         <div class="form-check form-switch mb-2">
-                                            {{ form.is_active_volunteer_title }}
+                                            {{ form.is_active_volunteer_title }}{{ form.is_active_volunteer_title.errors }}
                                             <label class="form-check-label fw-bold text-success" for="{{ form.is_active_volunteer_title.id_for_label }}">
                                                 Статус "Активный волонтер"
                                             </label>
                                         </div>
                                     </div>
                                     <div class="col-12 mt-2">
-                                        <a href="{% url 'admin_password_change' user_to_edit.pk %}" class="btn btn-warning w-100 fw-bold shadow-sm">
+                                        {% if request.user.is_superuser %}<a href="{% url 'admin_password_change' user_to_edit.pk %}" class="btn btn-warning w-100 fw-bold shadow-sm">
                                             <i class="fas fa-key me-2"></i> Принудительно сменить пароль
-                                        </a>
+                                        </a>{% endif %}
                                     </div>
                                 </div>
                             </div>
                             {% endif %}
                             <div class="col-md-12">
                                 <label class="form-label fw-bold">Фото профиля</label>
-                                <div data-tour="profile-info">{{ form.photo }}</div>
+                                <div data-tour="profile-info">{{ form.photo }}{{ form.photo.errors }}</div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Фамилия</label>
-                                {{ form.last_name }}
+                                {{ form.last_name }}{{ form.last_name.errors }}
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Имя</label>
-                                {{ form.first_name }}
+                                {{ form.first_name }}{{ form.first_name.errors }}
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Отчество</label>
-                                {{ form.patronymic }}
+                                {{ form.patronymic }}{{ form.patronymic.errors }}
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Дата рождения</label>
-                                {{ form.birth_date }}
+                                {{ form.birth_date }}{{ form.birth_date.errors }}
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Пол</label>
-                                {{ form.gender }}
+                                {{ form.gender }}{{ form.gender.errors }}
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Город</label>
@@ -120,11 +121,11 @@
                             {% if user_to_edit.role == 'worker' or user_to_edit.role == 'head_admin' %}
                                 <div class="col-md-6">
                                     <label class="form-label">Должность</label>
-                                    {{ form.job_title }}
+                                    {{ form.job_title }}{{ form.job_title.errors }}
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Кабинет</label>
-                                    {{ form.office_location }}
+                                    {{ form.office_location }}{{ form.office_location.errors }}
                                 </div>
                             {% else %}
                                 <div class="col-md-4">
@@ -137,7 +138,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Группа</label>
-                                    {{ form.group }}
+                                    {{ form.group }}{{ form.group.errors }}
                                 </div>
                             {% endif %}
                         </div>
@@ -152,14 +153,14 @@
                         <div class="row align-items-end mb-3">
                             <div class="col-md-7">
                                 <label class="form-label fw-bold"><i class="fas fa-phone-alt text-secondary"></i> Телефон</label>
-                                {{ form.phone }}
+                                {{ form.phone }}{{ form.phone.errors }}
                             </div>
                             {% if request.user == user_to_edit %}
                             <div class="col-md-5">
                                 <label class="form-label small text-muted">Кто видит?</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
-                                    <div data-tour="profile-privacy">{{ form.phone_privacy }}</div>
+                                    <div data-tour="profile-privacy">{{ form.phone_privacy }}{{ form.phone_privacy.errors }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -168,14 +169,14 @@
                         <div class="row align-items-end mb-3">
                             <div class="col-md-7">
                                 <label class="form-label fw-bold"><i class="fab fa-telegram text-primary"></i> Telegram</label>
-                                {{ form.telegram }}
+                                {{ form.telegram }}{{ form.telegram.errors }}
                             </div>
                             {% if request.user == user_to_edit %}
                             <div class="col-md-5">
                                 <label class="form-label small text-muted">Кто видит?</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
-                                    {{ form.telegram_privacy }}
+                                    {{ form.telegram_privacy }}{{ form.telegram_privacy.errors }}
                                 </div>
                             </div>
                             {% endif %}
@@ -184,14 +185,14 @@
                         <div class="row align-items-end mb-3">
                             <div class="col-md-7">
                                 <label class="form-label fw-bold"><i class="fab fa-instagram text-danger"></i> Instagram</label>
-                                {{ form.instagram }}
+                                {{ form.instagram }}{{ form.instagram.errors }}
                             </div>
                             {% if request.user == user_to_edit %}
                             <div class="col-md-5">
                                 <label class="form-label small text-muted">Кто видит?</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
-                                    {{ form.instagram_privacy }}
+                                    {{ form.instagram_privacy }}{{ form.instagram_privacy.errors }}
                                 </div>
                             </div>
                             {% endif %}
@@ -200,14 +201,14 @@
                         <div class="row align-items-end mb-4">
                             <div class="col-md-7">
                                 <label class="form-label fw-bold"><i class="fab fa-linkedin text-primary"></i> LinkedIn</label>
-                                {{ form.linkedin }}
+                                {{ form.linkedin }}{{ form.linkedin.errors }}
                             </div>
                             {% if request.user == user_to_edit %}
                             <div class="col-md-5">
                                 <label class="form-label small text-muted">Кто видит?</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
-                                    {{ form.linkedin_privacy }}
+                                    {{ form.linkedin_privacy }}{{ form.linkedin_privacy.errors }}
                                 </div>
                             </div>
                             {% endif %}
@@ -218,7 +219,7 @@
                         <h5 class="text-primary mb-3"><i class="fas fa-pen-nib"></i> О себе (Bio)</h5>
                         <div class="row mb-3">
                             <div class="col-md-12">
-                                {{ form.about_me }}
+                                {{ form.about_me }}{{ form.about_me.errors }}
                             </div>
                         </div>
                         {% if request.user == user_to_edit %}
@@ -227,7 +228,7 @@
                                 <label class="form-label small text-muted">Кто видит описание?</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
-                                    {{ form.about_me_privacy }}
+                                    {{ form.about_me_privacy }}{{ form.about_me_privacy.errors }}
                                 </div>
                             </div>
                         </div>

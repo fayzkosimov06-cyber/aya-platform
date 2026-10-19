@@ -38,14 +38,18 @@ class ControlMiddleware:
      model=User if name in {'public_profile','admin_edit_user','user_delete'} else Event if name.startswith('event_') else School if name.startswith('school_') else Direction if name.startswith('direction_') else Club if name.startswith('club_') else ContributionWork if name in {'points_work','work_delete'} else None
      obj=model.objects.filter(pk=pk).first() if model else None
      if obj and not (isinstance(obj,User) and obj.is_superuser and not request.user.is_superuser):target={'target_name':str(obj),'target_type':model._meta.label}
-    if name=='my_profile':target={'target_name':str(request.user),'target_type':'users.User'}
+    if name in {'my_profile','profile_edit'}:target={'target_name':str(request.user),'target_type':'users.User'}
     if response.status_code>=400:emit('failure',name,'Отказ или ошибка',after={**target,'path':request.path,'status':response.status_code,'method':request.method},private=True)
     elif request.method not in {'GET','HEAD','OPTIONS'}:
      import re,html
      body=response.content.decode('utf-8',errors='replace') if not response.streaming and response.get('Content-Type','').startswith('text/html') else ''
+     validation=getattr(request,'aya_form_validation',None)
      errors=re.findall(r'<ul[^>]*class=[\"\'][^\"\']*errorlist[^\"\']*[\"\'][^>]*>(.*?)</ul>',body,re.S)
      error='; '.join(html.unescape(re.sub('<[^>]+>',' ',x)).strip() for x in errors)
-     emit('failure' if errors else 'action',name,'Не сохранено: ошибка формы' if errors else 'Выполнено действие',after={**target,'path':request.path,'status':response.status_code,'action':safe_value('action',request.POST.get('action','сохранение')),'error':safe_value('error',error)})
+     if validation is not None:
+      emit('failure',name,'Не сохранено: ошибка формы',after={**target,'path':request.path,'status':response.status_code,**validation},private=True)
+     else:
+      emit('failure' if errors else 'action',name,'Не сохранено: ошибка формы' if errors else 'Выполнено действие',after={**target,'path':request.path,'status':response.status_code,'action':safe_value('action',request.POST.get('action','сохранение')),'error':safe_value('error',error)})
     elif response.status_code==200 and name not in {'journal_private','journal_activity','audit_log','record_search','training_progress'}:
      # Query text is retained only for known site search fields, never arbitrary URL credentials.
      query={k:safe_value(k,request.GET[k]) for k in ['q','query','status','state','direction','school','faculty','course','gender','city'] if k in request.GET}
