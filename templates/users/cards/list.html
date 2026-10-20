@@ -4,8 +4,8 @@
 <details class="vc-design" {% if not has_cards %}open{% endif %}>
   <summary class="vc-design-heading"><span><span class="vc-eyebrow">ОФОРМЛЕНИЕ КАРТЫ</span><strong>Так будет выглядеть карта</strong></span><span class="vc-demo-label">Демонстрационный образец</span></summary>
   <div class="vc-previews vc-sample-previews">
-    <figure><img src="{% url 'card_sample_preview' 'front' %}" draggable="false" alt="Образец лицевой стороны: фото, ФИО в три строки, курс и номер"><figcaption>Лицевая сторона · личные данные</figcaption></figure>
-    <figure><img src="{% url 'card_sample_preview' 'back' %}" draggable="false" alt="Образец оборота: место для загруженных печати и подписи, QR-код"><figcaption>Оборотная сторона · подтверждение и QR</figcaption></figure>
+    <figure><img src="{% url 'card_sample_preview' 'front' %}" draggable="false" alt="Образец лицевой стороны: фото, ФИО, QR-код профиля, курс и номер"><figcaption>Лицевая сторона · QR-код профиля</figcaption></figure>
+    <figure><img src="{% url 'card_sample_preview' 'back' %}" draggable="false" alt="Образец оборота: AYA, университет, название отдела, печать и подпись"><figcaption>Оборотная сторона · печать и подпись</figcaption></figure>
   </div>
   <p class="vc-demo-note">Вымышленные имя и фотография. В настоящей карте будут данные волонтёра, ваши логотипы, печать и подпись. QR образца открывает список волонтёров.</p>
 </details>

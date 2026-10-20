@@ -43,6 +43,11 @@ default so filtering and bulk printing remain convenient.
 - PDF and PNG use identical capital-height baselines and rounded portrait
   placement. The three name components share a fitted font size; missing
   components leave no blank rows. The course value sits beneath its label.
+- The QR sits on the front beside the three name lines; the fitted name column
+  cannot extend into its quiet zone. The back combines the two annual logos
+  with the exact department caption, and reserves 23 x 16 mm for the genuine
+  seal plus a separate 36 x 10 mm signature slot above the footer. Both sides
+  carry the editable card number and academic year. Corner accents are vectors.
 - QR modules are vectors in pure K black with a four-module white quiet zone;
   payload is the same configured canonical profile URL as existing profile QRs.
 - Images retain their available resolution up to 600 dpi at final placed size.
@@ -77,3 +82,5 @@ duplex sheets, missing name parts, private storage, CSRF, role checks and the
 create/issue/view/download/revoke workflow on synthetic accounts only. They
 also compare actual PDF/PNG name baselines, decode both QR renderers and verify
 initial setup, navigation, sample read-only behavior and profile-card isolation.
+The reverse's Tajik department name and full seal/signature bounds are verified
+in actual PNG and rendered PDF output. Duplex QR checks scan the front sheets.

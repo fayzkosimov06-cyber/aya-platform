@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 from zipfile import ZipFile
-from PIL import Image
+from PIL import Image, ImageChops
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -229,10 +229,11 @@ class VolunteerCardTests(TestCase):
 
     def test_real_pdf_qr_decodes_independently_at_print_resolution(self):
         document=pdfium.PdfDocument(make_pdf([self.card]))
-        image=document[1].render(scale=300/72).to_pil()
+        image=document[0].render(scale=300/72).to_pil()
         decoded=zxingcpp.read_barcode(image)
         self.assertIsNotNone(decoded)
         self.assertEqual(decoded.text,profile_url(self.member))
+        self.assertIsNone(zxingcpp.read_barcode(document[1].render(scale=300/72).to_pil()))
         document.close()
 
     def test_a4_imposition_pairs_every_card_even_on_partial_sheet_and_decodes_all_qr(self):
@@ -249,7 +250,7 @@ class VolunteerCardTests(TestCase):
             reader=PdfReader(BytesIO(pdf));self.assertEqual(len(reader.pages),4)
             self.assertAlmostEqual(float(reader.pages[0].mediabox.width)/mm,210,places=3)
             document=pdfium.PdfDocument(pdf)
-            for i,expected in [(1,8),(3,1)]:
+            for i,expected in [(0,8),(2,1)]:
                 image=document[i].render(scale=300/72).to_pil()
                 decoded=zxingcpp.read_barcodes(image)
                 self.assertEqual(len(decoded),expected)
@@ -312,7 +313,8 @@ class VolunteerCardTests(TestCase):
             for image in page['/Resources'].get('/XObject',{}).values():
                 image=image.get_object()
                 if image.get('/Subtype')=='/Image':
-                    self.assertLessEqual(int(image['/Width']),600)
+                    # The enlarged signature slot is 36 mm wide at up to 600 dpi.
+                    self.assertLessEqual(int(image['/Width']),851)
                     self.assertLessEqual(int(image['/Height']),700)
 
     def test_uploaded_photo_is_used_even_if_profile_source_was_not_changed(self):
@@ -387,7 +389,7 @@ class VolunteerCardTests(TestCase):
             response = self.client.get(reverse('card_sample_preview', args=[side]))
             self.assertEqual(response.status_code, 200)
             self.assertIn('no-store', response['Cache-Control'])
-            if side == 'back':
+            if side == 'front':
                 decoded = zxingcpp.read_barcode(Image.open(BytesIO(response.content)))
                 self.assertIsNotNone(decoded)
                 self.assertEqual(decoded.text, 'https://aya.test' + reverse('volunteer_list'))
@@ -404,8 +406,8 @@ class VolunteerCardTests(TestCase):
         preview = Image.open(BytesIO(preview_png(self.card, 'front', dpi=dpi))).convert('RGB')
         def text_rows(image):
             rows = []
-            for y in range(round(17*scale), round(36*scale)):
-                ink = sum(1 for x in range(round(32*scale), round(81*scale))
+            for y in range(round(17*scale), round(34*scale)):
+                ink = sum(1 for x in range(round(30*scale), round(58*scale))
                           if all(c < 160 for c in image.getpixel((x,y))[:3]))
                 if ink > 5:
                     if not rows or y-rows[-1][-1] > 8:
@@ -419,9 +421,67 @@ class VolunteerCardTests(TestCase):
         for left, right in zip(print_rows, preview_rows):
             self.assertLessEqual(abs(left[0]-right[0]), 3)
             self.assertLessEqual(abs(left[-1]-right[-1]), 3)
-        for image in [pdf[1].render(scale=dpi/72).to_pil(),
-                      Image.open(BytesIO(preview_png(self.card, 'back', dpi=dpi)))]:
+        for image in [pdf[0].render(scale=dpi/72).to_pil(),
+                      Image.open(BytesIO(preview_png(self.card, 'front', dpi=dpi)))]:
             decoded = zxingcpp.read_barcode(image)
             self.assertIsNotNone(decoded)
             self.assertEqual(decoded.text, profile_url(self.member))
         pdf.close()
+
+    def test_back_department_text_and_full_stamp_signature_spaces_in_png_and_pdf(self):
+        self.edition.stamp = picture(color='#fa00fa', size=(600,600))
+        self.edition.signature = picture(color='#00b400', size=(1400,280))
+        data = make_pdf([self.card])
+        text = ' '.join(PdfReader(BytesIO(data)).pages[1].extract_text().split())
+        self.assertIn('Шуъбаи кор бо ҷавонони ДДТТ ба номи Абуали ибни сино', text)
+        self.assertIn('Муҳр', text)
+        self.assertIn('Signature', text)
+        dpi, scale = 300, 300/25.4
+        document = pdfium.PdfDocument(data)
+        printed = document[1].render(scale=dpi/72).to_pil().crop(
+            (round(6*scale),round(6*scale),round(92*scale),round(60*scale))).convert('RGB')
+        preview = Image.open(BytesIO(preview_png(self.card,'back',dpi=dpi))).convert('RGB')
+        for image in [printed, preview]:
+            self.assertIsNone(zxingcpp.read_barcode(image))
+            red, green, blue = image.split()
+            seal_mask = ImageChops.multiply(ImageChops.multiply(
+                red.point(lambda c:255 if c>220 else 0),blue.point(lambda c:255 if c>220 else 0)),
+                green.point(lambda c:255 if c<50 else 0))
+            signature_mask = ImageChops.multiply(ImageChops.multiply(
+                green.point(lambda c:255 if c>120 else 0),red.point(lambda c:255 if c<50 else 0)),
+                blue.point(lambda c:255 if c<50 else 0))
+            self.assertIsNotNone(seal_mask.getbbox())
+            self.assertIsNotNone(signature_mask.getbbox())
+            left, top, right, bottom = [v/scale for v in seal_mask.getbbox()]
+            self.assertGreaterEqual(left,7.8)
+            self.assertLessEqual(right,31.2)
+            self.assertGreaterEqual(top,28.0)
+            self.assertLessEqual(bottom,44.5)
+            self.assertGreaterEqual(bottom-top,15.6)
+            left, top, right, bottom = [v/scale for v in signature_mask.getbbox()]
+            self.assertGreaterEqual(left,42.8)
+            self.assertLessEqual(right,79.2)
+            self.assertGreaterEqual(top,32.6)
+            self.assertLessEqual(bottom,43.2)
+        document.close()
+
+    def test_long_full_name_stays_left_of_front_qr_and_extreme_names_are_flagged(self):
+        from reportlab.pdfbase import pdfmetrics
+        self.card.last_name = 'Абдурахмонов'
+        self.card.first_name = 'Абдурашид'
+        self.card.patronymic = 'Сайфуллозода'
+        self.assertEqual(preflight(self.card), [])
+        names = {line.upper() for line in self.card.name_lines}
+        positions = {}
+        def inspect(text, cm, tm, font, size):
+            value = text.strip()
+            if value in names:
+                positions[value] = (tm[4]/mm-6, size)
+        PdfReader(BytesIO(make_pdf([self.card]))).pages[0].extract_text(visitor_text=inspect)
+        self.assertEqual(set(positions), names)
+        for name, (left, size) in positions.items():
+            self.assertGreaterEqual(left,30)
+            self.assertLessEqual(left+pdfmetrics.stringWidth(name,'AYA-Bold',size)/mm,57.6)
+            self.assertGreaterEqual(size,5.3)
+        self.card.last_name = 'Ж'*150
+        self.assertTrue(any('слишком длинная' in error for error in preflight(self.card)))

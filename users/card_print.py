@@ -25,6 +25,8 @@ from .profile_qr import profile_url
 W, H, BLEED, MARK = 86, 54, 3, 3
 NAVY, MUTED, PALE, WHITE = '#0C2F62', '#60758E', '#E6F0F7', '#FFFFFF'
 FONTS = Path(__file__).parent / 'card_assets' / 'fonts'
+NAME_WIDTH, NAME_SIZE = 27, 11.8
+DEPARTMENT_LINES = ('Шуъбаи кор бо ҷавонони ДДТТ', 'ба номи Абуали ибни сино')
 _font_lock = threading.Lock()
 
 
@@ -92,7 +94,7 @@ def preflight(card):
         errors.append('Учебный год карты уже закончился.')
     if not card.name_lines:
         errors.append('Заполните ФИО.')
-    if any(font_size(line.upper(), 47.5, 13.2, True) < 5.3 for line in card.name_lines):
+    if any(font_size(line.upper(), NAME_WIDTH, NAME_SIZE, True) < 5.3 for line in card.name_lines):
         errors.append('Одна из частей ФИО слишком длинная для читаемой печати. Проверьте её в редакторе карты.')
     if any(ord(char) not in pdfmetrics.getFont('AYA-Bold').face.charWidths for line in card.name_lines + [card.number] for char in line.upper()):
         errors.append('В ФИО есть символы, которые не поддерживает печатный шрифт. Проверьте написание.')
@@ -164,6 +166,15 @@ class PDFPainter:
         self.c.line(self.x+x*mm, self.y+(H-y)*mm,
                     self.x+(x if vertical else x+w)*mm, self.y+(H-y-w if vertical else H-y)*mm)
 
+    def polygon(self, points, fill):
+        path = self.c.beginPath()
+        path.moveTo(self.x+points[0][0]*mm, self.y+(H-points[0][1])*mm)
+        for x, y in points[1:]:
+            path.lineTo(self.x+x*mm, self.y+(H-y)*mm)
+        path.close()
+        self.c.setFillColor(HexColor(fill))
+        self.c.drawPath(path, stroke=0, fill=1)
+
     def text(self, text, x, y, size, *, bold=False, color=NAVY, align='left', width=None):
         if width is not None:
             size = font_size(text, width, size, bold)
@@ -227,6 +238,9 @@ class RasterPainter:
         self.draw.line([x*s, y*s, (x if vertical else x+w)*s,
                         (y+w if vertical else y)*s], fill=color, width=max(1, round(.12*s)))
 
+    def polygon(self, points, fill):
+        self.draw.polygon([(round(x*self.scale), round(y*self.scale)) for x, y in points], fill=fill)
+
     def text(self, text, x, y, size, *, bold=False, color=NAVY, align='left', width=None):
         if width is not None:
             size = font_size(text, width, size, bold)
@@ -263,52 +277,52 @@ def paint_card(p, card, side, assets=None, *, qr_url=None):
     p.rect(-BLEED, -BLEED, W+2*BLEED, H+2*BLEED, WHITE)
     year = card.edition.academic_year
     if side == 'front':
-        p.image(a['aya'], 5, 2.8, 20, 10.7)
-        p.line(28.6, 4.5, 8.5, '#92A8BF', vertical=True)
+        p.image(a['aya'], 3.5, 2.8, 20, 10.7)
+        p.line(27.2, 4.5, 8.5, '#92A8BF', vertical=True)
         p.image(a['university'], 70, 2.8, 10.5, 13.1)
-        p.text('КОРТИ ВОЛОНТЁР', 31.7, 4.7, 8.0, bold=True, width=35.5)
-        p.text('Карта волонтёра', 31.7, 8.5, 6.3, color=MUTED)
-        p.text('Volunteer card', 31.7, 11.5, 6.3, color=MUTED)
+        p.text('КОРТИ ВОЛОНТЁР', 30.5, 4.7, 8.0, bold=True, width=36)
+        p.text('Карта волонтёра', 30.5, 8.5, 6.3, color=MUTED)
+        p.text('Volunteer card', 30.5, 11.5, 6.3, color=MUTED)
         if a['photo']:
-            p.image(a['photo'], 5, 16.2, 24, 28.7, crop=True, radius=1.5)
+            p.image(a['photo'], 3.5, 15.7, 24, 28.7, crop=True, radius=1.5)
         else:
-            p.rect(5, 16.2, 24, 28.7, PALE)
-            p.text('Фото', 17, 29, 8, color=MUTED, align='center')
+            p.rect(3.5, 15.7, 24, 28.7, PALE, radius=1.5)
+            p.text('Фото', 15.5, 29, 8, color=MUTED, align='center')
         names = card.name_lines
-        first_y = {1: 26, 2: 23, 3: 20}.get(len(names), 20)
+        first_y = {1: 24.6, 2: 21.8, 3: 19}.get(len(names), 19)
         # Keep all name components at one size; long names still fit the card.
-        name_size = min((font_size(value.upper(), 47.5, 13.2, True) for value in names), default=13.2)
+        name_size = min((font_size(value.upper(), NAME_WIDTH, NAME_SIZE, True) for value in names), default=NAME_SIZE)
         for i, value in enumerate(names):
-            p.text(value.upper(), 33, first_y+i*5.8, name_size, bold=True)
+            p.text(value.upper(), 30.5, first_y+i*5.5, name_size, bold=True)
         if card.course:
-            p.text('Курс · Year', 33, 37.5, 6.0)
-            p.text(str(card.course), 33, 40.7, 12.5, bold=True)
-        p.rect(-BLEED, 46.5, W+2*BLEED, 7.5+BLEED, PALE)
-        p.text('№ '+card.number, 5.5, 49.5, 7.8, bold=True, width=40)
-        p.text(year, 81, 48.0, 7.2, bold=True, align='right')
-        p.text('Соли таҳсил · Учебный год · Academic year', 81, 51.5, 3.7, color=MUTED, align='right')
+            p.text('Курс · Year', 30.5, 35.6, 6.0)
+            p.text(str(card.course), 30.5, 39.0, 12.5, bold=True)
+        p.rect(59, 15.7, 24.5, 24.5, '#F0F3F7', radius=1.6)
+        p.qr(qr_matrix(qr_url or profile_url(card.user)), 59.4, 16.1, 23.7)
+        p.text('Профиль / Profile', 71.25, 41.3, 5.2, color=MUTED, align='center', width=24)
     else:
-        p.rect(54, -BLEED, 32+BLEED, H+2*BLEED, PALE)
-        p.image(a['aya'], 4, 3.7, 11.7, 9)
-        p.line(17.5, 4.5, 8.5, '#92A8BF', vertical=True)
-        p.image(a['university'], 19.4, 3.3, 8.2, 10.1)
-        p.text(year, 51, 4.7, 7.0, bold=True, align='right')
-        for i, text in enumerate(['Соли таҳсил', 'Учебный год', 'Academic year']):
-            p.text(text, 51, 8.4+i*2.15, 4.4, color=MUTED, align='right')
-        p.text('Тасдиқ', 4, 17.6, 9.0, bold=True)
-        p.text('Подтверждение / Approval', 4, 22, 5.6, color=MUTED, width=46)
+        # Vector corner accents leave the white seal/signature area untouched.
+        p.polygon([(-BLEED,-BLEED),(29,-BLEED),(-BLEED,20)], '#E8F5FD')
+        p.polygon([(-BLEED,-BLEED),(21,-BLEED),(-BLEED,11)], '#D7EAF8')
+        p.polygon([(W+BLEED,23),(W+BLEED,48),(76,48)], '#E8F5FD')
+        p.polygon([(W+BLEED,34),(W+BLEED,48),(80,48)], '#D7EAF8')
+        p.image(a['aya'], 22, 3.3, 21.5, 13)
+        p.line(46.5, 4.2, 11.6, '#92A8BF', vertical=True)
+        p.image(a['university'], 51, 2.7, 12, 14.8)
+        for i, text in enumerate(DEPARTMENT_LINES):
+            p.text(text, 43, 19.5+i*4.1, 9.1, bold=True, align='center', width=76)
+        # A full 23 x 16 mm white area is reserved for the uploaded seal.
         if a['stamp']:
-            p.image(a['stamp'], 6, 27, 18, 14)
+            p.image(a['stamp'], 8, 28.2, 23, 16)
         if a['signature']:
-            p.image(a['signature'], 27, 30, 22, 10)
-        p.line(4, 42, 45.5, '#91A2B7')
-        for i, text in enumerate(['Имзои роҳбар', 'Подпись руководителя', 'Director’s signature']):
-            p.text(text, 4, 44+i*2.35, 4.8, color=MUTED)
-        for i, text in enumerate(['ПРОФИЛ', 'ПРОФИЛЬ', 'PROFILE']):
-            p.text(text, 70, 6.8+i*3.4, 6.1 if i == 0 else 5.6,
-                   bold=True, color=NAVY if i == 0 else MUTED, align='center')
-        p.qr(qr_matrix(qr_url or profile_url(card.user)), 57.5, 18, 25)
-        p.text(card.number, 70, 45.8, 7.4, bold=True, align='center', width=28)
+            p.image(a['signature'], 43, 32.8, 36, 10)
+        p.line(42, 43, 38, '#91A2B7')
+        p.text('Муҳр · Печать · Stamp', 20, 44.7, 4.7, color=MUTED, align='center', width=32)
+        p.text('Имзои роҳбар · Подпись · Signature', 61, 44.7, 4.5, color=MUTED, align='center', width=38)
+    p.rect(-BLEED, 46.5, W+2*BLEED, 7.5+BLEED, PALE)
+    p.text('№ '+card.number, 5.5, 49.5, 7.8, bold=True, width=40)
+    p.text(year, 81, 48.0, 7.2, bold=True, align='right')
+    p.text('Соли таҳсил · Учебный год · Academic year', 81, 51.5, 3.7, color=MUTED, align='right')
 
 
 def preview_png(card, side, *, viewer=False, dpi=240, qr_url=None):
