@@ -37,17 +37,23 @@ default so filtering and bulk printing remain convenient.
 - Final trim: 86 x 54 mm. Bleed: 3 mm. Individual press pages: 98 x 66 mm including
   3 mm outside the bleed for crop marks. PDF TrimBox is 86 x 54 mm; BleedBox is
   92 x 60 mm. Pages alternate front/back of each card.
-- Noto Sans regular/bold are embedded with Tajik Cyrillic support. Font binaries
+- Noto Sans regular/medium/bold are embedded with Tajik Cyrillic support. Font binaries
   and their SIL OFL license are in `users/card_assets/fonts/`, sourced from
   `https://github.com/notofonts/noto-fonts/tree/main/hinted/ttf/NotoSans`.
 - PDF and PNG use identical capital-height baselines and rounded portrait
-  placement. The three name components share a fitted font size; missing
-  components leave no blank rows. The course value sits beneath its label.
-- The QR sits on the front beside the three name lines; the fitted name column
-  cannot extend into its quiet zone. The back combines the two annual logos
-  with the exact department caption, and reserves 23 x 16 mm for the genuine
-  seal plus a separate 36 x 10 mm signature slot above the footer. Both sides
-  carry the editable card number and academic year. Corner accents are vectors.
+  placement. Approved typography option 2 uses natural case and Noto Sans Medium:
+  the three name components share a fitted font size without forced uppercase;
+  missing components leave no blank rows. The course value sits beneath its label.
+- A 17 mm navy institutional stripe sits at the front's left edge and reverse's
+  right edge, with the university crest, full name "ДДТТ ба номи Абуали ибни Сино"
+  and academic year. Only border-connected white backing of a crest rendering
+  copy is removed; internal white details and original uploaded files remain intact.
+- The front's 18 mm QR sits beside the three name lines in a fine pale-blue
+  frame; the fitted name column cannot extend into its quiet zone. The portrait
+  is 21.5 x 28.7 mm and its editor crop ratio matches. The reverse combines the
+  AYA logo with the exact department caption, reserving a larger 29 x 21 mm white
+  space for the genuine seal and a separate 28.5 x 9.5 mm signature slot. Both
+  sides carry the editable number; no decorative or generated seal is included.
 - QR modules are vectors in pure K black with a four-module white quiet zone;
   payload is the same configured canonical profile URL as existing profile QRs.
 - Images retain their available resolution up to 600 dpi at final placed size.

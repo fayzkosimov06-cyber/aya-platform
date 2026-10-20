@@ -25,23 +25,31 @@ from .profile_qr import profile_url
 W, H, BLEED, MARK = 86, 54, 3, 3
 NAVY, MUTED, PALE, WHITE = '#0C2F62', '#60758E', '#E6F0F7', '#FFFFFF'
 FONTS = Path(__file__).parent / 'card_assets' / 'fonts'
-NAME_WIDTH, NAME_SIZE = 27, 11.8
+NAME_WIDTH, NAME_SIZE = 20, 10.8
+PHOTO_WIDTH, PHOTO_HEIGHT = 21.5, 28.7
+STRIPE_WIDTH = 17
 DEPARTMENT_LINES = ('Шуъбаи кор бо ҷавонони ДДТТ', 'ба номи Абуали ибни сино')
+UNIVERSITY_LINES = ('ДДТТ', 'ба номи', 'Абуали', 'ибни Сино')
 _font_lock = threading.Lock()
 
 
 @functools.lru_cache(maxsize=1)
 def fonts():
     with _font_lock:
-        for name, filename in [('AYA-Regular', 'NotoSans-Regular.ttf'), ('AYA-Bold', 'NotoSans-Bold.ttf')]:
+        for name, filename in [('AYA-Regular', 'NotoSans-Regular.ttf'),
+                               ('AYA-Medium', 'NotoSans-Medium.ttf'), ('AYA-Bold', 'NotoSans-Bold.ttf')]:
             if name not in pdfmetrics.getRegisteredFontNames():
                 pdfmetrics.registerFont(TTFont(name, str(FONTS / filename)))
     return True
 
 
-def font_size(text, width, preferred, bold=False):
+def font_name(bold=False, medium=False):
+    return 'AYA-Bold' if bold else 'AYA-Medium' if medium else 'AYA-Regular'
+
+
+def font_size(text, width, preferred, bold=False, *, medium=False):
     fonts()
-    length = pdfmetrics.stringWidth(text, 'AYA-Bold' if bold else 'AYA-Regular', preferred) / mm
+    length = pdfmetrics.stringWidth(text, font_name(bold, medium), preferred) / mm
     return min(preferred, preferred * width / length) if length else preferred
 
 
@@ -73,11 +81,31 @@ def opened_image(value, *, trim=False):
     return image
 
 
+def badge_image(image):
+    """Remove only border-connected white backing, retaining white crest details.
+
+    This is a rendering copy: the uploaded original is never changed. Padding
+    connects all outside edges, even when trimming made the shield touch them.
+    """
+    image = image.convert('RGBA').copy()
+    red, green, blue, alpha = image.split()
+    white = ImageChops.multiply(ImageChops.multiply(
+        red.point(lambda c: 255 if c >= 242 else 0),
+        green.point(lambda c: 255 if c >= 242 else 0)),
+        blue.point(lambda c: 255 if c >= 242 else 0))
+    padded = Image.new('L', (image.width+2, image.height+2), 255)
+    padded.paste(white, (1, 1))
+    ImageDraw.floodfill(padded, (0, 0), 128)
+    outside = padded.crop((1, 1, image.width+1, image.height+1))
+    image.putalpha(ImageChops.multiply(alpha, outside.point(lambda c: 0 if c == 128 else 255)))
+    return image
+
+
 def artwork(card):
     root = Path(settings.BASE_DIR) / 'static' / 'img'
     return {
         'aya': opened_image(card.edition.aya_logo or root / 'aya-logo-2026.png', trim=True),
-        'university': opened_image(card.edition.university_logo or root / 'logo_university.png', trim=True),
+        'university': badge_image(opened_image(card.edition.university_logo or root / 'logo_university.png', trim=True)),
         'photo': opened_image(card.photo) if card.photo else None,
         'stamp': opened_image(card.edition.stamp, trim=True) if card.edition.stamp else None,
         'signature': opened_image(card.edition.signature, trim=True) if card.edition.signature else None,
@@ -94,11 +122,13 @@ def preflight(card):
         errors.append('Учебный год карты уже закончился.')
     if not card.name_lines:
         errors.append('Заполните ФИО.')
-    if any(font_size(line.upper(), NAME_WIDTH, NAME_SIZE, True) < 5.3 for line in card.name_lines):
+    if any(font_size(line, NAME_WIDTH, NAME_SIZE, medium=True) < 5.3 for line in card.name_lines):
         errors.append('Одна из частей ФИО слишком длинная для читаемой печати. Проверьте её в редакторе карты.')
-    if any(ord(char) not in pdfmetrics.getFont('AYA-Bold').face.charWidths for line in card.name_lines + [card.number] for char in line.upper()):
+    if any(ord(char) not in pdfmetrics.getFont('AYA-Medium').face.charWidths
+           for line in card.name_lines for char in line) or any(
+               ord(char) not in pdfmetrics.getFont('AYA-Bold').face.charWidths for char in card.number):
         errors.append('В ФИО есть символы, которые не поддерживает печатный шрифт. Проверьте написание.')
-    if font_size(card.number, 40, 7.8, True) < 4.5:
+    if font_size(card.number, 60, 7.5, True) < 4.5:
         errors.append('Номер слишком длинный для карты. Используйте более короткий номер.')
     if not card.photo:
         errors.append('Добавьте фотографию.')
@@ -118,7 +148,7 @@ def photo_dpi(card):
     try:
         with card.photo.open('rb') as stream:
             with Image.open(stream) as image:
-                return round(min(image.width / (24 / 25.4), image.height / (28.7 / 25.4)))
+                return round(min(image.width / (PHOTO_WIDTH / 25.4), image.height / (PHOTO_HEIGHT / 25.4)))
     except (OSError, ValueError):
         return None
 
@@ -175,16 +205,17 @@ class PDFPainter:
         self.c.setFillColor(HexColor(fill))
         self.c.drawPath(path, stroke=0, fill=1)
 
-    def text(self, text, x, y, size, *, bold=False, color=NAVY, align='left', width=None):
+    def text(self, text, x, y, size, *, bold=False, medium=False, color=NAVY, align='left', width=None):
         if width is not None:
-            size = font_size(text, width, size, bold)
+            size = font_size(text, width, size, bold, medium=medium)
         self.c.setFillColor(HexColor(color))
-        self.c.setFont('AYA-Bold' if bold else 'AYA-Regular', size)
+        face = font_name(bold, medium)
+        self.c.setFont(face, size)
         method = {'left': self.c.drawString, 'right': self.c.drawRightString, 'center': self.c.drawCentredString}[align]
         # Both painters use the font's capital height to position the baseline.
         # An estimated baseline here and an ink-top anchor in Pillow used to make
         # the on-site preview differ noticeably from the downloaded PDF.
-        cap = pdfmetrics.getFont('AYA-Bold' if bold else 'AYA-Regular').face.capHeight / 1000
+        cap = pdfmetrics.getFont(face).face.capHeight / 1000
         method(self.x+x*mm, self.y+(H-y)*mm-size*cap, text)
 
     def image(self, image, x, y, w, h, *, crop=False, radius=0):
@@ -241,13 +272,16 @@ class RasterPainter:
     def polygon(self, points, fill):
         self.draw.polygon([(round(x*self.scale), round(y*self.scale)) for x, y in points], fill=fill)
 
-    def text(self, text, x, y, size, *, bold=False, color=NAVY, align='left', width=None):
+    def text(self, text, x, y, size, *, bold=False, medium=False, color=NAVY, align='left', width=None):
         if width is not None:
-            size = font_size(text, width, size, bold)
-        font = ImageFont.truetype(str(FONTS / ('NotoSans-Bold.ttf' if bold else 'NotoSans-Regular.ttf')),
+            size = font_size(text, width, size, bold, medium=medium)
+        face = font_name(bold, medium)
+        filename = {'AYA-Regular': 'NotoSans-Regular.ttf', 'AYA-Medium': 'NotoSans-Medium.ttf',
+                    'AYA-Bold': 'NotoSans-Bold.ttf'}[face]
+        font = ImageFont.truetype(str(FONTS / filename),
                                   max(1, round(size*self.dpi/72)))
         anchor = {'left': 'ls', 'right': 'rs', 'center': 'ms'}[align]
-        cap = pdfmetrics.getFont('AYA-Bold' if bold else 'AYA-Regular').face.capHeight / 1000
+        cap = pdfmetrics.getFont(face).face.capHeight / 1000
         self.draw.text((x*self.scale, y*self.scale + size*self.dpi/72*cap),
                        text, font=font, fill=color, anchor=anchor)
 
@@ -276,53 +310,60 @@ def paint_card(p, card, side, assets=None, *, qr_url=None):
     a = assets or artwork(card)
     p.rect(-BLEED, -BLEED, W+2*BLEED, H+2*BLEED, WHITE)
     year = card.edition.academic_year
+    # The opposite back edge is deliberate: front and reverse form one card.
+    stripe_x = 0 if side == 'front' else W-STRIPE_WIDTH
+    p.rect(-BLEED if side == 'front' else stripe_x, -BLEED,
+           STRIPE_WIDTH+BLEED, H+2*BLEED, NAVY)
+    p.image(a['university'], stripe_x+3.2, 4.0, 10.6, 14.2)
+    p.line(stripe_x+4.3, 20.5, 8.4, '#9FB6CC')
+    for i, text in enumerate(UNIVERSITY_LINES):
+        p.text(text, stripe_x+8.5, 22.5+i*3.9, 6.5, medium=True,
+               color=WHITE, align='center', width=13)
+    p.rect(stripe_x+3, 42.8, 11, .22, '#00BADB')
+    p.text(year, stripe_x+8.5, 47.5, 6.3, medium=True,
+           color=WHITE, align='center', width=14)
     if side == 'front':
-        p.image(a['aya'], 3.5, 2.8, 20, 10.7)
-        p.line(27.2, 4.5, 8.5, '#92A8BF', vertical=True)
-        p.image(a['university'], 70, 2.8, 10.5, 13.1)
-        p.text('КОРТИ ВОЛОНТЁР', 30.5, 4.7, 8.0, bold=True, width=36)
-        p.text('Карта волонтёра', 30.5, 8.5, 6.3, color=MUTED)
-        p.text('Volunteer card', 30.5, 11.5, 6.3, color=MUTED)
+        p.image(a['aya'], 19.5, 3.0, 20, 10.5)
+        p.line(42, 4.5, 8, '#72BED5', vertical=True)
+        p.text('КОРТИ ВОЛОНТЁР', 44, 5.0, 7.7, bold=True, width=39.5)
+        p.text('Карта волонтёра · Volunteer card', 44, 10, 5.0, color=MUTED, width=39.5)
         if a['photo']:
-            p.image(a['photo'], 3.5, 15.7, 24, 28.7, crop=True, radius=1.5)
+            p.image(a['photo'], 19.5, 18, PHOTO_WIDTH, PHOTO_HEIGHT, crop=True, radius=1.3)
         else:
-            p.rect(3.5, 15.7, 24, 28.7, PALE, radius=1.5)
-            p.text('Фото', 15.5, 29, 8, color=MUTED, align='center')
+            p.rect(19.5, 18, PHOTO_WIDTH, PHOTO_HEIGHT, PALE, radius=1.3)
+            p.text('Фото', 30.25, 31, 8, color=MUTED, align='center')
         names = card.name_lines
-        first_y = {1: 24.6, 2: 21.8, 3: 19}.get(len(names), 19)
-        # Keep all name components at one size; long names still fit the card.
-        name_size = min((font_size(value.upper(), NAME_WIDTH, NAME_SIZE, True) for value in names), default=NAME_SIZE)
+        first_y = {1: 24.4, 2: 21.6, 3: 18.8}.get(len(names), 18.8)
+        # Option 2: natural case, medium weight and one balanced size for all
+        # components. Long names shrink together and never invade the QR margin.
+        name_size = min((font_size(value, NAME_WIDTH, NAME_SIZE, medium=True)
+                         for value in names), default=NAME_SIZE)
         for i, value in enumerate(names):
-            p.text(value.upper(), 30.5, first_y+i*5.5, name_size, bold=True)
+            p.text(value, 43.5, first_y+i*5.6, name_size, medium=True)
         if card.course:
-            p.text('Курс · Year', 30.5, 35.6, 6.0)
-            p.text(str(card.course), 30.5, 39.0, 12.5, bold=True)
-        p.rect(59, 15.7, 24.5, 24.5, '#F0F3F7', radius=1.6)
-        p.qr(qr_matrix(qr_url or profile_url(card.user)), 59.4, 16.1, 23.7)
-        p.text('Профиль / Profile', 71.25, 41.3, 5.2, color=MUTED, align='center', width=24)
+            p.text('Курс · Year', 43.5, 37.7, 5.8, color=MUTED)
+            p.text(str(card.course), 43.5, 41.2, 11.5, medium=True)
+        p.rect(64.8, 20.5, 18.7, 18.7, '#D6E7F7', radius=1.4)
+        p.rect(65.0, 20.7, 18.3, 18.3, WHITE, radius=1.2)
+        p.qr(qr_matrix(qr_url or profile_url(card.user)), 65.15, 20.85, 18.0)
+        p.text('Профиль · Profile', 74.15, 40.4, 4.8, color=MUTED, align='center', width=18.7)
+        p.text('№ '+card.number, 19.5, 49.5, 7.5, bold=True, width=64)
     else:
-        # Vector corner accents leave the white seal/signature area untouched.
-        p.polygon([(-BLEED,-BLEED),(29,-BLEED),(-BLEED,20)], '#E8F5FD')
-        p.polygon([(-BLEED,-BLEED),(21,-BLEED),(-BLEED,11)], '#D7EAF8')
-        p.polygon([(W+BLEED,23),(W+BLEED,48),(76,48)], '#E8F5FD')
-        p.polygon([(W+BLEED,34),(W+BLEED,48),(80,48)], '#D7EAF8')
-        p.image(a['aya'], 22, 3.3, 21.5, 13)
-        p.line(46.5, 4.2, 11.6, '#92A8BF', vertical=True)
-        p.image(a['university'], 51, 2.7, 12, 14.8)
+        p.image(a['aya'], 5, 3, 18.5, 10)
+        p.line(25.5, 4.2, 7.5, '#72BED5', vertical=True)
+        p.text('ASSOCIATION OF', 27.5, 4.7, 7.0, medium=True, width=38)
+        p.text('YOUTH ATSMU', 27.5, 8.4, 7.0, medium=True, width=38)
         for i, text in enumerate(DEPARTMENT_LINES):
-            p.text(text, 43, 19.5+i*4.1, 9.1, bold=True, align='center', width=76)
-        # A full 23 x 16 mm white area is reserved for the uploaded seal.
+            p.text(text, 5, 16.5+i*3.9, 8.0, bold=True, width=60.5)
+        # A larger 29 x 21 mm white area remains clear of text and branding.
         if a['stamp']:
-            p.image(a['stamp'], 8, 28.2, 23, 16)
+            p.image(a['stamp'], 5, 24.2, 29, 21)
         if a['signature']:
-            p.image(a['signature'], 43, 32.8, 36, 10)
-        p.line(42, 43, 38, '#91A2B7')
-        p.text('Муҳр · Печать · Stamp', 20, 44.7, 4.7, color=MUTED, align='center', width=32)
-        p.text('Имзои роҳбар · Подпись · Signature', 61, 44.7, 4.5, color=MUTED, align='center', width=38)
-    p.rect(-BLEED, 46.5, W+2*BLEED, 7.5+BLEED, PALE)
-    p.text('№ '+card.number, 5.5, 49.5, 7.8, bold=True, width=40)
-    p.text(year, 81, 48.0, 7.2, bold=True, align='right')
-    p.text('Соли таҳсил · Учебный год · Academic year', 81, 51.5, 3.7, color=MUTED, align='right')
+            p.image(a['signature'], 37, 34.3, 28.5, 9.5)
+        p.line(37, 45.0, 28.5, '#91A2B7')
+        p.text('Муҳр · Печать · Stamp', 19.5, 46.4, 4.2, color=MUTED, align='center', width=29)
+        p.text('Имзои роҳбар · Подпись · Signature', 51.25, 46.4, 4.2, color=MUTED, align='center', width=28.5)
+        p.text('№ '+card.number, 5, 50.3, 7.5, bold=True, width=60)
 
 
 def preview_png(card, side, *, viewer=False, dpi=240, qr_url=None):

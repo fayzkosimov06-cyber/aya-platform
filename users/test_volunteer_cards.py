@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 from zipfile import ZipFile
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageDraw
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -215,9 +215,10 @@ class VolunteerCardTests(TestCase):
         positions=[]
         def visitor(text, cm, tm, font, size):
             for line in self.card.name_lines:
-                if line.upper() in text:positions.append((line,tm[5]))
+                if line in text:positions.append((line,tm[5]))
         text=page.extract_text(visitor_text=visitor)
-        self.assertIn('ФИРӮЗ',text)
+        self.assertIn('Фирӯз',text)
+        self.assertNotIn('ФИРӮЗ',text)
         self.assertEqual(len({round(pos,2) for _,pos in positions}),3)
         self.assertNotIn('Группа',text)
         self.assertNotIn('Гурӯҳ',text)
@@ -225,7 +226,9 @@ class VolunteerCardTests(TestCase):
         for font in page['/Resources']['/Font'].values():
             descriptor=font.get_object().get('/FontDescriptor')
             if descriptor and '/FontFile2' in descriptor.get_object():embedded+=1
-        self.assertGreaterEqual(embedded,2)
+        self.assertGreaterEqual(embedded,3)
+        self.assertTrue(any('NotoSans-Medium' in str(font.get_object().get('/BaseFont'))
+                            for font in page['/Resources']['/Font'].values()))
 
     def test_real_pdf_qr_decodes_independently_at_print_resolution(self):
         document=pdfium.PdfDocument(make_pdf([self.card]))
@@ -406,8 +409,8 @@ class VolunteerCardTests(TestCase):
         preview = Image.open(BytesIO(preview_png(self.card, 'front', dpi=dpi))).convert('RGB')
         def text_rows(image):
             rows = []
-            for y in range(round(17*scale), round(34*scale)):
-                ink = sum(1 for x in range(round(30*scale), round(58*scale))
+            for y in range(round(18*scale), round(34*scale)):
+                ink = sum(1 for x in range(round(43.5*scale), round(63.5*scale))
                           if all(c < 160 for c in image.getpixel((x,y))[:3]))
                 if ink > 5:
                     if not rows or y-rows[-1][-1] > 8:
@@ -453,16 +456,16 @@ class VolunteerCardTests(TestCase):
             self.assertIsNotNone(seal_mask.getbbox())
             self.assertIsNotNone(signature_mask.getbbox())
             left, top, right, bottom = [v/scale for v in seal_mask.getbbox()]
-            self.assertGreaterEqual(left,7.8)
-            self.assertLessEqual(right,31.2)
-            self.assertGreaterEqual(top,28.0)
-            self.assertLessEqual(bottom,44.5)
-            self.assertGreaterEqual(bottom-top,15.6)
+            self.assertGreaterEqual(left,4.8)
+            self.assertLessEqual(right,34.2)
+            self.assertGreaterEqual(top,24.0)
+            self.assertLessEqual(bottom,45.4)
+            self.assertGreaterEqual(bottom-top,20.6)
             left, top, right, bottom = [v/scale for v in signature_mask.getbbox()]
-            self.assertGreaterEqual(left,42.8)
-            self.assertLessEqual(right,79.2)
-            self.assertGreaterEqual(top,32.6)
-            self.assertLessEqual(bottom,43.2)
+            self.assertGreaterEqual(left,36.8)
+            self.assertLessEqual(right,65.7)
+            self.assertGreaterEqual(top,34.1)
+            self.assertLessEqual(bottom,44.0)
         document.close()
 
     def test_long_full_name_stays_left_of_front_qr_and_extreme_names_are_flagged(self):
@@ -471,7 +474,7 @@ class VolunteerCardTests(TestCase):
         self.card.first_name = 'Абдурашид'
         self.card.patronymic = 'Сайфуллозода'
         self.assertEqual(preflight(self.card), [])
-        names = {line.upper() for line in self.card.name_lines}
+        names = set(self.card.name_lines)
         positions = {}
         def inspect(text, cm, tm, font, size):
             value = text.strip()
@@ -480,8 +483,43 @@ class VolunteerCardTests(TestCase):
         PdfReader(BytesIO(make_pdf([self.card]))).pages[0].extract_text(visitor_text=inspect)
         self.assertEqual(set(positions), names)
         for name, (left, size) in positions.items():
-            self.assertGreaterEqual(left,30)
-            self.assertLessEqual(left+pdfmetrics.stringWidth(name,'AYA-Bold',size)/mm,57.6)
+            self.assertGreaterEqual(left,43.4)
+            self.assertLessEqual(left+pdfmetrics.stringWidth(name,'AYA-Medium',size)/mm,63.6)
             self.assertGreaterEqual(size,5.3)
         self.card.last_name = 'Ж'*150
         self.assertTrue(any('слишком длинная' in error for error in preflight(self.card)))
+
+    def test_institutional_stripes_use_opposite_edges_and_full_university_name(self):
+        dpi, scale = 240, 240/25.4
+        document = pdfium.PdfDocument(make_pdf([self.card]))
+        for side, index in [('front',0), ('back',1)]:
+            text = ' '.join(PdfReader(BytesIO(make_pdf([self.card]))).pages[index].extract_text().split())
+            self.assertIn('ДДТТ ба номи Абуали ибни Сино', text)
+            images = [Image.open(BytesIO(preview_png(self.card,side,dpi=dpi))).convert('RGB'),
+                      document[index].render(scale=dpi/72).to_pil().crop(
+                          (round(6*scale),round(6*scale),round(92*scale),round(60*scale))).convert('RGB')]
+            for image in images:
+                left = image.getpixel((round(1*scale),round(39*scale)))
+                right = image.getpixel((round(85*scale),round(39*scale)))
+                navy, white = (left,right) if side == 'front' else (right,left)
+                self.assertLess(navy[0],40)
+                self.assertLess(navy[1],80)
+                self.assertGreater(navy[2],80)
+                self.assertTrue(all(c>245 for c in white))
+        document.close()
+        from .card_print import PHOTO_WIDTH, PHOTO_HEIGHT
+        ratio = float(CardForm.base_fields['photo'].widget.attrs['data-photo-ratio'])
+        self.assertAlmostEqual(ratio, PHOTO_WIDTH/PHOTO_HEIGHT, places=6)
+
+    def test_crest_backing_removal_preserves_internal_white_and_original_pixels(self):
+        from .card_print import badge_image
+        source = Image.new('RGBA',(25,31),'white')
+        draw = ImageDraw.Draw(source)
+        draw.rectangle((3,3,21,27),fill='#0c2f62')
+        draw.rectangle((7,7,17,23),fill='white')
+        before = source.tobytes()
+        result = badge_image(source)
+        self.assertEqual(result.getpixel((0,0))[3],0)
+        self.assertEqual(result.getpixel((12,15)),(255,255,255,255))
+        self.assertEqual(result.getpixel((4,4)),(12,47,98,255))
+        self.assertEqual(source.tobytes(),before)

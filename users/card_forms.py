@@ -43,7 +43,7 @@ class CardForm(forms.ModelForm):
         model = VolunteerCard
         fields = ['user', 'edition', 'number', 'last_name', 'first_name', 'patronymic', 'course', 'photo_source', 'photo']
         widgets = {
-            'photo': forms.FileInput(attrs={'accept': 'image/png,image/jpeg,image/webp', 'data-photo-ratio': '0.836237'}),
+            'photo': forms.FileInput(attrs={'accept': 'image/png,image/jpeg,image/webp', 'data-photo-ratio': '0.749129'}),
             'user': forms.Select(attrs={'class': 'use-select2'}),
         }
         help_texts = {
