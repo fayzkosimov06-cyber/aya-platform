@@ -11,7 +11,7 @@ from django.http import Http404,HttpResponse,HttpResponseForbidden
 from django.shortcuts import render,redirect,get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-from users.access import can_manage_event,can_create_event,has_full_volunteer_access,can_register_for_events,can_see_event_catalog
+from users.access import can_manage_event,can_create_event,has_full_volunteer_access,can_register_for_events,can_see_event_catalog,can_view_event
 from users.units import global_manager,people_field
 from users.points import members,can_award
 from users.models import AuditLog,Notification,ContributionWork,PointProposal
@@ -51,7 +51,7 @@ def listing(request):
 
 def detail(request,pk):
     event=attach_state(get_object_or_404(Event,pk=pk));manage=can_manage_event(request.user,event)
-    if not manage and (not event.is_approved or (not request.user.is_authenticated and not event.is_public_for_guests)):raise Http404
+    if not can_view_event(request.user,event):raise Http404
     full=has_full_volunteer_access(request.user)
     people=event.participants.exclude(is_superuser=True).order_by('last_name','first_name','pk') if full else members().none()
     return render(request,'events/page.html',{'event':event,'can_manage':manage,'can_delete_event':can_delete(request.user,event),'can_register':can_register_for_events(request.user),'can_view_participants':full,'is_participant':request.user.is_authenticated and event.participants.filter(pk=request.user.pk).exists(),'people_count':event.participants.count(),'people':Paginator(people,24).get_page(request.GET.get('page')),'registration_open':event.is_approved and not event.cancelled and not event.is_completed and event.end_time>timezone.now()})

@@ -9,6 +9,18 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import requires_csrf_token
 
 
+def positive_pk(value):
+    """Reject malformed and oversized IDs before passing them to database drivers."""
+    from django.http import Http404
+    text = str(value)
+    if not text.isascii() or not text.isdecimal() or len(text) > 19:
+        raise Http404('Некорректный номер записи.')
+    number = int(text)
+    if not 1 <= number <= 9223372036854775807:
+        raise Http404('Некорректный номер записи.')
+    return number
+
+
 def rejection_details(reason):
     # Raw Django reasons can contain an untrusted Origin/Referer. Store fixed labels only.
     if reason == 'CSRF cookie not set.':

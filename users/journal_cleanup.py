@@ -14,7 +14,7 @@ from django.contrib import messages
 from .readable_journal import filtered_journal, Display, MODELS, ROUTES
 from .journal import emit
 
-FIELDS=('actor','start','end','category','q','section','cleanup_mode')
+FIELDS=('actor','start','end','category','q','section','cleanup_mode','traffic')
 
 def selection(request, data):
     scoped=copy(request);scoped.GET=QueryDict('',mutable=True)
@@ -66,9 +66,9 @@ def cleanup(request):
         return response
     count=rows.count()
     token=signing.dumps({'actor':request.user.pk,'filters':data,'until':until,'count':count},salt='journal-cleanup')
-    names={'actor':'Человек (ID)','start':'С даты','end':'По дату','category':'Тип','q':'Поиск','section':'Раздел','cleanup_mode':'Журнал'}
+    names={'actor':'Человек (ID)','start':'С даты','end':'По дату','category':'Тип','q':'Поиск','section':'Раздел','cleanup_mode':'Журнал','traffic':'Запросы'}
     readable=[(names[k],{'private':'Полная история','public':'Общие действия','activity':'Просмотры и поиск'}.get(v,v) if k=='cleanup_mode' else v) for k,v in data.items()]
-    labels={**MODELS,**ROUTES,'view':'Просмотры','search':'Поиск','change':'Изменения','action':'Действия','failure':'Ошибки и отказы','deletion':'Удаления','contact':'Контакты','none':'Гость'}
+    labels={**MODELS,**ROUTES,'view':'Просмотры','search':'Поиск','change':'Изменения','action':'Действия','failure':'Ошибки и отказы','deletion':'Удаления','contact':'Контакты','none':'Гость','actions':'Действия и ошибки сайта','technical':'Неизвестные адреса','all':'Все запросы'}
     readable=[(k,labels.get(v,v)) for k,v in readable]
     if set(data)=={'cleanup_mode'}:readable.append(('Область','Все записи этого журнала'))
     if data.get('actor','').isdigit():

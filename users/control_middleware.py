@@ -1,4 +1,4 @@
-from django.http import HttpResponseForbidden,Http404
+from django.http import HttpResponseForbidden,HttpResponseBadRequest,Http404
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -129,7 +129,11 @@ class ControlMiddleware:
      if target.pk==request.user.pk or rank(target)>=rank(request.user) or (50 if name.startswith('direction') else 40)>=rank(request.user):return HttpResponseForbidden('Назначение равного или вышестоящего недоступно.')
    # No backdated awards, including additions to old work without a date field.
    if code in {'points_award','points_review'}:
-    work=ContributionWork.objects.filter(pk=pk if name=='points_work' else request.POST.get('work') or 0).first()
+    from .request_security import positive_pk
+    work_id=pk if name=='points_work' else request.POST.get('work')
+    try:work_id=positive_pk(work_id) if work_id else None
+    except Http404:return HttpResponseBadRequest('Некорректный номер работы. Откройте форму начисления заново и выберите работу из списка.')
+    work=ContributionWork.objects.filter(pk=work_id).first() if work_id else None
     d=work.date.isoformat() if work else request.POST.get('date')
     if name=='proposal_review':
      proposal=PointProposal.objects.filter(pk=pk).first()

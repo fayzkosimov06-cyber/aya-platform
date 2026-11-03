@@ -46,6 +46,33 @@ def can_see_event_catalog(user) -> bool:
     return has_full_volunteer_access(user)
 
 
+def can_view_profile(viewer, person) -> bool:
+    """Use the same visibility for profiles and their contact/photo/QR endpoints."""
+    from .permissions import allowed
+    authenticated = getattr(viewer, 'is_authenticated', False)
+    if person.is_superuser:
+        return bool(authenticated and viewer.is_superuser)
+    if authenticated and viewer.pk == person.pk:
+        return True
+    if person.is_approved:
+        return True
+    if any(allowed(viewer, code) for code in ('contacts', 'people')):
+        return True
+    # Admission/visit operators need candidate profiles, not staff applications.
+    return bool(person.role in {'volunteer', 'moderator', 'president'}
+                and not hasattr(person, 'staff_application')
+                and any(allowed(viewer, code) for code in ('admissions', 'visits')))
+
+
+def can_view_event(user, event) -> bool:
+    if can_manage_event(user, event):
+        return True
+    if not event.is_approved:
+        return False
+    # Published public announcements stay available to guests and candidates.
+    return event.is_public_for_guests or has_full_volunteer_access(user)
+
+
 def is_public_volunteer(user) -> bool:
     return bool(
         getattr(user, 'is_approved', False)

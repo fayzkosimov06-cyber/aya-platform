@@ -54,12 +54,12 @@ def _png_for_url(url):
 @require_GET
 def profile_qr(request, pk):
     from .models import User
-    from .views import is_privileged_viewer
+    from .access import can_view_profile
     from .journal import emit
     person = get_object_or_404(User, pk=pk)
     if person.is_superuser:
         raise Http404
-    if not (person.is_approved or person.candidate_approved) and request.user != person and not is_privileged_viewer(request.user):
+    if not can_view_profile(request.user, person):
         raise Http404
     download = request.GET.get('download') == '1'
     response = HttpResponse(png_for_profile(person), content_type='image/png')

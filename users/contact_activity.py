@@ -5,9 +5,10 @@ from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.cache import never_cache
 from django.shortcuts import get_object_or_404, redirect
 from .models import User
-from .views import can_view_field, is_privileged_viewer
+from .views import can_view_field
 from .social_links import social_url
 from .journal import emit
+from .access import can_view_profile
 
 PROFILE_CONTACT_NETWORKS = {'telegram', 'instagram'}
 
@@ -28,7 +29,7 @@ def open_contact(request, pk, network):
     if network not in PROFILE_CONTACT_NETWORKS: raise Http404
     person=get_object_or_404(User,pk=pk)
     if person.is_superuser and not request.user.is_superuser: raise Http404
-    if not (person.is_approved or person.candidate_approved) and request.user!=person and not is_privileged_viewer(request.user): raise Http404
+    if not can_view_profile(request.user, person): raise Http404
     if not can_view_field(request.user,person,getattr(person,network+'_privacy')): raise Http404
     url=destination(person,network)
     if not url: raise Http404
@@ -41,7 +42,7 @@ def open_contact(request, pk, network):
 def reveal_phone(request, pk):
     person=get_object_or_404(User,pk=pk)
     if person.is_superuser and not request.user.is_superuser: raise Http404
-    if not (person.is_approved or person.candidate_approved) and request.user!=person and not is_privileged_viewer(request.user): raise Http404
+    if not can_view_profile(request.user, person): raise Http404
     if not can_view_field(request.user,person,person.phone_privacy) or not person.phone: raise Http404
     emit('contact','public_profile','Раскрыл номер телефона',object_id=person.pk,after={'target_name':str(person),'network':'phone'},private=True)
     response=JsonResponse({'phone':person.phone})
@@ -54,7 +55,7 @@ def reveal_phone(request, pk):
 def reveal_birthday(request, pk):
     person=get_object_or_404(User,pk=pk)
     if person.is_superuser and not request.user.is_superuser: raise Http404
-    if not (person.is_approved or person.candidate_approved) and request.user!=person and not is_privileged_viewer(request.user): raise Http404
+    if not can_view_profile(request.user, person): raise Http404
     if not person.birth_date: raise Http404
     emit('contact','public_profile','Раскрыл дату рождения',object_id=person.pk,after={'target_name':str(person),'network':'birthday'},private=True)
     response=JsonResponse({'date':person.birth_date.strftime('%d.%m.%Y')})
@@ -67,7 +68,7 @@ def reveal_birthday(request, pk):
 def open_photo(request, pk):
     person=get_object_or_404(User,pk=pk)
     if person.is_superuser and not request.user.is_superuser: raise Http404
-    if not (person.is_approved or person.candidate_approved) and request.user!=person and not is_privileged_viewer(request.user): raise Http404
+    if not can_view_profile(request.user, person): raise Http404
     if not person.photo: raise Http404
     emit('contact','public_profile','Открыл фотографию',object_id=person.pk,after={'target_name':str(person),'network':'photo'},private=True)
     response=JsonResponse({'url':person.photo.url,'name':str(person)})

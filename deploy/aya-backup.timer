@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily verified AYA backup
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 Asia/Dushanbe
+RandomizedDelaySec=5min
+Persistent=true
+Unit=aya-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -9,17 +9,19 @@
         <h2 class="mb-0">Все Уведомления</h2>
         
         {% if notifications %}
-            <a href="{% url 'mark_all_notifications_as_read' %}" class="btn btn-outline-primary btn-sm">
+            <form method="post" action="{% url 'mark_all_notifications_as_read' %}">
+              {% csrf_token %}<button type="submit" class="btn btn-outline-primary btn-sm">
                 <i class="fas fa-check-double me-1"></i> Прочитать все
-            </a>
+              </button>
+            </form>
         {% endif %}
     </div>
 
     <div class="card shadow-sm border-0">
         <div class="list-group list-group-flush">
             {% for notification in notifications %}
-                <a href="{% url 'mark_notification_as_read' notification.pk %}" 
-                   class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-info{% endif %} p-3">
+                <form method="post" action="{% url 'mark_notification_as_read' notification.pk %}" class="m-0">
+                   {% csrf_token %}<button type="submit" class="list-group-item list-group-item-action w-100 text-start {% if not notification.is_read %}list-group-item-info{% endif %} p-3">
                     <div class="d-flex w-100 justify-content-between align-items-center">
                         <div>
                             <p class="mb-1 text-dark">{{ notification.message }}</p>
@@ -31,7 +33,8 @@
                             <span class="badge bg-primary rounded-pill ms-2" title="Непрочитано">●</span>
                         {% endif %}
                     </div>
-                </a>
+                   </button>
+                </form>
             {% empty %}
                 <div class="list-group-item text-center py-5">
                     <div class="text-muted mb-3">

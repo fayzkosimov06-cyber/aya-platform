@@ -139,10 +139,20 @@ class Display:
         return entry
 
 
-def filtered_journal(request,mode):
+def technical_requests_q():
+    """Only anonymous 404s for unknown routes; never hide a known user's error."""
+    anonymous = Q(actor_key__startswith='guest:') | (Q(actor_key='') & ~Q(after__has_key='_actor_name'))
+    return Q(actor__isnull=True, category='failure', section='', after__status__in=[404, '404']) & anonymous
+
+
+def filtered_journal(request,mode,default_traffic='all'):
     qs=JournalEntry.objects.select_related('actor')
     if mode=='activity':qs=qs.filter(category__in=['view','search','contact'])
     elif mode=='public':qs=qs.filter(private=False).exclude(actor__is_superuser=True).exclude(category__in=['view','search','contact'])
+    if mode=='private':
+        traffic=request.GET.get('traffic',default_traffic)
+        if traffic=='actions':qs=qs.exclude(technical_requests_q())
+        elif traffic=='technical':qs=qs.filter(technical_requests_q())
     q=request.GET.get('q','').strip()[:200]
     if q:
         search=Q(action__icontains=q)|Q(actor__first_name__icontains=q)|Q(actor__last_name__icontains=q)|Q(actor__username__icontains=q)|Q(after__target_name__icontains=q)
@@ -162,9 +172,12 @@ def filtered_journal(request,mode):
 
 
 def grouped_queryset(qs):
-    from django.db.models import Value, CharField
+    from django.db.models import Value, CharField, Case, When
     from django.db.models.functions import Coalesce,NullIf,Concat,Cast,TruncDate
-    return qs.annotate(subject=Coalesce(NullIf('subject_key',Value('')),Concat(Value('entry:'),Cast('pk',CharField()))),who=Coalesce(NullIf('actor_key',Value('')),Concat(Value('legacy:'),Cast('pk',CharField()))),day=TruncDate('created_at'))
+    return qs.annotate(
+        subject=Case(When(technical_requests_q(),then=Value('technical:unknown-address')),default=Coalesce(NullIf('subject_key',Value('')),Concat(Value('entry:'),Cast('pk',CharField()))),output_field=CharField()),
+        who=Case(When(technical_requests_q(),then=Value('technical')),default=Coalesce(NullIf('actor_key',Value('')),Concat(Value('legacy:'),Cast('pk',CharField()))),output_field=CharField()),
+        day=TruncDate('created_at'))
 
 
 @login_required
@@ -174,6 +187,9 @@ def journal(request,mode='public'):
     from django.db.models import Min
     if mode!='public' and not request.user.is_superuser:return HttpResponseForbidden('Недоступно.')
     if mode=='public' and not allowed(request.user,'audit'):return HttpResponseForbidden('Нет доступа к журналу.')
+    # Keep the selected default explicit in all pagination, export and cleanup links.
+    if mode=='private' and request.GET.get('traffic') not in {'actions','technical','all'}:
+        request.GET=request.GET.copy();request.GET['traffic']='actions'
     qs=filtered_journal(request,mode)
     until=request.GET.get('until','')
     until=int(until) if until.isdigit() else (qs.aggregate(n=Max('pk'))['n'] or 0)
@@ -189,7 +205,7 @@ def journal(request,mode='public'):
         for entry in entries:display.entry(entry)
         return render(request,'users/journal_bundle_items.html',{**context,'entries':entries,'bundle':request.GET['bundle']})
     actor=request.GET.get('actor','')
-    view=request.GET.get('view','people' if not actor else 'groups')
+    view=request.GET.get('view','people' if not actor and request.GET.get('traffic')!='technical' else 'groups')
     if view not in {'people','groups','timeline'}:view='groups'
     if actor and view=='people':view='groups'
     context['view']=view;context['grouped']=view=='people'
@@ -222,6 +238,10 @@ def journal(request,mode='public'):
                     from django.urls import reverse
                     group['url']=reverse(routes[model],args=[pk])
             elif key.startswith('section:'):group['title']=ROUTES.get(key.split(':')[1],entry.readable_title)
+            elif key=='technical:unknown-address':
+                group['actor_name']='Неавторизованные запросы'
+                group['title']='Запросы к неизвестным адресам'
+                group['failure_summary']='Собраны за день по типу запроса. Это не означает, что их отправил один человек. Адрес и точное время каждого запроса доступны внутри.'
             subset=base.filter(who=group['who'],subject=key,day=group['day'])
             counters=subset.order_by().values('category','after__network').annotate(n=Count('pk'))
             names={'view':'Просмотры','contact':'Контакты','search':'Поиск','change':'Изменения','deletion':'Удаления','failure':'Ошибки','action':'Действия'}

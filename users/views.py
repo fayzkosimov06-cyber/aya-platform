@@ -7,6 +7,7 @@ from collections import defaultdict
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
+from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.urls import reverse
 from django.db import models, transaction
@@ -29,6 +30,7 @@ from .access import (
     is_privileged_user,
     is_public_volunteer,
     is_worker_account,
+    can_view_profile,
 )
 try:
     from .models import VolunteerVisit
@@ -304,6 +306,7 @@ def signup_view(request):
     return render(request, 'users/signup.html', {'form': form})
 
 
+@require_POST
 def logout_view(request):
     logout(request)
     messages.info(request, "Вы успешно вышли из системы.")
@@ -379,7 +382,7 @@ def public_profile_view(request, pk):
     needs_initial_approval = bool(not getattr(profile_user, 'is_approved', False) and not getattr(profile_user, 'candidate_approved', False))
 
     # Неодобренный профиль могут смотреть только сам пользователь и начальство.
-    if needs_initial_approval and request.user != profile_user and not is_privileged_viewer(request.user):
+    if not can_view_profile(request.user, profile_user):
         messages.error(request, "Этот профиль недоступен или находится на проверке.")
         return redirect('home')
 
@@ -750,6 +753,7 @@ def notification_list_view(request):
     return render(request, 'users/notifications.html', {'notifications': request.user.notifications.all()})
 
 @login_required
+@require_POST
 def mark_notification_as_read_view(request, pk):
     n = get_object_or_404(Notification, pk=pk, recipient=request.user)
     n.is_read = True; n.save()
@@ -786,6 +790,7 @@ def audit_log_view(request):
 # ... (existing imports)
 
 @login_required
+@require_POST
 def mark_all_notifications_as_read_view(request):
     """Marks all unread notifications for the current user as read."""
     unread_notifications = Notification.objects.filter(recipient=request.user, is_read=False)

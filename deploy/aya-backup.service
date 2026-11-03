@@ -1,0 +1,23 @@
+[Unit]
+Description=Verified backup of AYA database and files
+After=local-fs.target
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+WorkingDirectory=/srv/aya
+EnvironmentFile=/etc/aya.env
+Environment=DJANGO_SETTINGS_MODULE=aya_platform.settings_production
+ExecStart=/srv/aya/venv/bin/python /srv/aya/manage.py backup_aya --keep 14
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/deploy/aya-backups/daily
+TimeoutStartSec=20min
+Nice=10
+IOSchedulingClass=idle
+StandardOutput=journal
+StandardError=journal

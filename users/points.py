@@ -8,6 +8,7 @@ from django.db.models import Sum, Count
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from .request_security import positive_pk
 from .access import has_full_volunteer_access, STAFF_ONLY_ROLES
 from .models import User, ContributionKind, ContributionWork, ContributionAward, ContributionChange, Direction, School, Club
 
@@ -151,7 +152,7 @@ def work_list(request):
     event=None
     if request.GET.get('event'):
         from events.models import Event
-        event=get_object_or_404(Event,pk=request.GET['event'],is_approved=True)
+        event=get_object_or_404(Event,pk=positive_pk(request.GET['event']),is_approved=True)
         existing=ContributionWork.objects.filter(event=event).first()
         if existing:return redirect('points_work',pk=existing.pk)
     form=WorkForm(request.POST or None,initial={'title':event.title if event else '', 'date':timezone.localdate(event.end_time) if event else timezone.localdate()})
@@ -214,7 +215,7 @@ def correct_award(request,pk):
 def kinds(request):
     from .permissions import allowed
     if not allowed(request.user,'points_rules'):return HttpResponseForbidden('Нет доступа к правилам.')
-    instance=get_object_or_404(ContributionKind,pk=request.GET['edit']) if request.GET.get('edit') else None
+    instance=get_object_or_404(ContributionKind,pk=positive_pk(request.GET['edit'])) if request.GET.get('edit') else None
     form=KindForm(request.POST or None,instance=instance)
     if request.method=='POST' and form.is_valid():
         from .models import AuditLog
