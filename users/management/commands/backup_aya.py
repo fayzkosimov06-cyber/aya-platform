@@ -3,10 +3,9 @@ import json
 import os
 from pathlib import Path
 import platform
-import subprocess
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from users.backup import create_snapshot, plain_path, verify_snapshot
+from users.backup import create_snapshot, plain_path, verify_snapshot, git_metadata, MetadataTimeout
 
 
 class Command(BaseCommand):
@@ -45,11 +44,9 @@ class Command(BaseCommand):
             except BlockingIOError as error:
                 raise CommandError('An AYA backup is already running.') from error
             try:
-                def git(*arguments):
-                    return subprocess.check_output(['git',*arguments],cwd=root,timeout=60).decode('utf-8')
-                if git('status','--porcelain').strip():
+                if git_metadata(root,'status').strip():
                     raise ValueError('Commit project changes before backing up')
-                files = [name for name in git('ls-files','-z').split('\0') if name]
+                files = [name for name in git_metadata(root,'files').split('\0') if name]
                 configs = [('aya.env', Path('/etc/aya.env')),
                            ('aya.service', Path('/etc/systemd/system/aya.service')),
                            ('settings_production.py', root / 'aya_platform/settings_production.py')]
@@ -60,8 +57,10 @@ class Command(BaseCommand):
                     d.metadata['Name']:d.version for d in importlib.metadata.distributions()}}
                 folder = create_snapshot(root=root, database=settings.DATABASES['default']['NAME'],
                     media=settings.MEDIA_ROOT, private=root/'private', destination=destination,
-                    code_files=files, config_files=configs, revision=git('rev-parse','HEAD').strip(),
+                    code_files=files, config_files=configs, revision=git_metadata(root,'revision').strip(),
                     runtime=runtime, keep=options['keep'])
+            except MetadataTimeout as error:
+                raise CommandError(str(error)) from error
             except Exception as error:
                 # Keep secrets and personal data out of systemd logs.
                 raise CommandError('AYA backup failed ('+type(error).__name__+'). Previous verified copies were retained.') from error

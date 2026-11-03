@@ -8,6 +8,24 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 from unittest.mock import patch
 from users.backup import create_snapshot, verify_snapshot, prune_snapshots, digest
+from users.backup import git_metadata, MetadataTimeout
+
+
+class BackupMetadataTests(TestCase):
+    def test_temporary_metadata_timeout_is_retried_before_backup(self):
+        import subprocess
+        error=subprocess.TimeoutExpired(['git','status'],180)
+        with patch('users.backup.subprocess.check_output',side_effect=[error,b'']) as git, patch('users.backup.time.sleep'):
+            self.assertEqual(git_metadata(Path('/synthetic-aya'),'status'),'')
+            self.assertEqual(git.call_count,2)
+
+    def test_repeated_timeout_is_bounded_and_names_safe_operation(self):
+        import subprocess
+        error=subprocess.TimeoutExpired(['git','ls-files'],180)
+        with patch('users.backup.subprocess.check_output',side_effect=error) as git, patch('users.backup.time.sleep'):
+            with self.assertRaisesRegex(MetadataTimeout,'files.*Previous copies retained'):
+                git_metadata(Path('/synthetic-aya'),'files')
+            self.assertEqual(git.call_count,2)
 
 
 class BackupTests(TestCase):

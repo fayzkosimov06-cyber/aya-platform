@@ -8,6 +8,7 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import sqlite3
+import subprocess
 import tarfile
 import tempfile
 import time
@@ -15,6 +16,23 @@ from uuid import uuid4
 
 FORMAT = 'aya-backup-v1'
 SNAPSHOT_NAME = re.compile(r'aya-\d{8}T\d{6}Z-[0-9a-f]{8}\Z')
+
+
+class MetadataTimeout(RuntimeError):
+    pass
+
+
+def git_metadata(root, operation):
+    commands={'status':['status','--porcelain'], 'files':['ls-files','-z'],
+              'revision':['rev-parse','HEAD']}
+    arguments=commands[operation]
+    for attempt in range(2):
+        try:
+            return subprocess.check_output(['git',*arguments],cwd=root,timeout=180).decode('utf-8')
+        except subprocess.TimeoutExpired as error:
+            if attempt:
+                raise MetadataTimeout('AYA backup metadata timed out: '+operation+'. Previous copies retained.') from error
+            time.sleep(1)
 
 
 def digest(path):
