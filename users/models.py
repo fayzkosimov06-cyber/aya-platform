@@ -123,9 +123,18 @@ class User(AbstractUser):
             if self.school_leader_of.exists(): return 'Учитель школы'
         return dict(self.ROLE_CHOICES).get(self.role,self.role.capitalize())
     
+    def clean(self):
+        super().clean()
+        from .avatars import prepare
+        from django.core.exceptions import ValidationError
+        try: prepare(self)
+        except ValidationError as error: raise ValidationError({'photo':error.messages}) from error
+
     def save(self, *args, **kwargs):
         is_new = self.pk is None
-        super().save(*args, **kwargs)
+        from .avatars import updating
+        with updating(self,kwargs.get('update_fields')):
+            super().save(*args, **kwargs)
         if is_new and not self.qr_code and not self.is_superuser:
             try:
                 from .profile_qr import png_for_profile

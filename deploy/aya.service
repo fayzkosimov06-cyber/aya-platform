@@ -1,0 +1,40 @@
+[Unit]
+Description=AYA Django application
+After=network.target
+
+[Service]
+Type=simple
+User=aya-web
+Group=aya-data
+WorkingDirectory=/srv/aya
+EnvironmentFile=/etc/aya.env
+Environment=DJANGO_SETTINGS_MODULE=aya_platform.settings_production
+Environment=AYA_DB_PATH=/srv/aya/var/db.sqlite3
+Environment=XDG_CACHE_HOME=/srv/aya/var/cache
+ExecStart=/srv/aya/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8001 --timeout 120 --access-logfile - --error-logfile - aya_platform.wsgi:application
+Restart=always
+RestartSec=3
+UMask=0007
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectProc=invisible
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/srv/aya/var /srv/aya/media /srv/aya/private
+InaccessiblePaths=/srv/aya/.git /etc/aya.env
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -16,7 +16,7 @@ class PrivateCardStorage(FileSystemStorage):
 
 def card_storage():
     return PrivateCardStorage(location=settings.CARD_PRIVATE_ROOT,
-                              file_permissions_mode=0o600, directory_permissions_mode=0o700)
+                              file_permissions_mode=0o640, directory_permissions_mode=0o2750)
 
 
 def card_asset_path(instance, filename):

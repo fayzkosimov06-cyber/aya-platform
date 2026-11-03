@@ -15,6 +15,7 @@ from users.access import can_manage_event,can_create_event,has_full_volunteer_ac
 from users.units import global_manager,people_field
 from users.points import members,can_award
 from users.models import AuditLog,Notification,ContributionWork,PointProposal
+from users.request_security import positive_pk
 from users.permissions import allowed
 from .models import Event,EventAttendance,EventPhoto,EventVideo,EventHero
 from .forms import EventWorkspaceForm,EventReportForm,EventVideoForm,EventHeroForm
@@ -151,13 +152,12 @@ def report(request,event):
             success=True
         elif action=='add_video' and video.is_valid():obj=video.save(commit=False);obj.event=event;obj.save();success=True
         elif action=='delete_video':
-            if not request.POST.get('video_id','').isdigit():raise Http404
-            get_object_or_404(EventVideo,pk=request.POST['video_id'],event=event).delete();success=True
+            get_object_or_404(EventVideo,pk=positive_pk(request.POST.get('video_id')),event=event).delete();success=True
         elif action=='set_role':
             hero=EventHeroForm(request.POST,event=event)
             if hero.is_valid():EventHero.objects.update_or_create(event=event,user=hero.cleaned_data['user'],defaults={'role_name':hero.cleaned_data['role_name']});success=True
             else:messages.error(request,'Выберите записанного участника и укажите роль.')
-        elif action=='delete_role':get_object_or_404(EventHero,pk=request.POST.get('hero_id'),event=event).delete();success=True
+        elif action=='delete_role':get_object_or_404(EventHero,pk=positive_pk(request.POST.get('hero_id')),event=event).delete();success=True
         if success:
             log(request.user,f'Отчёт мероприятия #{event.pk}: {action}');messages.success(request,'Сохранено.')
             return redirect(reverse('event_edit',args=[event.pk])+'?tab=report')

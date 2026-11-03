@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from .models import StaffApplication, User
+from .request_security import positive_pk
 
 
 class StaffSignupForm(UserCreationForm):
@@ -61,7 +62,7 @@ def applications(request):
     if not request.user.is_superuser:
         qs = qs.filter(requested_role='worker')
     if request.method == 'POST':
-        item = get_object_or_404(qs.select_for_update(), pk=request.POST.get('application'))
+        item = get_object_or_404(qs.select_for_update(), pk=positive_pk(request.POST.get('application')))
         person = User.objects.select_for_update().get(pk=item.user_id)
         if person.pk == request.user.pk or person.is_superuser:
             return HttpResponseForbidden('Недоступная заявка.')

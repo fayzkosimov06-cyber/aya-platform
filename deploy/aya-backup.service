@@ -6,9 +6,11 @@ After=local-fs.target
 Type=oneshot
 User=deploy
 Group=deploy
+SupplementaryGroups=aya-data
 WorkingDirectory=/srv/aya
 EnvironmentFile=/etc/aya.env
 Environment=DJANGO_SETTINGS_MODULE=aya_platform.settings_production
+Environment=AYA_DB_PATH=/srv/aya/var/db.sqlite3
 ExecStart=/srv/aya/venv/bin/python /srv/aya/manage.py backup_aya --keep 14
 UMask=0077
 NoNewPrivileges=true

@@ -360,12 +360,20 @@ def record_profile_form_errors(request, form):
     }
 
 
+def save_profile_form(form):
+    from django.core.exceptions import ValidationError
+    try: form.save()
+    except ValidationError as error:
+        form.add_error(None,error)
+        return False
+    return True
+
+
 @login_required
 def profile_edit_view(request):
     if request.method == 'POST':
         form = UserUpdateForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            form.save()
+        if form.is_valid() and save_profile_form(form):
             messages.success(request, 'Ваш профиль успешно обновлен.')
             return redirect('my_profile')
         record_profile_form_errors(request, form)
@@ -770,8 +778,7 @@ def admin_edit_user_view(request, pk):
         
     if request.method == 'POST':
         form = AdminUpdateForm(request.POST, request.FILES, instance=target, actor=request.user)
-        if form.is_valid():
-            form.save()
+        if form.is_valid() and save_profile_form(form):
             log_action(request.user, f"Отредактировал профиль {target}", target=target)
             if request.user != target:
                 Notification.objects.create(recipient=target, message=f"Модератор {request.user} изменил ваш профиль.")

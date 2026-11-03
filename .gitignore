@@ -8,6 +8,7 @@ db.sqlite3-wal
 db.sqlite3-shm
 media/
 private/
+var/
 .DS_Store
 .env
 .idea/

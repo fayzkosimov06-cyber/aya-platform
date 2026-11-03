@@ -32,6 +32,10 @@ class UserRegisterForm(UserCreationForm):
 class FixedProfileChoicesMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if 'photo' in self.fields:
+            from .avatars import HELP
+            self.fields['photo'].help_text=HELP
+            self.fields['photo'].widget.attrs['accept']='image/jpeg,image/png,image/webp'
         self.legacy_profile_fields = set()
         self.legacy_social_fields = set()
         self.original_social_values = {name: getattr(self.instance, name, '') or '' for name in ('instagram',)}

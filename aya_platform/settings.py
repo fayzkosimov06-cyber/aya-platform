@@ -66,7 +66,7 @@ WSGI_APPLICATION = 'aya_platform.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', 
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.environ.get('AYA_DB_PATH', BASE_DIR / 'db.sqlite3'),
         'OPTIONS': {'transaction_mode': 'IMMEDIATE', 'timeout': 20}
     }
 }
@@ -96,6 +96,8 @@ MEDIA_URL = '/media/'
 
 # Папка на диске для медиа-файлов
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+FILE_UPLOAD_PERMISSIONS = 0o644
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o2775
 
 # --- КОНЕЦ НАСТРОЕК ФАЙЛОВ ---
 
