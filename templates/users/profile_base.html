@@ -1,15 +1,16 @@
 {% extends 'base.html' %}{% load static aya_people %}
 {% block title %}Профиль {{ profile_user.get_full_name|default:profile_user.username }} — AYA{% endblock %}
 {% block body_class %}aya-profile profile-v2 {% block profile_type %}{% endblock %}{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/profile-v2.css' %}?v=1">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/profile-v2.css' %}?v=2">{% endblock %}
 {% block content %}
 <div class="container pv2-shell">
   <nav class="pv2-breadcrumb" aria-label="Навигация"><a href="{% url 'volunteer_list' %}">Команда AYA</a><span aria-hidden="true">/</span><span>{% block profile_label %}Профиль волонтёра{% endblock %}</span></nav>
   <header class="pv2-hero">
+    <div class="pv2-cover"><span>AYA <span class="pv2-cover-divider" aria-hidden="true"></span> Одна команда. Общие возможности.</span><span class="pv2-cover-label">{% if user == profile_user %}Личный профиль{% else %}Команда AYA{% endif %}</span></div>
+    <div class="pv2-header-content">
     <div class="pv2-photo">{% include 'users/profile_photo.html' %}</div>
     <div class="pv2-identity">
-      <p class="pv2-eyebrow">{% if user == profile_user %}МОЙ ПРОФИЛЬ{% else %}КОМАНДА AYA{% endif %}</p>
-      <h1>{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+      <h1>{% if profile_user.last_name %}<span class="pv2-surname">{{ profile_user.last_name }}</span>{% endif %}{% if profile_user.first_name or profile_user.patronymic %}<span class="pv2-given">{{ profile_user.first_name }}{% if profile_user.patronymic %} {{ profile_user.patronymic }}{% endif %}</span>{% elif not profile_user.last_name %}{{ profile_user.username }}{% endif %}</h1>
       {% role_badges profile_user %}
       {% block profile_subtitle %}{% endblock %}
       <p class="pv2-since"><i class="far fa-calendar-alt" aria-hidden="true"></i> На сайте с {{ profile_user.date_joined|date:'d.m.Y' }}</p>
@@ -17,12 +18,13 @@
     <div class="pv2-actions">
       {% if user == profile_user %}<a class="pv2-button pv2-button-primary" href="{% url 'profile_edit' %}"><i class="fas fa-pen" aria-hidden="true"></i>Редактировать профиль</a>{% endif %}
       {% if can_admin_edit %}<a class="pv2-button" href="{% url 'admin_edit_user' profile_user.pk %}"><i class="fas fa-sliders-h" aria-hidden="true"></i>Управление аккаунтом</a>{% endif %}
-      {% deletion_allowed user profile_user as can_delete_account %}{% if can_delete_account %}<a class="pv2-delete" href="{% url 'user_delete' profile_user.pk %}">Удалить аккаунт</a>{% endif %}
+      {% deletion_allowed user profile_user as can_delete_account %}{% if can_delete_account %}<details class="pv2-account-menu"><summary><i class="fas fa-ellipsis-h" aria-hidden="true"></i><span class="visually-hidden">Другие действия с аккаунтом</span></summary><a class="pv2-delete" href="{% url 'user_delete' profile_user.pk %}"><i class="far fa-trash-alt" aria-hidden="true"></i>Удалить аккаунт</a></details>{% endif %}
     </div>
-    <nav class="pv2-nav" aria-label="Разделы профиля"><a href="#overview" aria-current="location">Обзор</a>{% block profile_nav %}{% endblock %}<a href="#contacts">Контакты</a><a href="#profile-documents">QR и документы</a></nav>
+    </div>
+    {% block profile_stats %}{% endblock %}
   </header>
+  <nav class="pv2-nav" aria-label="Разделы профиля"><a href="#overview" aria-current="location"><i class="far fa-user" aria-hidden="true"></i><span>Обзор</span></a>{% block profile_nav %}{% endblock %}<a href="#contacts"><i class="far fa-address-book" aria-hidden="true"></i><span>Контакты</span></a><a href="#profile-documents"><i class="fas fa-qrcode" aria-hidden="true"></i><span>QR и документы</span></a></nav>
   {% block profile_status %}{% endblock %}
-  {% block profile_stats %}{% endblock %}
   <div class="pv2-grid">
     <div class="pv2-main">{% block profile_main %}{% endblock %}</div>
     <aside class="pv2-aside" aria-label="Контакты и документы">
@@ -38,4 +40,4 @@
 </div>
 {% block profile_modals %}{% endblock %}
 {% endblock %}
-{% block extra_js %}<script src="{% static 'js/profile-v2.js' %}?v=1" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/profile-v2.js' %}?v=2" defer></script>{% endblock %}
