@@ -17,14 +17,32 @@ CAPABILITIES={
  'contacts':'Просматривать закрытые контакты'}
 SCOPED={'events_edit','events_publish','events_delete','directions','schools','clubs','club_appointments','points_propose'}
 
+def assignment_flags(user):
+ """Share role reads within a GET only; mutations always read current relations."""
+ req=request_context.get()
+ cache=None
+ if req is not None and req.method=='GET':
+  if not hasattr(req,'_aya_assignment_flags'):req._aya_assignment_flags={}
+  cache=req._aya_assignment_flags
+  if user.pk in cache:return cache[user.pk]
+ def exists(relation):
+  return relation.filter().exists() if req is not None and req.method!='GET' else relation.exists()
+ result=(exists(user.directions_led),
+         exists(user.school_leader_of) or exists(user.schoolteacher_set),
+         exists(user.clubs_led))
+ if cache is not None:cache[user.pk]=result
+ return result
+
 def rank(user):
  if not getattr(user,'is_authenticated',False):return 0
  if user.is_superuser:return 1000
  base={'head_admin':90,'worker':80,'president':60,'moderator':50,'volunteer':10}.get(user.role,10)
+ if base>=50:return base
  if getattr(user,'pk',None) and hasattr(user,'directions_led'):
-  if user.directions_led.exists():base=max(base,50)
-  if user.school_leader_of.exists() or user.schoolteacher_set.exists():base=max(base,40)
-  if user.clubs_led.exists():base=max(base,30)
+  leader,teacher,club=assignment_flags(user)
+  if leader:base=max(base,50)
+  if teacher:base=max(base,40)
+  if club:base=max(base,30)
  return base
 
 def defaults(user,code):
@@ -32,8 +50,7 @@ def defaults(user,code):
  if code=='visits' and user.role=='moderator':return True
  if code not in {'events_edit','points_propose','directions','schools','clubs'}:return False
  if not getattr(user,'pk',None):return False
- leader=user.directions_led.exists();teacher=user.school_leader_of.exists() or user.schoolteacher_set.exists()
- club=user.clubs_led.exists()
+ leader,teacher,club=assignment_flags(user)
  return (code in {'events_edit','points_propose'} and (leader or teacher or club)) or (code=='directions' and leader) or (code=='schools' and (leader or teacher)) or (code=='clubs' and (leader or teacher or club))
 
 def setting(user,code):

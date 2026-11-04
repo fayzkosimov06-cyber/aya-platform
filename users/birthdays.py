@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from calendar import isleap
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponseForbidden, JsonResponse
@@ -22,10 +23,19 @@ def occurrence(born, year):
     except ValueError: return date(year, 2, 28)
 
 
-def upcoming(today=None):
+def upcoming(today=None, window_days=None):
     today = today or timezone.localdate()
     result=[]
-    for person in volunteers().exclude(birth_date=None):
+    people=volunteers().exclude(birth_date=None)
+    if window_days is not None:
+        dates=Q(pk__in=[])
+        for offset in range(window_days+1):
+            day=today+timedelta(days=offset)
+            dates |= Q(birth_date__month=day.month,birth_date__day=day.day)
+            if day.month==2 and day.day==28 and not isleap(day.year):
+                dates |= Q(birth_date__month=2,birth_date__day=29)
+        people=people.filter(dates).only('id','username','first_name','last_name','patronymic','birth_date')
+    for person in people:
         day=occurrence(person.birth_date, today.year)
         if day<today: day=occurrence(person.birth_date, today.year+1)
         person.birthday_day=day
@@ -38,7 +48,7 @@ def notify(recipient, today=None):
     if not manager(recipient): return 0
     today=today or timezone.localdate()
     count=0
-    for person in upcoming(today):
+    for person in upcoming(today,window_days=1):
         if person.birthday_days>1: break
         when='Сегодня' if person.birthday_days==0 else 'Завтра'
         _, created=Notification.objects.get_or_create(event_key=f'birthday:{today}:{recipient.pk}:{person.pk}', defaults={
@@ -52,8 +62,8 @@ def context(request):
     if not request.user.is_authenticated: return {}
     today=timezone.localdate()
     person=request.user
-    eligible=volunteers().filter(pk=person.pk).exists()
-    birthday=bool(eligible and person.birth_date and occurrence(person.birth_date,today.year)==today)
+    birthday=bool(person.birth_date and occurrence(person.birth_date,today.year)==today
+                  and volunteers().filter(pk=person.pk).exists())
     return {'birthday_today':birthday, 'birthday_auto':birthday and not BirthdayGreeting.objects.filter(user=person,year=today.year).exists(), 'can_view_birthdays':manager(person)}
 
 

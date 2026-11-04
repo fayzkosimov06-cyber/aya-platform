@@ -14,9 +14,8 @@ def presentation(person):
     elif person.role in ('worker', 'head_admin'):
         roles = [('staff', 'Начальник отдела' if person.role == 'head_admin' else 'Сотрудник отдела')]
     else:
-        leader = person.directions_led.exists()
-        teacher = person.school_leader_of.exists() or person.schoolteacher_set.exists()
-        club = person.clubs_led.exists()
+        from users.permissions import assignment_flags
+        leader, teacher, club = assignment_flags(person)
         if person.role == 'president':
             roles.append(('president', 'Президент'))
         if leader:

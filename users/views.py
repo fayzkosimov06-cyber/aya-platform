@@ -267,8 +267,8 @@ def volunteer_list_view(request):
 
     request.aya_result_count=queryset.distinct().count()
     context = {
-        'volunteers': queryset.distinct().prefetch_related('directions_led', 'school_leader_of'),
-        'volunteers_count': queryset.distinct().count(),
+        'volunteers': queryset.distinct().prefetch_related('directions_led', 'school_leader_of', 'schoolteacher_set', 'clubs_led'),
+        'volunteers_count': request.aya_result_count,
         'faculties': faculties, 'courses': courses, 'cities': cities, 'directions': directions,
         'form_values': request.GET,
     }
@@ -316,6 +316,8 @@ def logout_view(request):
 # --- ПРОФИЛЬ (Личный) ---
 @login_required
 def my_profile_view(request):
+    from django.db.models import prefetch_related_objects
+    prefetch_related_objects([request.user], 'directions_led', 'school_leader_of', 'schoolteacher_set', 'clubs_led')
     # В своем профиле человек видит всё, поэтому show={} не нужен, или можно передать всё True
     # Но проще использовать тот же шаблон и просто не скрывать ничего
     # Для этого в profile.html мы используем {% if user == profile_user %}
@@ -384,7 +386,8 @@ def profile_edit_view(request):
 
 # --- ПРОФИЛЬ (Публичный) - ЗДЕСЬ ГЛАВНАЯ МАГИЯ ---
 def public_profile_view(request, pk):
-    profile_user = get_object_or_404(User.objects.all() if request.user.is_superuser else User.objects.filter(is_superuser=False), pk=pk)
+    people = User.objects.all() if request.user.is_superuser else User.objects.filter(is_superuser=False)
+    profile_user = get_object_or_404(people.prefetch_related('directions_led','school_leader_of','schoolteacher_set','clubs_led'), pk=pk)
 
     is_candidate_profile = bool(getattr(profile_user, 'candidate_approved', False) and not getattr(profile_user, 'is_approved', False))
     needs_initial_approval = bool(not getattr(profile_user, 'is_approved', False) and not getattr(profile_user, 'candidate_approved', False))

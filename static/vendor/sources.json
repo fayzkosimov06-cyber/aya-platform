@@ -1,0 +1,74 @@
+{
+  "bootstrap/5.3.3/LICENSE": {
+    "source": "https://raw.githubusercontent.com/twbs/bootstrap/v5.3.3/LICENSE",
+    "sha256": "8c14611ae41ac6fd543c13349f22188eb12c69b3e59105c5eca3925a8e4eca3e"
+  },
+  "jquery/3.7.1/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/jquery/jquery/3.7.1/LICENSE.txt",
+    "sha256": "d4db9ebe6f29f5168eac45ad713f055623ac5d0dcd5ba92da23d650ae012020d"
+  },
+  "select2/4.1.0-rc.0/LICENSE.md": {
+    "source": "https://raw.githubusercontent.com/select2/select2/4.1.0-rc.0/LICENSE.md",
+    "sha256": "4ee0cbc51370afde358652a0f977972053729ed578b6a42f5e2a037d114f0b39"
+  },
+  "fontawesome/6.0.0-beta3/LICENSE.txt": {
+    "source": "https://registry.npmjs.org/@fortawesome/fontawesome-free/-/fontawesome-free-6.0.0-beta3.tgz#package/LICENSE.txt",
+    "sha256": "3960bccdb10203104075a1d1ad3f6bb4b116f4344dc57444d6222f35297a052c"
+  },
+  "bootstrap/5.3.3/bootstrap.min.css": {
+    "source": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
+    "sha256": "3c8f27e6009ccfd710a905e6dcf12d0ee3c6f2ac7da05b0572d3e0d12e736fc8"
+  },
+  "bootstrap/5.3.3/bootstrap.bundle.min.js": {
+    "source": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js",
+    "sha256": "0833b2e9c3a26c258476c46266e6877fc75218625162e0460be9a3a098a61c6c"
+  },
+  "jquery/3.7.1/jquery.min.js": {
+    "source": "https://code.jquery.com/jquery-3.7.1.min.js",
+    "sha256": "fc9a93dd241f6b045cbff0481cf4e1901becd0e12fb45166a8f17f95823f0b1a"
+  },
+  "select2/4.1.0-rc.0/css/select2.min.css": {
+    "source": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css",
+    "sha256": "cda4a81c187015d95ed2c71f1841540b08203cdec5fa2a7d5d1825a3c2166f8c"
+  },
+  "select2/4.1.0-rc.0/js/select2.min.js": {
+    "source": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
+    "sha256": "f7244fff610595b944f76bf3080d74e3af42b5dd234f8f079e698cc39ac966b0"
+  },
+  "fontawesome/6.0.0-beta3/css/all.min.css": {
+    "source": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css",
+    "sha256": "a361e7885c36bacb3fd9cb068da207c3b9329962cac022d06e28923939f575e8"
+  },
+  "fontawesome/6.0.0-beta3/webfonts/fa-brands-400.ttf": {
+    "source": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/webfonts/fa-brands-400.ttf",
+    "sha256": "523dc72caa42687c946e5a8d7e6b438880a26881964466cf1425ce5114e49701"
+  },
+  "fontawesome/6.0.0-beta3/webfonts/fa-brands-400.woff2": {
+    "source": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/webfonts/fa-brands-400.woff2",
+    "sha256": "33a252d6393cbd6debe0ac517229c7aa258a0ee68fc0253f8be6a7cee8b65ee9"
+  },
+  "fontawesome/6.0.0-beta3/webfonts/fa-regular-400.ttf": {
+    "source": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/webfonts/fa-regular-400.ttf",
+    "sha256": "e47616185481b0ecd636dc35fc4673a4a332b1ac96585fc1f9cf0d0553dac2a0"
+  },
+  "fontawesome/6.0.0-beta3/webfonts/fa-regular-400.woff2": {
+    "source": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/webfonts/fa-regular-400.woff2",
+    "sha256": "886fd1e6ce992ede514743a826fa71fefdb577047a2a899ca95f6f28f3305d09"
+  },
+  "fontawesome/6.0.0-beta3/webfonts/fa-solid-900.ttf": {
+    "source": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/webfonts/fa-solid-900.ttf",
+    "sha256": "1c210c134c340a1133991a605b0aac990ce8505c48fce37c915063402964e994"
+  },
+  "fontawesome/6.0.0-beta3/webfonts/fa-solid-900.woff2": {
+    "source": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/webfonts/fa-solid-900.woff2",
+    "sha256": "94e1bbc1c2a41ebc73fa5253fd563256c0035b4d69181e48f9aef9e474a11251"
+  },
+  "fontawesome/6.0.0-beta3/webfonts/fa-v4compatibility.ttf": {
+    "source": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/webfonts/fa-v4compatibility.ttf",
+    "sha256": "a77fc4d94850e5a9b3964d08f5e2d2fad5c6635ba68d38b2a7e17cf4c560bf37"
+  },
+  "fontawesome/6.0.0-beta3/webfonts/fa-v4compatibility.woff2": {
+    "source": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/webfonts/fa-v4compatibility.woff2",
+    "sha256": "4dc08f15f61ce16b97c0c4580bd233be0c9ea52165333fe460af54040a5c425c"
+  }
+}
