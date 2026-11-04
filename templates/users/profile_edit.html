@@ -1,234 +1,53 @@
-{% extends "base.html" %}
-{% load static %}
-
-{% block title %}
-    {% if request.user == user_to_edit %}
-        Редактирование профиля
-    {% else %}
-        Редактирование (Админ): {{ user_to_edit.get_full_name }}
-    {% endif %}
-{% endblock %}
-
-{% block body_class %}aya-unified{% endblock %}
+{% extends 'base.html' %}{% load static aya_people %}
+{% block title %}Редактирование профиля — AYA{% endblock %}
+{% block body_class %}aya-profile-editor{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/profile-editor.css' %}?v=1">{% endblock %}
 {% block content %}
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                
-                <div class="card shadow-lg border-0 rounded-4">
-                    <div class="card-header bg-primary text-white p-4 rounded-top-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h3 class="mb-1 fw-bold">
-                                    {% if request.user == user_to_edit %}
-                                        Редактирование профиля
-                                    {% else %}
-                                        <i class="fas fa-gavel"></i> Админ-режим: {{ user_to_edit.get_full_name }}
-                                    {% endif %}
-                                </h3>
-                                <p class="mb-0 opacity-75">Заполните информацию о себе и настройте приватность.</p>
-                            </div>
-                            
-                            <div style="width: 60px; height: 60px;">
-                                {% if user_to_edit.photo %}
-                                    <img src="{{ user_to_edit.photo.url }}" class="rounded-circle border border-2 border-white w-100 h-100" style="object-fit: cover;">
-                                {% else %}
-                                    {% if user_to_edit.gender == 'female' or user_to_edit.gender == 'F' or user_to_edit.gender == '2' %}
-                                        <img src="{% static 'img/female_avatar.png' %}" class="rounded-circle border border-2 border-white w-100 h-100" style="object-fit: cover;">
-                                    {% else %}
-                                        <img src="{% static 'img/male_avatar.png' %}" class="rounded-circle border border-2 border-white w-100 h-100" style="object-fit: cover;">
-                                    {% endif %}
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-body p-5">
-                        {% include "users/partials/profile_errors.html" %}
-                        
-                        <h5 class="text-primary mb-3"><i class="fas fa-user-circle"></i> Основное</h5>
-                        <div class="row g-3 mb-4">
-                            
-                            {% if form.username %} 
-                            <div class="p-3 mb-3 bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-3">
-                                <h6 class="fw-bold text-danger mb-3"><i class="fas fa-lock"></i> Служебные данные (видит только Админ)</h6>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold text-dark">Логин (Username)</label>
-                                        {{ form.username }}{{ form.username.errors }}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold text-dark">Email</label>
-                                        {{ form.email }}{{ form.email.errors }}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold text-dark">Роль</label>
-                                        {{ form.role }}{{ form.role.errors }}
-                                    </div>
-                                    <div class="col-md-6 d-flex align-items-end">
-                                        <div class="form-check form-switch mb-2">
-                                            {{ form.is_active_volunteer_title }}{{ form.is_active_volunteer_title.errors }}
-                                            <label class="form-check-label fw-bold text-success" for="{{ form.is_active_volunteer_title.id_for_label }}">
-                                                Статус "Активный волонтер"
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 mt-2">
-                                        {% if request.user.is_superuser %}<a href="{% url 'admin_password_change' user_to_edit.pk %}" class="btn btn-warning w-100 fw-bold shadow-sm">
-                                            <i class="fas fa-key me-2"></i> Принудительно сменить пароль
-                                        </a>{% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                            {% endif %}
-                            <div class="col-md-12">
-                                <label class="form-label fw-bold">Фото профиля</label>
-                                <div data-tour="profile-info">{{ form.photo }}{{ form.photo.errors }}</div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Фамилия</label>
-                                {{ form.last_name }}{{ form.last_name.errors }}
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Имя</label>
-                                {{ form.first_name }}{{ form.first_name.errors }}
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Отчество</label>
-                                {{ form.patronymic }}{{ form.patronymic.errors }}
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Дата рождения</label>
-                                {{ form.birth_date }}{{ form.birth_date.errors }}
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Пол</label>
-                                {{ form.gender }}{{ form.gender.errors }}
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Город</label>
-                                {{ form.city }}{% if form.city.help_text %}<small class="text-muted d-block">{{ form.city.help_text }}</small>{% endif %}{{ form.city.errors }}
-                            </div>
-                        </div>
-
-                        <hr class="text-muted my-4">
-
-                        <h5 class="text-primary mb-3"><i class="fas fa-university"></i> Учеба / Работа</h5>
-                        <div class="row g-3 mb-4">
-                            {% if user_to_edit.role == 'worker' or user_to_edit.role == 'head_admin' %}
-                                <div class="col-md-6">
-                                    <label class="form-label">Должность</label>
-                                    {{ form.job_title }}{{ form.job_title.errors }}
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Кабинет</label>
-                                    {{ form.office_location }}{{ form.office_location.errors }}
-                                </div>
-                            {% else %}
-                                <div class="col-md-4">
-                                    <label class="form-label">Факультет</label>
-                                    <div data-tour="profile-study">{{ form.faculty }}</div>{% if form.faculty.help_text %}<small class="text-muted d-block">{{ form.faculty.help_text }}</small>{% endif %}{{ form.faculty.errors }}
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Курс</label>
-                                    {{ form.course }}{% if form.course.help_text %}<small class="text-muted d-block">{{ form.course.help_text }}</small>{% endif %}{{ form.course.errors }}
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Группа</label>
-                                    {{ form.group }}{{ form.group.errors }}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <hr class="text-muted my-4">
-
-                        <h5 class="text-primary mb-3"><i class="fas fa-shield-alt"></i> Контакты и Приватность</h5>
-                        <div class="alert alert-info py-2 small">
-                            <i class="fas fa-info-circle"></i> Настройте, кто может видеть ваши данные. Администрация видит их всегда.
-                        </div>
-
-                        <div class="row align-items-end mb-3">
-                            <div class="col-md-7">
-                                <label class="form-label fw-bold"><i class="fas fa-phone-alt text-secondary"></i> Телефон</label>
-                                {{ form.phone }}{{ form.phone.errors }}
-                            </div>
-                            {% if request.user == user_to_edit %}
-                            <div class="col-md-5">
-                                <label class="form-label small text-muted">Кто видит?</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
-                                    <div data-tour="profile-privacy">{{ form.phone_privacy }}{{ form.phone_privacy.errors }}</div>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="row align-items-end mb-3">
-                            <div class="col-md-7">
-                                <label class="form-label fw-bold"><i class="fab fa-telegram text-primary"></i> Telegram</label>
-                                {{ form.telegram }}{{ form.telegram.errors }}
-                            </div>
-                            {% if request.user == user_to_edit %}
-                            <div class="col-md-5">
-                                <label class="form-label small text-muted">Кто видит?</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
-                                    {{ form.telegram_privacy }}{{ form.telegram_privacy.errors }}
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="row align-items-end mb-3">
-                            <div class="col-md-7">
-                                <label class="form-label fw-bold"><i class="fab fa-instagram text-danger"></i> Instagram</label>
-                                {{ form.instagram }}{{ form.instagram.errors }}{% if form.instagram.help_text %}<small class="text-muted d-block">{{ form.instagram.help_text }}</small>{% endif %}
-                            </div>
-                            {% if request.user == user_to_edit %}
-                            <div class="col-md-5">
-                                <label class="form-label small text-muted">Кто видит?</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
-                                    {{ form.instagram_privacy }}{{ form.instagram_privacy.errors }}
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <hr class="text-muted my-4">
-
-                        <h5 class="text-primary mb-3"><i class="fas fa-pen-nib"></i> О себе (Bio)</h5>
-                        <div class="row mb-3">
-                            <div class="col-md-12">
-                                {{ form.about_me }}{{ form.about_me.errors }}
-                            </div>
-                        </div>
-                        {% if request.user == user_to_edit %}
-                        <div class="row justify-content-end">
-                            <div class="col-md-5">
-                                <label class="form-label small text-muted">Кто видит описание?</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light"><i class="fas fa-eye"></i></span>
-                                    {{ form.about_me_privacy }}{{ form.about_me_privacy.errors }}
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        <div class="d-flex justify-content-between align-items-center mt-5">
-                            <a href="{% url 'my_profile' %}" class="btn btn-outline-secondary px-4">Отмена</a>
-                            <button data-tour="profile-save" type="submit" class="btn btn-success btn-lg px-5 shadow">
-                                <i class="fas fa-save"></i> Сохранить
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            </form>
-        </div>
+<div class="container pe-shell">
+  <a class="pe-back" href="{% if request.user == user_to_edit %}{% url 'my_profile' %}{% else %}{% url 'public_profile' user_to_edit.pk %}{% endif %}"><i class="fas fa-arrow-left" aria-hidden="true"></i>Вернуться в профиль</a>
+  <header class="pe-heading"><p>ЛИЧНОЕ ПРОСТРАНСТВО · AYA</p><h1>{% block editor_title %}Редактирование профиля{% endblock %}</h1><span>{% if request.user == user_to_edit %}Ваша фотография, информация и настройки видимости — в одном месте.{% else %}Вы редактируете профиль: <strong>{{ user_to_edit.get_full_name|default:user_to_edit.username }}</strong>.{% endif %}</span></header>
+  <form method="post" enctype="multipart/form-data" class="pe-form" data-profile-editor novalidate>
+    {% csrf_token %}{% include 'users/partials/profile_errors.html' %}
+    <div class="pe-layout">
+      <aside class="pe-sidebar" aria-label="Фотография и разделы анкеты">
+        <section class="pe-panel pe-photo-card" data-tour="profile-info">
+          <h2>Фото профиля</h2><p>Пусть команда узнает вас с первого взгляда</p>
+          <div class="pe-photo-preview" data-photo-preview data-photo-initial="{% if user_to_edit.photo %}{{ user_to_edit.photo.url }}{% endif %}" data-photo-fallback="{% if user_to_edit.gender == 'female' or user_to_edit.gender == 'F' or user_to_edit.gender == '2' %}{% static 'img/female_avatar.png' %}{% else %}{% static 'img/male_avatar.png' %}{% endif %}">{% portrait user_to_edit 'edit' %}</div>
+          {{ form.photo }}{{ form.photo.errors }}
+          <button class="pe-reframe" type="button" data-photo-reframe hidden><i class="fas fa-crop-alt" aria-hidden="true"></i>Настроить кадр</button>
+          <button class="pe-reset-photo" type="button" data-photo-reset hidden>Отменить замену фотографии</button>
+          <p id="profile-photo-state" class="pe-photo-state" role="status" aria-live="polite">Фото изменится после сохранения анкеты.</p>
+          <small id="profile-photo-help">{{ form.photo.help_text }}</small>
+        </section>
+        <nav class="pe-sections" aria-label="Разделы анкеты"><a href="#edit-personal"><i class="far fa-user" aria-hidden="true"></i>Личные данные</a><a href="#edit-study"><i class="fas fa-university" aria-hidden="true"></i>{% if form.faculty %}Учёба{% else %}Работа{% endif %}</a><a href="#edit-contacts"><i class="far fa-address-book" aria-hidden="true"></i>Контакты</a><a href="#edit-about"><i class="far fa-comment" aria-hidden="true"></i>О себе</a>{% if form.username %}<a href="#edit-account"><i class="fas fa-sliders-h" aria-hidden="true"></i>Управление аккаунтом</a>{% endif %}</nav>
+      </aside>
+      <div class="pe-main">
+        <section class="pe-panel" id="edit-personal"><div class="pe-section-title"><span><i class="far fa-user" aria-hidden="true"></i></span><div><h2>Личные данные</h2><p>Так вас будут видеть в команде</p></div></div><div class="pe-fields">
+          {% include 'users/partials/editor_field.html' with field=form.last_name %}
+          {% include 'users/partials/editor_field.html' with field=form.first_name %}
+          {% include 'users/partials/editor_field.html' with field=form.patronymic %}
+          {% include 'users/partials/editor_field.html' with field=form.birth_date %}
+          {% include 'users/partials/editor_field.html' with field=form.gender %}
+          {% include 'users/partials/editor_field.html' with field=form.city %}
+        </div></section>
+        <section class="pe-panel" id="edit-study" data-tour="profile-study"><div class="pe-section-title"><span><i class="fas fa-university" aria-hidden="true"></i></span><div><h2>{% if form.faculty %}Учёба{% else %}Работа в отделе{% endif %}</h2><p>{% if form.faculty %}Факультет, курс и группа{% else %}Должность и место работы{% endif %}</p></div></div><div class="pe-fields">
+          {% if form.faculty %}{% include 'users/partials/editor_field.html' with field=form.faculty %}{% include 'users/partials/editor_field.html' with field=form.course %}{% include 'users/partials/editor_field.html' with field=form.group %}{% else %}{% include 'users/partials/editor_field.html' with field=form.job_title %}{% include 'users/partials/editor_field.html' with field=form.office_location %}{% endif %}
+        </div></section>
+        <section class="pe-panel" id="edit-contacts"><div class="pe-section-title"><span><i class="far fa-address-book" aria-hidden="true"></i></span><div><h2>Контакты{% if form.phone_privacy %} и приватность{% endif %}</h2><p>Выберите удобные способы связи</p></div></div>
+          {% if form.phone_privacy %}<p class="pe-privacy-note"><i class="fas fa-shield-alt" aria-hidden="true"></i>Настройте, кто видит каждый контакт. Уполномоченные управляющие сохраняют служебный доступ.</p>{% endif %}
+          <div class="pe-contact-fields"><div class="pe-contact-pair">{% include 'users/partials/editor_field.html' with field=form.phone %}<div data-tour="profile-privacy">{% include 'users/partials/editor_field.html' with field=form.phone_privacy %}</div></div><div class="pe-contact-pair">{% include 'users/partials/editor_field.html' with field=form.telegram %}{% include 'users/partials/editor_field.html' with field=form.telegram_privacy %}</div><div class="pe-contact-pair">{% include 'users/partials/editor_field.html' with field=form.instagram %}{% include 'users/partials/editor_field.html' with field=form.instagram_privacy %}</div></div>
+        </section>
+        <section class="pe-panel" id="edit-about"><div class="pe-section-title"><span><i class="far fa-comment" aria-hidden="true"></i></span><div><h2>О себе</h2><p>Интересы, увлечения и то, чем хотите заниматься</p></div></div>{% include 'users/partials/editor_field.html' with field=form.about_me %}{% include 'users/partials/editor_field.html' with field=form.about_me_privacy %}</section>
+        {% if form.username %}<section class="pe-panel pe-account" id="edit-account"><div class="pe-section-title"><span><i class="fas fa-sliders-h" aria-hidden="true"></i></span><div><h2>Управление аккаунтом</h2><p>Служебные поля доступны в пределах ваших прав</p></div></div><div class="pe-fields">
+          {% include 'users/partials/editor_field.html' with field=form.username %}{% include 'users/partials/editor_field.html' with field=form.email %}{% include 'users/partials/editor_field.html' with field=form.role %}
+          {% if form.is_active_volunteer_title %}<label class="pe-check">{{ form.is_active_volunteer_title }}<span>Активный волонтёр</span>{{ form.is_active_volunteer_title.errors }}</label>{% endif %}
+          {% if form.faculty %}{% include 'users/partials/editor_field.html' with field=form.job_title %}{% include 'users/partials/editor_field.html' with field=form.office_location %}{% endif %}
+        </div>{% if request.user.is_superuser %}<a class="pe-password" href="{% url 'admin_password_change' user_to_edit.pk %}"><i class="fas fa-key" aria-hidden="true"></i>Сменить пароль аккаунта</a>{% endif %}</section>{% endif %}
+        <footer class="pe-savebar"><span data-editor-state role="status">Изменения применятся после сохранения</span><div><a href="{% if request.user == user_to_edit %}{% url 'my_profile' %}{% else %}{% url 'public_profile' user_to_edit.pk %}{% endif %}">Отмена</a><button type="submit" data-tour="profile-save"><i class="fas fa-check" aria-hidden="true"></i>Сохранить изменения</button></div></footer>
+      </div>
     </div>
+  </form>
 </div>
+<dialog class="pe-crop-dialog" aria-labelledby="pe-crop-title"><header><div><p>ФОТОГРАФИЯ ПРОФИЛЯ</p><h2 id="pe-crop-title">Выберите удачный кадр</h2></div><button type="button" data-crop-cancel aria-label="Закрыть кадрирование">×</button></header><p class="pe-crop-help">Перемещайте фото пальцем или мышью. В рамку попадёт только выбранная область.</p><canvas width="720" height="720" aria-label="Предпросмотр фотографии"></canvas><label class="pe-zoom">Масштаб<input type="range" min="1" max="4" step="0.01" value="1" data-crop-zoom></label><details class="pe-fine"><summary>Точное положение кадра</summary><label>По горизонтали<input type="range" min="0" max="1" step="0.01" value="0.5" data-crop-x></label><label>По вертикали<input type="range" min="0" max="1" step="0.01" value="0.5" data-crop-y></label></details><p data-crop-status role="status"></p><footer><button type="button" class="pe-crop-apply" data-crop-apply>Применить кадр</button><button type="button" data-crop-original>Без кадрирования</button><button type="button" data-crop-cancel>Отмена</button></footer></dialog>
 {% endblock %}
+{% block extra_js %}<script src="{% static 'js/profile-editor.js' %}?v=1" defer></script>{% endblock %}

@@ -1,0 +1,1 @@
+{% if field %}<div class="pe-field{% if field.errors %} pe-field-invalid{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="pe-required" aria-hidden="true"> *</span>{% endif %}</label>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{{ field.errors }}</div>{% endif %}

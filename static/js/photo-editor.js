@@ -1,6 +1,7 @@
 (() => {
   'use strict';
   for (const input of document.querySelectorAll('input[type=file]:not([multiple])')) {
+    if (input.hasAttribute('data-profile-photo-input')) continue;
     if (!['photo','image','cover','cover_image','author_photo','quote_photo'].includes(input.name.split('-').pop())) continue;
     let applied=false;
     const hint=document.createElement('p');hint.className='photo-hint';hint.textContent='После выбора фотографии можно настроить кадр и масштаб.';input.after(hint);

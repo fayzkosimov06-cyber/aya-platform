@@ -29,6 +29,10 @@ class UserRegisterForm(UserCreationForm):
             user.save()
         return user
 
+class ProfilePhotoInput(forms.ClearableFileInput):
+    template_name = 'users/widgets/profile_photo_input.html'
+
+
 class FixedProfileChoicesMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -127,7 +131,7 @@ class UserUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
             'instagram_privacy': forms.Select(attrs={'class': 'form-select form-select-sm border-info'}),
             'about_me_privacy': forms.Select(attrs={'class': 'form-select form-select-sm border-info'}),
             
-            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'photo': ProfilePhotoInput(attrs={'data-profile-photo-input': '', 'aria-describedby': 'profile-photo-help profile-photo-state'}),
         }
 
 class AdminUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
@@ -175,7 +179,7 @@ class AdminUpdateForm(FixedProfileChoicesMixin, forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'telegram': forms.TextInput(attrs={'class': 'form-control'}),
             'instagram': forms.TextInput(attrs={'class': 'form-control'}),
-            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'photo': ProfilePhotoInput(attrs={'data-profile-photo-input': '', 'aria-describedby': 'profile-photo-help profile-photo-state'}),
         }
 
 
