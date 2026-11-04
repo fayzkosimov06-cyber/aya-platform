@@ -97,7 +97,7 @@ MEDIA_URL = '/media/'
 # Папка на диске для медиа-файлов
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 FILE_UPLOAD_PERMISSIONS = 0o644
-FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o2775
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o775
 
 # --- КОНЕЦ НАСТРОЕК ФАЙЛОВ ---
 

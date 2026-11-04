@@ -135,7 +135,7 @@ def archive_unused(name, owner='legacy'):
             or not source.is_file()): return False
     with transaction.atomic():
         if is_referenced(name,source): return False
-        folder=private/str(owner);folder.mkdir(mode=0o2750,parents=True,exist_ok=True)
+        folder=private/str(owner);folder.mkdir(mode=0o750,parents=True,exist_ok=True)
         if folder.resolve()!=folder: raise ValueError('Invalid archive path')
         identity=uuid4().hex
         target=folder/(identity+source.suffix.lower())
