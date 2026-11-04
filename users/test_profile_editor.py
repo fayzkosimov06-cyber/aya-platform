@@ -59,3 +59,21 @@ class ProfileEditorTests(TestCase):
         self.assertIn('photo',response.context['form'].errors)
         self.assertContains(response,'href="#id_photo"')
         self.member.refresh_from_db(); self.assertEqual(self.member.photo.name,previous)
+
+    def test_invalid_text_with_upload_previews_saved_photo_or_placeholder(self):
+        for existing in (True,False):
+            with self.subTest(existing=existing):
+                if not existing:
+                    self.member.photo=''; self.member.save()
+                previous=self.member.photo.url if self.member.photo else ''
+                self.client.force_login(self.member)
+                response=self.client.post(reverse('profile_edit'),{**self.data(),'birth_date':'2999-01-01','photo':picture('replacement.png',color='blue')})
+                self.assertEqual(response.status_code,200)
+                self.assertIn('birth_date',response.context['form'].errors)
+                self.assertContains(response,'Выберите фотографию повторно')
+                preview=response.content.decode().split('data-photo-preview',1)[1].split('</div>',1)[0]
+                self.assertIn('data-photo-initial="'+previous+'"',preview)
+                self.assertIn('src="'+(previous or '/static/img/male_avatar.png')+'"',preview)
+                self.assertNotIn('replacement.png',preview)
+                self.member.refresh_from_db()
+                self.assertEqual(self.member.photo.url if self.member.photo else '',previous)

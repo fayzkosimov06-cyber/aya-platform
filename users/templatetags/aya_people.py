@@ -37,8 +37,9 @@ def presentation(person):
     return result
 
 @register.inclusion_tag('users/partials/portrait.html')
-def portrait(person, size='medium', photo=None):
-    return {'person': person, 'size': size, 'portrait_photo':photo, **presentation(person)}
+def portrait(person, size='medium', photo=None, ignore_person_photo=False):
+    return {'person': person, 'size': size, 'portrait_photo':photo,
+            'ignore_person_photo':ignore_person_photo, **presentation(person)}
 
 @register.inclusion_tag('users/partials/role_badges.html')
 def role_badges(person):

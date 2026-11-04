@@ -12,11 +12,11 @@
       <aside class="pe-sidebar" aria-label="Фотография и разделы анкеты">
         <section class="pe-panel pe-photo-card" data-tour="profile-info">
           <h2>Фото профиля</h2><p>Пусть команда узнает вас с первого взгляда</p>
-          <div class="pe-photo-preview" data-photo-preview data-photo-initial="{% if user_to_edit.photo %}{{ user_to_edit.photo.url }}{% endif %}" data-photo-fallback="{% if user_to_edit.gender == 'female' or user_to_edit.gender == 'F' or user_to_edit.gender == '2' %}{% static 'img/female_avatar.png' %}{% else %}{% static 'img/male_avatar.png' %}{% endif %}">{% portrait user_to_edit 'edit' %}</div>
+          <div class="pe-photo-preview" data-photo-preview data-photo-initial="{% if form.photo.initial %}{{ form.photo.initial.url }}{% endif %}" data-photo-fallback="{% if user_to_edit.gender == 'female' or user_to_edit.gender == 'F' or user_to_edit.gender == '2' %}{% static 'img/female_avatar.png' %}{% else %}{% static 'img/male_avatar.png' %}{% endif %}">{% portrait user_to_edit 'edit' photo=form.photo.initial ignore_person_photo=True %}</div>
           {{ form.photo }}{{ form.photo.errors }}
           <button class="pe-reframe" type="button" data-photo-reframe hidden><i class="fas fa-crop-alt" aria-hidden="true"></i>Настроить кадр</button>
           <button class="pe-reset-photo" type="button" data-photo-reset hidden>Отменить замену фотографии</button>
-          <p id="profile-photo-state" class="pe-photo-state" role="status" aria-live="polite">Фото изменится после сохранения анкеты.</p>
+          <p id="profile-photo-state" class="pe-photo-state" role="status" aria-live="polite">{% if form.is_bound and form.files.photo %}Выберите фотографию повторно после исправления ошибок анкеты. Новое фото ещё не сохранено.{% else %}Фото изменится после сохранения анкеты.{% endif %}</p>
           <small id="profile-photo-help">{{ form.photo.help_text }}</small>
         </section>
         <nav class="pe-sections" aria-label="Разделы анкеты"><a href="#edit-personal"><i class="far fa-user" aria-hidden="true"></i>Личные данные</a><a href="#edit-study"><i class="fas fa-university" aria-hidden="true"></i>{% if form.faculty %}Учёба{% else %}Работа{% endif %}</a><a href="#edit-contacts"><i class="far fa-address-book" aria-hidden="true"></i>Контакты</a><a href="#edit-about"><i class="far fa-comment" aria-hidden="true"></i>О себе</a>{% if form.username %}<a href="#edit-account"><i class="fas fa-sliders-h" aria-hidden="true"></i>Управление аккаунтом</a>{% endif %}</nav>
