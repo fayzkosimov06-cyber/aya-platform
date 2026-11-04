@@ -1,0 +1,41 @@
+{% extends 'base.html' %}{% load static aya_people %}
+{% block title %}Профиль {{ profile_user.get_full_name|default:profile_user.username }} — AYA{% endblock %}
+{% block body_class %}aya-profile profile-v2 {% block profile_type %}{% endblock %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/profile-v2.css' %}?v=1">{% endblock %}
+{% block content %}
+<div class="container pv2-shell">
+  <nav class="pv2-breadcrumb" aria-label="Навигация"><a href="{% url 'volunteer_list' %}">Команда AYA</a><span aria-hidden="true">/</span><span>{% block profile_label %}Профиль волонтёра{% endblock %}</span></nav>
+  <header class="pv2-hero">
+    <div class="pv2-photo">{% include 'users/profile_photo.html' %}</div>
+    <div class="pv2-identity">
+      <p class="pv2-eyebrow">{% if user == profile_user %}МОЙ ПРОФИЛЬ{% else %}КОМАНДА AYA{% endif %}</p>
+      <h1>{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+      {% role_badges profile_user %}
+      {% block profile_subtitle %}{% endblock %}
+      <p class="pv2-since"><i class="far fa-calendar-alt" aria-hidden="true"></i> На сайте с {{ profile_user.date_joined|date:'d.m.Y' }}</p>
+    </div>
+    <div class="pv2-actions">
+      {% if user == profile_user %}<a class="pv2-button pv2-button-primary" href="{% url 'profile_edit' %}"><i class="fas fa-pen" aria-hidden="true"></i>Редактировать профиль</a>{% endif %}
+      {% if can_admin_edit %}<a class="pv2-button" href="{% url 'admin_edit_user' profile_user.pk %}"><i class="fas fa-sliders-h" aria-hidden="true"></i>Управление аккаунтом</a>{% endif %}
+      {% deletion_allowed user profile_user as can_delete_account %}{% if can_delete_account %}<a class="pv2-delete" href="{% url 'user_delete' profile_user.pk %}">Удалить аккаунт</a>{% endif %}
+    </div>
+    <nav class="pv2-nav" aria-label="Разделы профиля"><a href="#overview" aria-current="location">Обзор</a>{% block profile_nav %}{% endblock %}<a href="#contacts">Контакты</a><a href="#profile-documents">QR и документы</a></nav>
+  </header>
+  {% block profile_status %}{% endblock %}
+  {% block profile_stats %}{% endblock %}
+  <div class="pv2-grid">
+    <div class="pv2-main">{% block profile_main %}{% endblock %}</div>
+    <aside class="pv2-aside" aria-label="Контакты и документы">
+      {% include 'users/partials/profile_contacts.html' %}
+      <section class="pv2-panel pv2-documents" id="profile-documents" aria-labelledby="documents-heading">
+        <div class="pv2-section-heading"><span class="pv2-section-icon"><i class="far fa-id-card" aria-hidden="true"></i></span><div><p class="pv2-eyebrow">ВСЕГДА ПОД РУКОЙ</p><h2 id="documents-heading">QR и документы</h2></div></div>
+        {% include 'users/profile_qr.html' %}
+        {% include 'users/cards/profile_entry.html' %}
+        {% if user == profile_user %}<a class="pv2-help" href="{% url 'training_help' %}"><i class="far fa-question-circle" aria-hidden="true"></i><span>Нужна помощь?<small>Короткие инструкции по работе с сайтом</small></span><span aria-hidden="true">↗</span></a>{% endif %}
+      </section>
+    </aside>
+  </div>
+</div>
+{% block profile_modals %}{% endblock %}
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/profile-v2.js' %}?v=1" defer></script>{% endblock %}
