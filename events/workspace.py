@@ -5,18 +5,18 @@ from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Q,Count
+from django.db.models import Q,Count,Prefetch,prefetch_related_objects
 from django.core.paginator import Paginator
 from django.http import Http404,HttpResponse,HttpResponseForbidden
 from django.shortcuts import render,redirect,get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-from users.access import can_manage_event,can_create_event,has_full_volunteer_access,can_register_for_events,can_see_event_catalog,can_view_event
+from users.access import can_manage_event,can_create_event,has_full_volunteer_access,can_register_for_events,can_see_event_catalog,can_view_event,visible_profiles
 from users.units import global_manager,people_field
 from users.points import members,can_award
 from users.models import AuditLog,Notification,ContributionWork,PointProposal
 from users.request_security import positive_pk
-from users.permissions import allowed
+from users.permissions import allowed,setting
 from .models import Event,EventAttendance,EventPhoto,EventVideo,EventHero
 from .forms import EventWorkspaceForm,EventReportForm,EventVideoForm,EventHeroForm
 
@@ -25,6 +25,17 @@ def log(user,text):AuditLog.objects.create(actor=user,action=text)
 def manage_q(user):
     return Q(organizer=user)|Q(aya_directions__leaders=user)|Q(aya_schools__teachers__member=user)|Q(aya_schools__direction__leaders=user)
 def can_delete(user,event):return allowed(user,'events_delete',event)
+
+
+def can_publish_form(user,event,form):
+    """Check current visibility and the proposed team links before writing anything."""
+    if not allowed(user,'events_publish',event):return False
+    if user.is_superuser:return True
+    rule=setting(user,'events_publish')
+    scope=rule.scope if rule else ('all' if user.role in {'president','worker','head_admin'} else 'own')
+    if scope=='all':return True
+    if 'directions' not in form.fields:return bool(event and allowed(user,'events_publish',event))
+    return any(allowed(user,'events_publish',team) for key in ('directions','schools','clubs') for team in form.cleaned_data.get(key,()))
 def attach_state(event):
     event.state_label='Отменено' if event.cancelled else 'Завершено' if event.is_completed else 'Опубликовано' if event.is_approved else 'На рассмотрении' if event.submitted_for_review else 'Черновик'
     return event
@@ -54,7 +65,10 @@ def detail(request,pk):
     event=attach_state(get_object_or_404(Event,pk=pk));manage=can_manage_event(request.user,event)
     if not can_view_event(request.user,event):raise Http404
     full=has_full_volunteer_access(request.user)
-    people=event.participants.exclude(is_superuser=True).order_by('last_name','first_name','pk') if full else members().none()
+    people=visible_profiles(request.user,event.participants.exclude(is_superuser=True)).order_by('last_name','first_name','pk') if full else members().none()
+    if full:
+        from users.models import User
+        prefetch_related_objects([event],Prefetch('heroes',queryset=EventHero.objects.filter(user__in=visible_profiles(request.user,User.objects.exclude(is_superuser=True))).select_related('user')))
     return render(request,'events/page.html',{'event':event,'can_manage':manage,'can_delete_event':can_delete(request.user,event),'can_register':can_register_for_events(request.user),'can_view_participants':full,'is_participant':request.user.is_authenticated and event.participants.filter(pk=request.user.pk).exists(),'people_count':event.participants.count(),'people':Paginator(people,24).get_page(request.GET.get('page')),'registration_open':event.is_approved and not event.cancelled and not event.is_completed and event.end_time>timezone.now()})
 
 @login_required
@@ -73,7 +87,7 @@ def edit(request,pk=None):
             if not event:obj.organizer=request.user
             action=request.POST.get('action','save')
             if action=='publish':
-                if not allowed(request.user,'events_publish',event):return HttpResponseForbidden('Публикация недоступна.')
+                if not can_publish_form(request.user,event,form):return HttpResponseForbidden('Публикация недоступна для выбранных команд.')
                 obj.is_approved=True;obj.submitted_for_review=False
             elif action=='submit' and not obj.is_approved:obj.submitted_for_review=True
             obj.save();form.save_links(obj)

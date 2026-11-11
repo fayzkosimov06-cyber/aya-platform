@@ -24,7 +24,12 @@ class ControlMiddleware:
  def __call__(self,request):
   token=request_context.set(request)
   try:
-   response=self.get_response(request)
+   from .request_security import oversized_record_path, protect_response
+   if oversized_record_path(request.path):
+    from django.http import HttpResponseNotFound
+    response=HttpResponseNotFound('Страница не найдена.')
+   else:response=self.get_response(request)
+   protect_response(request,response)
    if not request.path.startswith(('/static/','/media/')):
     from .journal import emit,safe_value
     name=getattr(getattr(request,'resolver_match',None),'url_name','') or ''
@@ -63,6 +68,8 @@ class ControlMiddleware:
   finally:request_context.reset(token)
  def process_view(self,request,view,args,kwargs):
   name=request.resolver_match.url_name
+  from .request_security import validate_identifiers
+  validate_identifiers(request,name,kwargs)
   if request.path.startswith('/superadmin/') and not request.user.is_superuser:raise Http404
   from .models import User,Direction,School,Club,ContributionWork,ContributionAward,PointProposal
   if name in {'public_profile','admin_edit_user','activity_periods_manage','activity_period_edit','activity_period_delete','admin_password_change','toggle_active_volunteer'} and 'pk' in kwargs:
@@ -81,7 +88,7 @@ class ControlMiddleware:
   pk=kwargs.get('pk')
   if name=='event_edit':
    tab=request.GET.get('tab','about');action=request.POST.get('action','')
-   if tab=='status' or action=='publish':code='events_publish'
+   if tab=='status':code='events_publish'
    elif tab=='points':code='points_award' if allowed(request.user,'points_award') else 'points_propose'
   if pk and name.startswith('event_'):
    from events.models import Event,EventPhoto

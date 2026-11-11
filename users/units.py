@@ -3,7 +3,7 @@ from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Q, Sum, Count
+from django.db.models import Q, Sum, Count, Prefetch
 from django.core.paginator import Paginator
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render, redirect
@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.urls import reverse
 from .permissions import allowed
 from .models import Direction, School, User, SchoolTeacher, SchoolLesson, AuditLog, ContributionAward
-from .access import has_full_volunteer_access
+from .access import has_full_volunteer_access, visible_school_teachers
 from .points import can_award, members as eligible_members
 from events.models import Event
 
@@ -47,7 +47,7 @@ def log(user,text): AuditLog.objects.create(actor=user,action=text)
 def schedule_page(request, school, *, editor=False):
     """Retain history and inactive-school lessons; never silently hide a saved schedule."""
     now = timezone.now()
-    lessons = school.lessons.prefetch_related('teachers__member')
+    lessons = school.lessons.prefetch_related(Prefetch('teachers',queryset=visible_school_teachers(request.user,SchoolTeacher.objects.all()).select_related('member')))
     counts = lessons.aggregate(all=Count('pk'),
         upcoming=Count('pk', filter=Q(ends_at__gte=now, cancelled=False)),
         past=Count('pk', filter=Q(ends_at__lt=now, cancelled=False)),
@@ -142,7 +142,7 @@ def detail(request, pk, kind='direction'):
         'upcoming': Paginator(events, 6).get_page(request.GET.get('events_page')),
         'event_filter': event_filter,
         'schools': obj.schools.order_by('-active', 'name') if not school else [],
-        'teachers': obj.teachers.exclude(member__is_superuser=True).select_related('member') if school else [],
+        'teachers': visible_school_teachers(request.user,obj.teachers).select_related('member') if school else [],
         'unit_points': awards.aggregate(n=Sum('points'))['n'] or 0 if has_full_volunteer_access(request.user) else None,
         'academic_year': f'{year}/{year+1}', **unit_actions(request.user, obj),
     }

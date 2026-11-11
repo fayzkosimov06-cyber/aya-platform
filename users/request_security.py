@@ -9,6 +9,52 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import requires_csrf_token
 
 
+QUERY_IDENTIFIERS = {
+    'volunteer_list': ('direction',), 'school_catalog': ('direction',),
+    'club_catalog': ('school','direction'), 'user_management': ('school','direction'),
+    'card_list': ('year','course','school','direction','club'), 'card_create': ('user','year'), 'card_edit': ('user','year'),
+    'points_quick': ('member','work','school','direction','club'),
+    'points_works': ('school','direction','club'), 'volunteer_rating': ('school','direction','club'),
+    'audit_log': ('actor','until'), 'journal_private': ('actor','until'), 'journal_activity': ('actor','until'),
+    'event_create': ('directions','schools','clubs'),
+    'my_profile': ('direction','school','club'), 'public_profile': ('direction','school','club'),
+    'rating_history': ('direction','school','club'),
+}
+
+
+def oversized_record_path(path):
+    # Run before URL resolution: Django's integer converter can raise on huge integers.
+    return any(len(part)>19 and part.isascii() and part.isdecimal() for part in path.split('/'))
+
+
+def validate_identifiers(request, route, kwargs):
+    def check(value):
+        text=str(value)
+        # Other malformed form choices remain form errors. Guard numeric lookalikes
+        # and oversized values that would otherwise reach int() or a DB driver.
+        if text.isdigit():
+            if text.isascii() and len(text)<=19 and not text.strip('0'):return
+            positive_pk(text)
+    for value in kwargs.values():
+        if isinstance(value,int):check(value)
+    for key in QUERY_IDENTIFIERS.get(route,()):
+        for value in request.GET.getlist(key):check(value)
+    if request.method=='POST':
+        # These fields are inspected by permissions before ModelForm validation.
+        for key in ('direction','school','member','leaders','events','directions','schools','clubs','lessons','actor'):
+            for value in request.POST.getlist(key):check(value)
+
+
+def protect_response(request, response):
+    # Partial CSP: preserve existing inline scripts and permitted video providers.
+    # A stricter script-src policy needs a separate migration to nonces.
+    response.setdefault('Content-Security-Policy', "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'")
+    if request.user.is_authenticated and not request.path.startswith(('/static/','/media/')):
+        from django.utils.cache import patch_cache_control, patch_vary_headers
+        patch_cache_control(response,private=True,no_store=True)
+        patch_vary_headers(response,['Cookie'])
+
+
 def positive_pk(value):
     """Reject malformed and oversized IDs before passing them to database drivers."""
     from django.http import Http404

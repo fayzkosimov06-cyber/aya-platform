@@ -73,6 +73,25 @@ def can_view_event(user, event) -> bool:
     return event.is_public_for_guests or has_full_volunteer_access(user)
 
 
+def visible_profiles(viewer, people):
+    """Queryset equivalent of can_view_profile for linked people on other pages."""
+    from .permissions import allowed
+    if getattr(viewer,'is_superuser',False):return people
+    people=people.exclude(is_superuser=True)
+    if not getattr(viewer,'is_authenticated',False):return people.filter(is_approved=True)
+    if any(allowed(viewer,code) for code in ('contacts','people')):return people
+    visible=models.Q(is_approved=True)|models.Q(pk=viewer.pk)
+    if any(allowed(viewer,code) for code in ('admissions','visits')):
+        visible |= models.Q(role__in=['volunteer','moderator','president'],staff_application__isnull=True)
+    return people.filter(visible)
+
+
+def visible_school_teachers(viewer, teachers):
+    from .models import User
+    return teachers.exclude(member__is_superuser=True).filter(
+        models.Q(member__isnull=True)|models.Q(member__in=visible_profiles(viewer,User.objects.all())))
+
+
 def is_public_volunteer(user) -> bool:
     return bool(
         getattr(user, 'is_approved', False)
