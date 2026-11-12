@@ -2,60 +2,47 @@
 {% load static %}
 {% block title %}AYA — Association of Youth ATSMU{% endblock %}
 {% block body_class %}aya-home{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/home-depth.css' %}?v=1">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/home-editorial.css' %}?v=1">{% endblock %}
 {% block content %}
 <div class="aya-home-top">
 <div class="container">
 {% if can_edit_home %}<div class="aya-editor-link"><a href="{% url 'home_manage' %}"><i class="fas fa-pen" aria-hidden="true"></i> Редактировать главную</a></div>{% endif %}
 <section class="aya-hero" aria-labelledby="hero-title">
   <div class="aya-hero-copy">
-    <p class="aya-hero-label"><span aria-hidden="true"></span> ASSOCIATION OF YOUTH ATSMU</p>
-    <h1 id="hero-title">Твои идеи.<br>Наша <span>энергия.</span><br>Общие дела.</h1>
-    <p class="aya-intro">Находи своих, пробуй новое и меняй жизнь университета вместе с AYA. Здесь у каждого есть возможность сделать больше.</p>
+    <p class="aya-hero-label">ASSOCIATION OF YOUTH ATSMU</p>
+    <h1 id="hero-title">Объединяем людей.<br><span>Создаём возможности.</span></h1>
+    <p class="aya-intro">AYA — сообщество молодёжи ТГМУ имени Абуали ибни Сино. Учимся, развиваем инициативы и вместе делаем жизнь университета лучше.</p>
     <div class="aya-actions">
       {% if not user.is_authenticated %}<a class="aya-button" href="{% url 'signup' %}">Присоединиться <span aria-hidden="true">→</span></a>
       {% elif home_full_access %}<a class="aya-button" href="{% url 'event_list' %}">К мероприятиям <span aria-hidden="true">→</span></a>
       {% else %}<a class="aya-button" href="{% url 'my_profile' %}">Мой профиль <span aria-hidden="true">→</span></a>{% endif %}
-      <a class="aya-button aya-button-outline" href="#directions">Найти свою команду <span aria-hidden="true">↗</span></a>
+      <a class="aya-button aya-button-outline" href="#directions">Направления AYA <span aria-hidden="true">↗</span></a>
     </div>
-    <p class="aya-university-note"><i class="fas fa-university" aria-hidden="true"></i><span>Молодёжь ТГМУ<br>имени Абуали ибни Сино</span></p>
+    <a class="aya-university-note" href="{% url 'about_page' %}">Об ассоциации <span aria-hidden="true">→</span></a>
   </div>
-  <div class="aya-scene" data-depth-scene>
-    <div class="aya-scene-model" aria-hidden="true">
-      <span class="aya-scene-coordinate">AYA / ОДНА КОМАНДА</span>
-      <div class="aya-model-fallback"><span></span><span></span></div>
-      <canvas class="aya-model-canvas" data-aya-model></canvas>
-      <div class="aya-scene-logo"><img src="{% static 'img/aya-logo-2026.png' %}" alt="" width="200" height="200"><span>ТВОЁ МЕСТО В КОМАНДЕ</span></div>
-      <span class="aya-scene-chip aya-chip-learn"><i class="fas fa-graduation-cap"></i> Учимся</span>
-      <span class="aya-scene-chip aya-chip-create"><i class="fas fa-star"></i> Создаём</span>
-      <span class="aya-scene-sphere"></span>
-    </div>
-  <div class="aya-hero-gallery" data-gallery data-count="1" data-autoplay="7000" role="region" aria-label="Фотографии AYA" aria-roledescription="карусель">
-    <div class="aya-gallery-heading"><span><span aria-hidden="true"></span> Наши люди. Наши моменты.</span><i class="fas fa-users" aria-hidden="true"></i></div>
+  <div class="aya-hero-gallery" data-gallery data-count="1" role="region" aria-label="Фотографии AYA" aria-roledescription="карусель">
     <div class="aya-hero-photo">
     {% for slide in home_slides %}<img data-slide {% if not forloop.first %}hidden{% endif %} src="{{ slide.image.url }}" alt="{{ slide.caption|default:'Команда AYA' }}" width="1280" height="960" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
     {% empty %}<img src="{% static 'img/collage_2.jpg' %}" alt="Команда AYA" width="1280" height="960" fetchpriority="high">{% endfor %}
     </div>
-    {% if home_slides|length > 1 %}<div class="aya-gallery-controls"><button type="button" data-prev aria-label="Предыдущая фотография">‹</button><span data-position aria-live="off">1 / {{ home_slides|length }}</span><button type="button" data-next aria-label="Следующая фотография">›</button><button type="button" data-pause aria-label="Приостановить смену фотографий">Пауза</button></div>{% endif %}
-  </div>
-    <span class="aya-scene-caption" aria-hidden="true">Объединяем людей.<br>Создаём возможности.</span>
+    <div class="aya-gallery-footer"><span>Люди и события AYA</span>{% if home_slides|length > 1 %}<div class="aya-gallery-controls"><button type="button" data-prev aria-label="Предыдущая фотография">←</button><span data-position aria-live="polite">1 / {{ home_slides|length }}</span><button type="button" data-next aria-label="Следующая фотография">→</button></div>{% endif %}</div>
   </div>
 </section>
-{% if home_stats %}<section class="aya-stats" aria-label="AYA в цифрах">
-{% for stat in home_stats %}<div class="aya-stat"><span class="aya-icon" aria-hidden="true"><i class="{{ stat.icon }}"></i></span><div><strong>{{ stat.number }}</strong><span>{{ stat.label }}</span></div></div>{% endfor %}
-</section>{% endif %}
 </div></div>
+{% if home_stats %}<div class="aya-stats-band"><section class="container aya-stats" aria-label="AYA в цифрах">
+{% for stat in home_stats %}<div class="aya-stat"><span class="aya-icon" aria-hidden="true"><i class="{{ stat.icon }}"></i></span><div><strong>{{ stat.number }}</strong><span>{{ stat.label }}</span></div></div>{% endfor %}
+</section></div>{% endif %}
 <div class="container aya-home-content">
 <section class="aya-section aya-discover" aria-labelledby="discover-title">
-  <div class="aya-section-head"><div><p class="aya-eyebrow">Точка притяжения</p><h2 id="discover-title">Твоё следующее «хочу»</h2></div><p class="aya-section-description">От первого интереса<br>до общего большого дела.</p></div>
+  <div class="aya-section-head"><div><p class="aya-eyebrow">Возможности для каждого</p><h2 id="discover-title">Найдите своё место в AYA</h2></div><p class="aya-section-description">Знания, общие интересы<br>и работа в команде.</p></div>
   <div class="aya-discover-grid">
-    <a class="aya-discover-card aya-discover-learn" href="{% url 'school_catalog' %}"><span class="aya-discover-object" aria-hidden="true"><i class="fas fa-graduation-cap"></i></span><span class="aya-discover-index">01 / УЧИСЬ</span><h3>Освоить новое</h3><p>Школы, преподаватели и занятия, с которых начинается развитие.</p><span class="aya-discover-link">Выбрать школу <span aria-hidden="true">↗</span></span></a>
-    <a class="aya-discover-card aya-discover-clubs" href="{% url 'club_catalog' %}"><span class="aya-discover-object" aria-hidden="true"><i class="fas fa-comments"></i></span><span class="aya-discover-index">02 / ОБЪЕДИНЯЙСЯ</span><h3>Найти своих</h3><p>Клубы, общие интересы и встречи с единомышленниками.</p><span class="aya-discover-link">Найти клуб <span aria-hidden="true">↗</span></span></a>
-    <a class="aya-discover-card aya-discover-team" href="#directions"><span class="aya-discover-object" aria-hidden="true"><i class="fas fa-heart"></i></span><span class="aya-discover-index">03 / ДЕЙСТВУЙ</span><h3>Сделать важное</h3><p>Направления AYA и команда, с которой идеи становятся делами.</p><span class="aya-discover-link">К направлениям <span aria-hidden="true">↗</span></span></a>
+    <a class="aya-discover-card" href="{% url 'school_catalog' %}"><span class="aya-discover-object" aria-hidden="true"><i class="fas fa-graduation-cap"></i></span><h3>Школы</h3><p>Занятия с преподавателями и практические навыки для новых задач.</p><span class="aya-discover-link">Выбрать школу <span aria-hidden="true">↗</span></span></a>
+    <a class="aya-discover-card" href="{% url 'club_catalog' %}"><span class="aya-discover-object" aria-hidden="true"><i class="far fa-comments"></i></span><h3>Клубы</h3><p>Встречи по интересам, общение и совместные проекты.</p><span class="aya-discover-link">Найти клуб <span aria-hidden="true">↗</span></span></a>
+    <a class="aya-discover-card" href="#directions"><span class="aya-discover-object" aria-hidden="true"><i class="far fa-compass"></i></span><h3>Направления</h3><p>Команды, которые развивают инициативы и организуют общие дела.</p><span class="aya-discover-link">Познакомиться с командами <span aria-hidden="true">↗</span></span></a>
   </div>
 </section>
 <section id="directions" class="aya-section" aria-labelledby="directions-title">
-  <div class="aya-section-head"><div><p class="aya-eyebrow">Разные интересы. Общие ценности.</p><h2 id="directions-title">Найди свою команду</h2></div><a href="{% url 'unit_catalog' %}">Все направления <span aria-hidden="true">↗</span></a></div>
+  <div class="aya-section-head"><div><p class="aya-eyebrow">Люди, которые действуют вместе</p><h2 id="directions-title">Направления ассоциации</h2></div><a href="{% url 'unit_catalog' %}">Все направления <span aria-hidden="true">↗</span></a></div>
   <div class="aya-directions">
   {% for direction in directions %}<a class="aya-direction" href="{% url 'direction_detail' direction.pk %}"><span class="aya-direction-top"><span class="aya-icon" aria-hidden="true">{% if direction.logo %}<img src="{{ direction.logo.url }}" alt="" width="48" height="48" loading="lazy">{% else %}<i class="fas fa-{{ direction.home_icon }}"></i>{% endif %}</span><span class="aya-direction-arrow" aria-hidden="true">↗</span></span><span><h3>{{ direction.name }}</h3><span class="aya-caption">{{ direction.intro|default:'Идеи, единомышленники и общие дела.'|truncatechars:100 }}</span></span><span class="aya-direction-link">Познакомиться с командой</span></a>
   {% empty %}<p class="aya-empty">Скоро здесь появятся направления AYA.</p>{% endfor %}
@@ -65,11 +52,11 @@
   <div class="aya-section-head"><div><p class="aya-eyebrow">Встречаемся и действуем</p><h2 id="events-title">Ближайшие мероприятия</h2></div>{% if home_catalog_access %}<a href="{% url 'event_list' %}">Вся афиша <span aria-hidden="true">↗</span></a>{% endif %}</div>
   <div class="aya-events">
   {% for event in upcoming_events %}<article class="aya-event"><a class="aya-event-photo" href="{% url 'event_detail' event.pk %}"><img src="{% if event.cover_image %}{{ event.cover_image.url }}{% else %}{% static 'img/event-placeholder.svg' %}{% endif %}" alt="{{ event.title }}" width="640" height="320" loading="lazy"><span class="aya-event-date"><strong>{{ event.start_time|date:'d' }}</strong><span>{{ event.start_time|date:'M' }}</span></span></a><div class="aya-event-body"><time datetime="{{ event.start_time|date:'c' }}"><i class="far fa-clock" aria-hidden="true"></i> {{ event.start_time|date:'d E Y' }} · {{ event.start_time|date:'H:i' }}</time><h3><a href="{% url 'event_detail' event.pk %}">{{ event.title }}</a></h3><p><i class="fas fa-map-marker-alt" aria-hidden="true"></i> {{ event.location|default:'Место уточняется' }}</p><a class="aya-event-arrow" href="{% url 'event_detail' event.pk %}" aria-label="Подробнее: {{ event.title }}">↗</a></div></article>
-  {% empty %}<div class="aya-empty aya-event-empty"><span class="aya-empty-object" aria-hidden="true"><i class="far fa-calendar-plus"></i></span><div><h3>Готовим новые встречи</h3><p>Новые мероприятия скоро появятся. Следите за афишей!</p></div><a href="{% url 'unit_catalog' %}">А пока — познакомься с командами <span aria-hidden="true">↗</span></a></div>{% endfor %}
+  {% empty %}<div class="aya-empty aya-event-empty"><span class="aya-empty-object" aria-hidden="true"><i class="far fa-calendar-alt"></i></span><div><h3>Афиша обновляется</h3><p>Ближайшие встречи появятся здесь после публикации.</p></div><a href="{% url 'unit_catalog' %}">Познакомиться с командами <span aria-hidden="true">↗</span></a></div>{% endfor %}
   </div>
 </section>
-<section class="aya-section aya-start" aria-labelledby="steps-title"><div class="aya-start-heading"><p class="aya-eyebrow">Всё начинается с тебя</p><h2 id="steps-title">Как стать частью AYA</h2><p>Первый шаг проще, чем кажется.</p></div>
-  <ol class="aya-steps"><li><span class="aya-step-number">1</span><div><h3>Зарегистрируйся</h3><p>Создай профиль и дождись одобрения заявки.</p></div></li><li><span class="aya-step-number">2</span><div><h3>Приходи знакомиться</h3><p>Три визита — и тебе откроется полный доступ.</p></div></li><li><span class="aya-step-number">3</span><div><h3>Действуй вместе с нами</h3><p>Выбирай мероприятия и присоединяйся к команде.</p></div></li></ol>
+<section class="aya-section aya-start" aria-labelledby="steps-title"><div class="aya-start-heading"><p class="aya-eyebrow">От знакомства к участию</p><h2 id="steps-title">Как стать частью AYA</h2><p>Три шага, чтобы присоединиться к сообществу.</p>{% if not user.is_authenticated %}<a class="aya-button" href="{% url 'signup' %}">Подать заявку <span aria-hidden="true">→</span></a>{% else %}<a class="aya-button" href="{% url 'my_profile' %}">Мой профиль <span aria-hidden="true">→</span></a>{% endif %}</div>
+  <ol class="aya-steps"><li><span class="aya-step-number">01</span><div><h3>Создайте профиль</h3><p>Зарегистрируйтесь и дождитесь одобрения заявки.</p></div></li><li><span class="aya-step-number">02</span><div><h3>Познакомьтесь с командой</h3><p>После трёх визитов вам откроется полный доступ волонтёра.</p></div></li><li><span class="aya-step-number">03</span><div><h3>Участвуйте в общих делах</h3><p>Выберите направление, занятия или мероприятие по интересам.</p></div></li></ol>
 </section>
 <section class="aya-section aya-quotes-section" aria-labelledby="quotes-title">
 <div class="aya-section-head"><h2 id="quotes-title">Люди и вдохновение</h2>{% if can_edit_home %}<a href="{% url 'home_manage' %}#quotes">Добавить цитату →</a>{% endif %}</div>
@@ -86,7 +73,6 @@
 {% if home_quotes|length > home_page.quotes_per_view %}<div class="aya-quote-controls"><button type="button" data-prev aria-label="Предыдущие цитаты">←</button><span data-position aria-live="polite"></span><button type="button" data-next aria-label="Следующие цитаты">→</button></div>{% endif %}
 </div>{% else %}<div class="aya-quote-empty"><span aria-hidden="true">“</span><div><h3>Здесь скоро появятся истории участников AYA</h3><p>Слова студентов, волонтёров и людей, которые вдохновляют.</p>{% if can_edit_home %}<a class="aya-button aya-button-outline" href="{% url 'home_manage' %}#quote-edit">Добавить первую цитату</a>{% endif %}</div></div>{% endif %}
 </section>
-<section class="aya-cta"><div><h2>Готов стать частью перемен?</h2><p>Присоединяйся к AYA и создавай лучшее завтра вместе с нами.</p></div>{% if not user.is_authenticated %}<a class="aya-button aya-button-white" href="{% url 'signup' %}">Зарегистрироваться <span aria-hidden="true">→</span></a>{% else %}<a class="aya-button aya-button-white" href="{% url 'my_profile' %}">Мой профиль <span aria-hidden="true">→</span></a>{% endif %}</section>
 <section id="contacts" class="aya-section aya-contacts" aria-labelledby="contacts-title"><div><p class="aya-eyebrow">Оставайся на связи</p><h2 id="contacts-title">Контакты AYA</h2><a class="aya-about-link" href="{% url 'about_page' %}">Подробнее об ассоциации →</a></div><div class="aya-contact-items">
 {% for link in home_contacts %}<a class="aya-contact-link" href="{{ link.resolved_url }}"><span class="aya-icon" aria-hidden="true"><i class="{{ link.resolved_icon }}"></i></span><span>{{ link.label|default:link.platform_label }}</span></a>{% endfor %}
 {% if about_content.email %}<a class="aya-contact-link" href="mailto:{{ about_content.email }}"><span class="aya-icon" aria-hidden="true"><i class="far fa-envelope"></i></span><span>{{ about_content.email }}</span></a>{% endif %}
@@ -96,4 +82,4 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}<script src="{% static 'js/home-gallery.js' %}?v=3" defer></script><script src="{% static 'js/home-depth.js' %}?v=1" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/home-gallery.js' %}?v=3" defer></script>{% endblock %}
