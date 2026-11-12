@@ -2,33 +2,47 @@
    Scoped selectors keep the later global card rules from changing this layout. */
 .aya-site.aya-home { background:#fff; color:#142d48; }
 .aya-site.aya-home main { background:transparent; }
-.aya-site.aya-home .container { max-width:1280px!important; }
-.aya-site.aya-home .aya-home-top { background:linear-gradient(115deg,#102d48,#164e6b); color:#fff; }
+.aya-site.aya-home :is(.aya-home-top>.container,.aya-home-content,.aya-stats.container) { width:calc(100% - 64px); max-width:1440px!important; padding-left:0; padding-right:0; }
+.aya-site.aya-home .aya-home-top { background:radial-gradient(ellipse at 85% 15%,#e1f2fb,transparent 65%),linear-gradient(#f6fbff,#fff); color:#14344f; }
 .aya-site.aya-home .aya-editor-link { padding:14px 0 0; text-align:right; font-size:13px; }
-.aya-site.aya-home .aya-editor-link a { color:#c3e5f6; }
-.aya-site.aya-home .aya-hero { display:grid; grid-template-columns:.82fr 1.18fr; align-items:center; gap:52px; padding:56px 0 40px; }
+.aya-site.aya-home .aya-editor-link a { color:#176c98; }
+.aya-site.aya-home .aya-hero { display:grid; grid-template-columns:.82fr 1.18fr; align-items:center; gap:44px; padding:40px 0 30px; }
 .aya-site.aya-home .aya-hero-copy { min-width:0; padding:4px 0; }
-.aya-site.aya-home .aya-hero-label { font-size:11px; font-weight:700; letter-spacing:.13em; color:#acd9ed; margin:0 0 26px; }
-.aya-site.aya-home h1 { color:#fff; font-size:clamp(34px,3.5vw,49px); font-weight:750; line-height:1.14; letter-spacing:-.035em; margin:0 0 25px; overflow-wrap:normal; }
-.aya-site.aya-home h1 span { color:#9edbe9; }
-.aya-site.aya-home .aya-intro { font-size:16px; line-height:1.85; color:#d7e6ef; max-width:450px; margin:0 0 28px; }
+.aya-site.aya-home .aya-hero-label { font-size:11px; font-weight:700; letter-spacing:.1em; color:#2d7799; margin:0 0 22px; }
+.aya-site.aya-home h1 { color:#14344f; font-size:clamp(36px,3.5vw,54px); font-weight:750; line-height:1.1; letter-spacing:-.04em; margin:0 0 24px; overflow-wrap:normal; }
+.aya-site.aya-home h1 span { color:#0877ad; }
+.aya-site.aya-home .aya-intro { font-size:17px; line-height:1.8; color:#526d82; max-width:480px; margin:0 0 25px; }
 .aya-site.aya-home .aya-actions { display:flex; flex-wrap:wrap; gap:12px; }
-.aya-site.aya-home .aya-button { display:inline-flex; align-items:center; justify-content:center; gap:20px; min-height:46px; padding:12px 18px; background:#087fc4; border:1px solid #087fc4; border-radius:8px; box-shadow:none; color:#fff; text-decoration:none; font-size:14px; line-height:1.5; font-weight:650; transition:background .15s; }
+.aya-site.aya-home .aya-button { display:inline-flex; align-items:center; justify-content:center; gap:20px; min-height:46px; padding:12px 18px; background:#0873b3; border:1px solid #0873b3; border-radius:8px; box-shadow:none; color:#fff; text-decoration:none; font-size:14px; line-height:1.5; font-weight:650; transition:background .15s; }
 .aya-site.aya-home .aya-button:hover { background:#056ba8; border-color:#056ba8; color:#fff; }
-.aya-site.aya-home .aya-button-outline { background:transparent; border-color:#82afc3; color:#fff; }
-.aya-site.aya-home .aya-button-outline:hover { background:#ffffff12; border-color:#c3e8f5; }
-.aya-site.aya-home .aya-university-note { display:inline-flex; align-items:center; gap:16px; margin:25px 0 0; font-size:13px; color:#c1dbe8; text-decoration:none; }
-.aya-site.aya-home .aya-university-note:hover { color:#fff; text-decoration:underline; }
+.aya-site.aya-home .aya-button-outline { background:#fff; border-color:#b5d2e2; color:#17658e; }
+.aya-site.aya-home .aya-button-outline:hover { background:#edf7fc; border-color:#7eafc8; color:#14577d; }
+.aya-site.aya-home .aya-university-note { display:inline-flex; align-items:center; gap:16px; margin:20px 0 0; font-size:13px; color:#39718e; text-decoration:none; }
+.aya-site.aya-home .aya-university-note:hover { color:#0d4f75; text-decoration:underline; }
+.aya-site.aya-home .aya-hero-themes { display:flex; flex-wrap:wrap; gap:12px 22px; margin-top:28px; padding-top:20px; border-top:1px solid #d9e7f0; color:#58768b; font-size:12px; }
+.aya-site.aya-home .aya-hero-themes i { color:#2581a5; margin-right:6px; }
+.aya-site.aya-home .aya-photo-composition { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,.38fr); gap:14px; align-items:center; min-width:0; }
 .aya-site.aya-home .aya-hero-gallery { min-width:0; margin:0; transform:none; border:0; border-radius:0; box-shadow:none; }
-.aya-site.aya-home .aya-hero-photo { aspect-ratio:4/3; background:#0c2539; border-radius:4px; overflow:hidden; }
+.aya-site.aya-home .aya-hero-photo { aspect-ratio:4/3; background:#e6f0f7; border:5px solid #fff; border-radius:16px; box-shadow:0 15px 35px #133b5d18; overflow:hidden; }
 .aya-site.aya-home .aya-hero-photo img { display:block; width:100%; height:100%; object-fit:contain; object-position:center; transform:none; border:0; border-radius:0; filter:none; }
 .aya-site.aya-home [hidden] { display:none!important; }
-.aya-site.aya-home .aya-gallery-footer { display:flex; justify-content:space-between; align-items:center; gap:15px; min-height:45px; padding:12px 0 0; color:#b7d5e3; font-size:12px; }
+.aya-site.aya-home .aya-gallery-footer { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; min-height:40px; padding:10px 3px 0; color:#55768c; font-size:11px; }
 .aya-site.aya-home .aya-gallery-controls { display:flex; gap:12px; align-items:center; font-variant-numeric:tabular-nums; }
-.aya-site.aya-home .aya-gallery-controls button { display:grid; place-items:center; width:36px; height:32px; padding:0; border:1px solid #6592a7; border-radius:4px; background:transparent; color:#fff; font-size:19px; }
-.aya-site.aya-home .aya-gallery-controls button:hover { background:#ffffff14; }
+.aya-site.aya-home .aya-gallery-controls button { display:grid; place-items:center; width:34px; height:32px; padding:0; border:1px solid #aacbdb; border-radius:5px; background:#fff; color:#17658e; font-size:19px; }
+.aya-site.aya-home .aya-gallery-controls button:hover { background:#e5f3fa; }
+.aya-site.aya-home .aya-supporting-photos { display:grid; gap:20px; min-width:0; }
+.aya-site.aya-home .aya-supporting-photos figure { margin:0; }
+.aya-site.aya-home .aya-supporting-photos img { display:block; width:100%; height:auto; border:4px solid white; border-radius:12px; box-shadow:0 8px 22px #12385112; }
+.aya-site.aya-home .aya-supporting-photos figcaption { color:#507187; font-size:10px; line-height:1.5; padding:7px 4px 0; }
+.aya-site.aya-home .aya-photo-note { grid-column:1/-1; display:flex; align-items:center; gap:14px; background:#173f5b; color:white; padding:16px 20px; border-radius:10px; text-decoration:none; }
+.aya-site.aya-home .aya-photo-note>span:nth-child(2) { display:grid; gap:4px; }
+.aya-site.aya-home .aya-photo-note strong { font-size:14px; font-weight:600; color:white; }
+.aya-site.aya-home .aya-photo-note>span:nth-child(2)>span { font-size:11px; color:#bbd9e8; }
+.aya-site.aya-home .aya-photo-note>span:last-child { margin-left:auto; }
+.aya-site.aya-home .aya-photo-note-icon { font-size:24px; color:#94d7e7; }
+.aya-site.aya-home .aya-photo-note:hover { background:#124c6d; color:white; }
 .aya-site.aya-home .aya-stats-band { background:#fff; border-bottom:1px solid #e2ebf1; }
-.aya-site.aya-home .aya-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); padding-top:27px; padding-bottom:27px; margin:0 auto; border:0; border-radius:0; box-shadow:none; }
+.aya-site.aya-home .aya-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); padding-top:20px; padding-bottom:20px; margin:0 auto; border:0; border-radius:0; box-shadow:none; }
 .aya-site.aya-home .aya-stat { display:flex; align-items:center; justify-content:center; gap:18px; padding:0 20px; min-width:0; }
 .aya-site.aya-home .aya-stat+.aya-stat { border-left:1px solid #dfe9ef; }
 .aya-site.aya-home .aya-stat>div { display:flex; flex-direction:column; gap:2px; }
@@ -37,7 +51,7 @@
 .aya-site.aya-home .aya-icon { display:inline-grid; place-items:center; flex-shrink:0; width:48px; height:48px; color:#207fa5; font-size:22px; border:0; border-radius:8px; background:#edf6fa; box-shadow:none; }
 .aya-site.aya-home .aya-stat .aya-icon { background:transparent; width:30px; height:34px; font-size:24px; }
 .aya-site.aya-home .aya-home-content { padding-top:0; padding-bottom:0; }
-.aya-site.aya-home .aya-section { margin:0; padding:52px 0; scroll-margin-top:105px; }
+.aya-site.aya-home .aya-section { margin:0; padding:38px 0; scroll-margin-top:105px; }
 .aya-site.aya-home .aya-section+.aya-section { border-top:1px solid #e2ebf1; }
 .aya-site.aya-home .aya-eyebrow { margin:0 0 10px; color:#357692; font-size:10px; font-weight:750; line-height:1.5; letter-spacing:.12em; text-transform:uppercase; }
 .aya-site.aya-home h2 { font-size:clamp(26px,2.6vw,34px); line-height:1.2; letter-spacing:-.025em; font-weight:700; color:#14344f; margin:0; }
@@ -46,14 +60,29 @@
 .aya-site.aya-home .aya-section-head>a { color:#086fac; text-decoration:none; font-size:13px; font-weight:600; padding:7px 0; }
 .aya-site.aya-home .aya-section-head>a:hover { text-decoration:underline; }
 .aya-site.aya-home .aya-section-description { color:#60788b; font-size:13px; line-height:1.7; margin:0; }
-.aya-site.aya-home .aya-discover-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:38px; }
-.aya-site.aya-home .aya-discover-card { display:grid; grid-template-columns:36px 1fr; align-content:start; column-gap:15px; text-decoration:none; padding:22px 0 4px; border-top:2px solid #b7d5e4; color:#173f5c; }
+.aya-site.aya-home .aya-discover-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+.aya-site.aya-home .aya-discover-card { display:grid; grid-template-columns:36px 1fr; align-content:start; column-gap:15px; text-decoration:none; padding:24px; border:1px solid #cfe1ed; border-radius:12px; background:linear-gradient(125deg,#f0f8fc,#fff); color:#173f5c; }
 .aya-site.aya-home .aya-discover-card:hover { border-color:#087fc4; }
 .aya-site.aya-home .aya-discover-object { grid-column:1; grid-row:1/4; color:#227da3; font-size:25px; line-height:1.3; }
 .aya-site.aya-home .aya-discover-card h3 { grid-column:2; font-size:22px; margin:0 0 10px; }
 .aya-site.aya-home .aya-discover-card p { grid-column:2; color:#5c7385; font-size:14px; line-height:1.75; margin:0 0 20px; }
 .aya-site.aya-home .aya-discover-link { grid-column:2; color:#086fac; font-size:13px; font-weight:600; }
 .aya-site.aya-home .aya-discover-link>span { margin-left:10px; }
+.aya-site.aya-home .aya-catalog-columns { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr)); gap:30px; }
+.aya-site.aya-home .aya-catalog-group { border:1px solid #d6e5ef; border-radius:14px; overflow:hidden; }
+.aya-site.aya-home .aya-catalog-heading { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:18px 22px; background:#edf6fb; }
+.aya-site.aya-home .aya-catalog-heading h3 { margin:0; font-size:18px; }
+.aya-site.aya-home .aya-catalog-heading h3 i { margin-right:8px; color:#3082a2; }
+.aya-site.aya-home .aya-catalog-heading>a { color:#086fac; text-decoration:none; font-size:12px; white-space:nowrap; }
+.aya-site.aya-home .aya-catalog-item { display:flex; align-items:center; gap:15px; margin:0 22px; padding:20px 0; text-decoration:none; color:#173f5c; }
+.aya-site.aya-home .aya-catalog-item+.aya-catalog-item { border-top:1px solid #e0ebf2; }
+.aya-site.aya-home .aya-catalog-logo { flex-shrink:0; display:grid; place-items:center; width:52px; height:52px; background:#eff6fa; color:#2b7e9f; border-radius:11px; font-size:23px; }
+.aya-site.aya-home .aya-catalog-logo img { width:100%; height:100%; object-fit:contain; padding:5px; }
+.aya-site.aya-home .aya-catalog-item>span:nth-child(2) { display:grid; gap:6px; min-width:0; }
+.aya-site.aya-home .aya-catalog-item strong { font-size:16px; line-height:1.4; font-weight:650; }
+.aya-site.aya-home .aya-catalog-item>span:nth-child(2)>span { font-size:12px; line-height:1.65; color:#617b8e; }
+.aya-site.aya-home .aya-catalog-arrow { margin-left:auto; color:#2982a6; }
+.aya-site.aya-home .aya-catalog-item:hover strong { color:#0877ad; }
 .aya-site.aya-home .aya-directions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:45px; }
 .aya-site.aya-home .aya-direction { display:grid; grid-template-columns:56px 1fr; gap:0 18px; position:relative; padding:23px 30px 23px 0; border-bottom:1px solid #e2ebf1; color:#173f5c; text-decoration:none; min-width:0; }
 .aya-site.aya-home .aya-direction:hover h3 { color:#087fc4; }
@@ -83,8 +112,7 @@
 .aya-site.aya-home .aya-event-empty h3 { font-size:18px; margin:0 0 7px; }
 .aya-site.aya-home .aya-event-empty p { font-size:13px; margin:0; }
 .aya-site.aya-home .aya-event-empty>a { margin-left:auto; font-size:13px; color:#086fac; text-decoration:none; }
-.aya-site.aya-home .aya-start { display:grid; grid-template-columns:1fr 1.2fr; gap:65px; position:relative; background:#edf5fa; border:0!important; padding:45px 0; margin:5px 0; }
-.aya-site.aya-home .aya-start::before { content:""; position:absolute; z-index:0; inset:0 calc((1280px - 100vw)/2 - 12px); background:#edf5fa; }
+.aya-site.aya-home .aya-start { display:grid; grid-template-columns:1fr 1.2fr; gap:55px; position:relative; background:#edf5fa; border:0!important; border-radius:16px; padding:35px; margin:5px 0; }
 .aya-site.aya-home .aya-start>* { position:relative; z-index:1; }
 .aya-site.aya-home .aya-start-heading>p:not(.aya-eyebrow) { color:#5d7789; margin:17px 0 24px; font-size:14px; line-height:1.7; }
 .aya-site.aya-home .aya-steps { list-style:none; padding:0; margin:0; display:grid; gap:22px; }
@@ -114,9 +142,11 @@
 .aya-site.aya-home .aya-contact-link { display:flex; align-items:center; gap:12px; padding:12px 0; margin:0; border-bottom:1px solid #dfe9f0; font-size:13px; color:#325c76; text-decoration:none; overflow-wrap:anywhere; }
 .aya-site.aya-home .aya-contact-link .aya-icon { width:29px; height:29px; font-size:17px; background:transparent; }
 .aya-site.aya-home .aya-contact-link:hover { color:#087fc4; }
+.aya-site.aya-home .aya-contact-start { grid-column:1/-1; border-left:3px solid #88bdce; padding:0 0 0 22px; }
+.aya-site.aya-home .aya-contact-start h3 { font-size:21px; margin:0 0 12px; }
+.aya-site.aya-home .aya-contact-start p { font-size:14px; line-height:1.8; color:#617b8e; margin:0 0 15px; }
+.aya-site.aya-home .aya-contact-start>a { color:#086fac; font-size:13px; text-decoration:none; }
 .aya-site.aya-home :is(a,button):focus-visible { outline:3px solid #30aacc; outline-offset:5px; }
-@media(min-width:1280px) { .aya-site.aya-home .aya-home-content { overflow:visible; } }
-@media(max-width:1279px) { .aya-site.aya-home .aya-start::before { inset:0 -12px; } }
 @media(max-width:1050px) {
   .aya-site.aya-home .aya-hero { gap:28px; grid-template-columns:.9fr 1.1fr; padding-top:38px; padding-bottom:28px; }
   .aya-site.aya-home h1 { font-size:36px; }
@@ -125,9 +155,13 @@
   .aya-site.aya-home .aya-button { font-size:13px; gap:12px; padding:11px 14px; }
   .aya-site.aya-home .aya-discover-grid { gap:24px; }
   .aya-site.aya-home .aya-start { gap:35px; }
+  .aya-site.aya-home .aya-photo-composition { grid-template-columns:1fr; }
+  .aya-site.aya-home .aya-supporting-photos { grid-template-columns:1fr 1fr; align-items:start; gap:12px; }
+  .aya-site.aya-home .aya-supporting-photos img { aspect-ratio:4/3; object-fit:contain; background:white; }
+  .aya-site.aya-home .aya-supporting-photos figcaption { font-size:10px; }
 }
 @media(max-width:767px) {
-  .aya-site.aya-home .container { width:100%; padding-left:22px; padding-right:22px; }
+  .aya-site.aya-home :is(.aya-home-top>.container,.aya-home-content,.aya-stats.container) { width:calc(100% - 40px); }
   .aya-site.aya-home .aya-hero { grid-template-columns:1fr; gap:28px; padding:32px 0 23px; }
   .aya-site.aya-home .aya-hero-label { font-size:10px; margin-bottom:20px; }
   .aya-site.aya-home h1 { font-size:clamp(31px,7.8vw,46px); margin-bottom:19px; }
@@ -149,8 +183,7 @@
   .aya-site.aya-home .aya-events { grid-template-columns:1fr; gap:20px; }
   .aya-site.aya-home .aya-event-empty { display:grid; grid-template-columns:32px 1fr; gap:15px; }
   .aya-site.aya-home .aya-event-empty>a { grid-column:2; margin-left:0; }
-  .aya-site.aya-home .aya-start { grid-template-columns:1fr; padding:35px 0; gap:32px; }
-  .aya-site.aya-home .aya-start::before { inset:0 -22px; }
+  .aya-site.aya-home .aya-start { grid-template-columns:1fr; padding:26px 22px; gap:28px; }
   .aya-site.aya-home .aya-quote-grid { grid-template-columns:1fr; gap:20px; }
   .aya-site.aya-home .aya-quote-photo,.aya-site.aya-home .aya-quote-avatar { width:58px; height:66px; }
   .aya-site.aya-home .aya-quote-card blockquote { font-size:16px; }
@@ -158,12 +191,14 @@
   .aya-site.aya-home .aya-contacts { grid-template-columns:1fr; gap:22px; }
 }
 @media(max-width:380px) {
-  .aya-site.aya-home .container { padding-left:18px; padding-right:18px; }
   .aya-site.aya-home h1 { font-size:29px; }
   .aya-site.aya-home .aya-actions { flex-direction:column; align-items:stretch; }
   .aya-site.aya-home .aya-stat { padding:0 6px; gap:9px; }
   .aya-site.aya-home .aya-stat .aya-icon { width:23px; font-size:20px; }
-  .aya-site.aya-home .aya-start::before { inset:0 -18px; }
   .aya-site.aya-home .aya-contact-items { grid-template-columns:1fr; }
+  .aya-site.aya-home .aya-discover-card { padding:20px 16px; }
+  .aya-site.aya-home .aya-catalog-heading { flex-wrap:wrap; padding:15px; }
+  .aya-site.aya-home .aya-catalog-item { margin:0 15px; }
+  .aya-site.aya-home .aya-catalog-logo { width:40px; height:40px; }
 }
 @media(prefers-reduced-motion:reduce) { .aya-site.aya-home * { scroll-behavior:auto!important; transition:none!important; } }

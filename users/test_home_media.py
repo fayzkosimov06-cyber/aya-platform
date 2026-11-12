@@ -34,7 +34,7 @@ class HomeMediaTests(TestCase):
         self.assertNotContains(response,second.image.url)
         self.post(action='delete',kind='slide',id=first.pk)
         self.assertFalse(HomeSlide.objects.filter(pk=first.pk).exists())
-        self.assertContains(self.client.get(reverse('home')),'img/collage_2.jpg')
+        self.assertContains(self.client.get(reverse('home')),'img/grid-photo-3.jpg')
 
     def test_invalid_bulk_upload_does_not_save_partial_batch(self):
         response=self.post(action='upload',images=[self.image('valid.png'),SimpleUploadedFile('bad.png',b'not an image',content_type='image/png')])

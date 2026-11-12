@@ -193,7 +193,7 @@ def build_evaluation_stats(volunteer: User):
 # --- VIEWS (Представления) ---
 
 def home_view(request):
-    from .models import HomePage
+    from .models import HomePage, School, Club
     from .access import STAFF_ONLY_ROLES
     about = AboutPage.objects.filter(pk=1).first()
     home_page = HomePage.objects.filter(pk=1).first()
@@ -209,6 +209,8 @@ def home_view(request):
     contacts = public_contacts(about, request.user)
     return render(request, 'users/home.html', {
         'directions': directions, 'upcoming_events': events[:3], 'home_stats': stats,
+        'home_schools': list(School.objects.filter(active=True).order_by('name', 'pk')[:3]),
+        'home_clubs': list(Club.objects.filter(active=True).order_by('name', 'pk')[:3]),
         'home_page': home_page, 'about_content': about,
         'home_slides': list(home_page.slides.filter(is_active=True)) if home_page else [],
         'home_quotes': list(home_page.quotes.filter(is_active=True).select_related('member').exclude(member__is_superuser=True).exclude(member__is_approved=False)) if home_page else [],

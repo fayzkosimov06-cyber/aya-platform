@@ -4,6 +4,21 @@ from .models import AboutPage, AboutContactLink, Direction, HomePage, User
 
 
 class HomepageTests(TestCase):
+    def test_home_catalog_only_promotes_active_schools_and_clubs(self):
+        from .models import School, Club
+        for index in range(4):
+            School.objects.create(name=f'School {index}', active=True)
+            Club.objects.create(name=f'Club {index}', active=True)
+        School.objects.create(name='Inactive school marker', active=False)
+        Club.objects.create(name='Inactive club marker', active=False)
+        response=self.client.get(reverse('home'))
+        self.assertEqual([s.name for s in response.context['home_schools']], ['School 0','School 1','School 2'])
+        self.assertEqual([c.name for c in response.context['home_clubs']], ['Club 0','Club 1','Club 2'])
+        self.assertNotContains(response,'Inactive school marker')
+        self.assertNotContains(response,'Inactive club marker')
+        self.assertContains(response,reverse('school_detail',args=[response.context['home_schools'][0].pk]))
+        self.assertContains(response,reverse('club_detail',args=[response.context['home_clubs'][0].pk]))
+
     def test_all_directions_menu_and_single_statistics(self):
         for i in range(17): Direction.objects.create(name=f'Direction {i}')
         response = self.client.get(reverse('home'))

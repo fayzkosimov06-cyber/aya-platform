@@ -2,16 +2,16 @@
 {% load static %}
 {% block title %}AYA — Association of Youth ATSMU{% endblock %}
 {% block body_class %}aya-home{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/home-editorial.css' %}?v=1">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/home-editorial.css' %}?v=2">{% endblock %}
 {% block content %}
 <div class="aya-home-top">
 <div class="container">
 {% if can_edit_home %}<div class="aya-editor-link"><a href="{% url 'home_manage' %}"><i class="fas fa-pen" aria-hidden="true"></i> Редактировать главную</a></div>{% endif %}
 <section class="aya-hero" aria-labelledby="hero-title">
   <div class="aya-hero-copy">
-    <p class="aya-hero-label">ASSOCIATION OF YOUTH ATSMU</p>
-    <h1 id="hero-title">Объединяем людей.<br><span>Создаём возможности.</span></h1>
-    <p class="aya-intro">AYA — сообщество молодёжи ТГМУ имени Абуали ибни Сино. Учимся, развиваем инициативы и вместе делаем жизнь университета лучше.</p>
+    <p class="aya-hero-label">AYA · МОЛОДЁЖНОЕ СООБЩЕСТВО ТГМУ</p>
+    <h1 id="hero-title">Больше, чем<br><span>студенческая жизнь.</span></h1>
+    <p class="aya-intro">Люди, с которыми можно учиться, создавать и менять мир вокруг. Присоединяйтесь к сообществу молодёжи ТГМУ имени Абуали ибни Сино.</p>
     <div class="aya-actions">
       {% if not user.is_authenticated %}<a class="aya-button" href="{% url 'signup' %}">Присоединиться <span aria-hidden="true">→</span></a>
       {% elif home_full_access %}<a class="aya-button" href="{% url 'event_list' %}">К мероприятиям <span aria-hidden="true">→</span></a>
@@ -19,13 +19,21 @@
       <a class="aya-button aya-button-outline" href="#directions">Направления AYA <span aria-hidden="true">↗</span></a>
     </div>
     <a class="aya-university-note" href="{% url 'about_page' %}">Об ассоциации <span aria-hidden="true">→</span></a>
+    <div class="aya-hero-themes" aria-label="Возможности AYA"><span><i class="fas fa-graduation-cap" aria-hidden="true"></i> Обучение</span><span><i class="fas fa-users" aria-hidden="true"></i> Команда</span><span><i class="far fa-heart" aria-hidden="true"></i> Волонтёрство</span></div>
   </div>
+  <div class="aya-photo-composition">
   <div class="aya-hero-gallery" data-gallery data-count="1" role="region" aria-label="Фотографии AYA" aria-roledescription="карусель">
     <div class="aya-hero-photo">
     {% for slide in home_slides %}<img data-slide {% if not forloop.first %}hidden{% endif %} src="{{ slide.image.url }}" alt="{{ slide.caption|default:'Команда AYA' }}" width="1280" height="960" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
-    {% empty %}<img src="{% static 'img/collage_2.jpg' %}" alt="Команда AYA" width="1280" height="960" fetchpriority="high">{% endfor %}
+    {% empty %}<img src="{% static 'img/grid-photo-3.jpg' %}" alt="Команда у ТГМУ имени Абуали ибни Сино" width="1280" height="960" fetchpriority="high">{% endfor %}
     </div>
     <div class="aya-gallery-footer"><span>Люди и события AYA</span>{% if home_slides|length > 1 %}<div class="aya-gallery-controls"><button type="button" data-prev aria-label="Предыдущая фотография">←</button><span data-position aria-live="polite">1 / {{ home_slides|length }}</span><button type="button" data-next aria-label="Следующая фотография">→</button></div>{% endif %}</div>
+  </div>
+  <div class="aya-supporting-photos" aria-label="Жизнь сообщества">
+    <figure><img src="{% static 'img/collage_1.jpg' %}" alt="Волонтёры на общей встрече с детьми" width="1280" height="960" loading="lazy"><figcaption>Дела, которые объединяют</figcaption></figure>
+    <figure><img src="{% static 'img/grid-photo-6.jpg' %}" alt="Участники AYA в зале на встрече" width="1280" height="721" loading="lazy"><figcaption>Люди, с которыми растёшь</figcaption></figure>
+  </div>
+  <a class="aya-photo-note" href="{% url 'volunteer_list' %}"><span class="aya-photo-note-icon" aria-hidden="true"><i class="fas fa-users"></i></span><span><strong>Знакомьтесь: команда AYA</strong><span>За каждым общим делом — наши люди</span></span><span aria-hidden="true">↗</span></a>
   </div>
 </section>
 </div></div>
@@ -41,6 +49,19 @@
     <a class="aya-discover-card" href="#directions"><span class="aya-discover-object" aria-hidden="true"><i class="far fa-compass"></i></span><h3>Направления</h3><p>Команды, которые развивают инициативы и организуют общие дела.</p><span class="aya-discover-link">Познакомиться с командами <span aria-hidden="true">↗</span></span></a>
   </div>
 </section>
+{% if home_schools or home_clubs %}
+<section class="aya-section aya-live-catalog" aria-labelledby="catalog-title">
+  <div class="aya-section-head"><div><p class="aya-eyebrow">Не откладывайте интересное</p><h2 id="catalog-title">Учиться. Встречаться. Пробовать.</h2></div><p class="aya-section-description">Выберите сообщество<br>по своим интересам.</p></div>
+  <div class="aya-catalog-columns">
+  {% if home_schools %}<div class="aya-catalog-group"><div class="aya-catalog-heading"><h3><i class="fas fa-graduation-cap" aria-hidden="true"></i> Школы AYA</h3><a href="{% url 'school_catalog' %}">Все школы ↗</a></div>
+    {% for school in home_schools %}<a class="aya-catalog-item" href="{% url 'school_detail' school.pk %}"><span class="aya-catalog-logo">{% if school.logo %}<img src="{{ school.logo.url }}" alt="" width="56" height="56" loading="lazy">{% else %}<i class="fas fa-graduation-cap" aria-hidden="true"></i>{% endif %}</span><span><strong>{{ school.name }}</strong><span>{{ school.intro|default:'Знакомьтесь с преподавателями и расписанием занятий.'|truncatechars:95 }}</span></span><span class="aya-catalog-arrow" aria-hidden="true">↗</span></a>{% endfor %}
+  </div>{% endif %}
+  {% if home_clubs %}<div class="aya-catalog-group"><div class="aya-catalog-heading"><h3><i class="far fa-comments" aria-hidden="true"></i> Клубы по интересам</h3><a href="{% url 'club_catalog' %}">Все клубы ↗</a></div>
+    {% for club in home_clubs %}<a class="aya-catalog-item" href="{% url 'club_detail' club.pk %}"><span class="aya-catalog-logo">{% if club.logo %}<img src="{{ club.logo.url }}" alt="" width="56" height="56" loading="lazy">{% else %}<i class="far fa-comments" aria-hidden="true"></i>{% endif %}</span><span><strong>{{ club.name }}</strong><span>{{ club.intro|default:'Общие интересы, встречи и новые знакомства.'|truncatechars:95 }}</span></span><span class="aya-catalog-arrow" aria-hidden="true">↗</span></a>{% endfor %}
+  </div>{% endif %}
+  </div>
+</section>
+{% endif %}
 <section id="directions" class="aya-section" aria-labelledby="directions-title">
   <div class="aya-section-head"><div><p class="aya-eyebrow">Люди, которые действуют вместе</p><h2 id="directions-title">Направления ассоциации</h2></div><a href="{% url 'unit_catalog' %}">Все направления <span aria-hidden="true">↗</span></a></div>
   <div class="aya-directions">
@@ -77,7 +98,7 @@
 {% for link in home_contacts %}<a class="aya-contact-link" href="{{ link.resolved_url }}"><span class="aya-icon" aria-hidden="true"><i class="{{ link.resolved_icon }}"></i></span><span>{{ link.label|default:link.platform_label }}</span></a>{% endfor %}
 {% if about_content.email %}<a class="aya-contact-link" href="mailto:{{ about_content.email }}"><span class="aya-icon" aria-hidden="true"><i class="far fa-envelope"></i></span><span>{{ about_content.email }}</span></a>{% endif %}
 {% if about_content.address %}<p class="aya-contact-link"><span class="aya-icon" aria-hidden="true"><i class="fas fa-map-marker-alt"></i></span><span>{{ about_content.address }}</span></p>{% endif %}
-{% if not home_contacts and not about_content.email and not about_content.address %}<p class="text-muted mb-0">Контакты скоро появятся.</p>{% endif %}
+{% if not home_contacts and not about_content.email and not about_content.address %}<div class="aya-contact-start"><h3>Есть вопросы об участии?</h3><p>Узнайте, как устроена ассоциация и с чего начать знакомство с командой.</p><a href="{% url 'about_page' %}">Узнать больше об AYA <span aria-hidden="true">→</span></a></div>{% endif %}
 </div></section>
 </div>
 {% endblock %}
