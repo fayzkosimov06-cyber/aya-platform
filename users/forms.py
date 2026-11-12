@@ -2,6 +2,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import User, AboutPage, ActivityPeriod
+from .image_uploads import BoundedImageField
 
 class UserRegisterForm(UserCreationForm):
     first_name = forms.CharField(max_length=150, required=True, label="Имя", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ваше имя'}))
@@ -205,6 +206,7 @@ class ActivityPeriodForm(forms.ModelForm):
 class AboutPageForm(forms.ModelForm):
     class Meta:
         model = AboutPage
+        field_classes = {'video_poster': BoundedImageField}
         fields = '__all__'
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),

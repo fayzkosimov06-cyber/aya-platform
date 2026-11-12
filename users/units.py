@@ -14,6 +14,7 @@ from .models import Direction, School, User, SchoolTeacher, SchoolLesson, AuditL
 from .access import has_full_volunteer_access, visible_school_teachers
 from .points import can_award, members as eligible_members
 from events.models import Event
+from .image_uploads import BoundedImageField
 
 
 def global_manager(user, code=None):
@@ -163,10 +164,12 @@ def people_field(label,queryset=None):
 class AboutDirection(forms.ModelForm):
     class Meta:
         model=Direction;fields=['name','intro','description','cover','logo']
+        field_classes={'cover':BoundedImageField,'logo':BoundedImageField}
 
 class AboutSchool(forms.ModelForm):
     class Meta:
         model=School;fields=['name','direction','active','intro','description','cover','logo']
+        field_classes={'cover':BoundedImageField,'logo':BoundedImageField}
     def __init__(self,*args,user,**kwargs):
         super().__init__(*args,**kwargs)
         self.fields['direction'].empty_label='Самостоятельная школа'
@@ -223,10 +226,16 @@ class FeatureForm(forms.Form):
 class EventForm(forms.Form):
     events=forms.ModelMultipleChoiceField(queryset=Event.objects.filter(is_approved=True),required=False,label='Мероприятия',widget=forms.CheckboxSelectMultiple(attrs={'class':'member-picker'}))
     def __init__(self,*args,obj,user=None,**kwargs):
-        super().__init__(*args,**kwargs);self.obj=obj;self.initial['events']=obj.events.values_list('pk',flat=True)
+        super().__init__(*args,**kwargs);self.obj=obj;self.user=user;self.initial['events']=obj.events.values_list('pk',flat=True)
         if user:
             ids = [e.pk for e in Event.objects.filter(is_approved=True) if allowed(user, 'events_edit', e)]
             self.fields['events'].queryset=Event.objects.filter(Q(pk__in=ids) | Q(pk__in=obj.events.values('pk'))).filter(is_approved=True)
+    def clean_events(self):
+        selected=self.cleaned_data['events']
+        changed=set(selected.values_list('pk',flat=True)) ^ set(self.obj.events.values_list('pk',flat=True))
+        if changed and (not self.user or any(not allowed(self.user,'events_edit',event) for event in Event.objects.filter(pk__in=changed))):
+            raise forms.ValidationError('Нет прав на изменение связей одного из мероприятий.')
+        return selected
     def save(self): self.obj.events.set(self.cleaned_data['events'])
 
 class SchoolLinkForm(forms.Form):
@@ -301,6 +310,7 @@ def edit(request,pk,kind='direction'):
 class TeacherForm(forms.ModelForm):
     class Meta:
         model=SchoolTeacher;fields=['member','subject','bio','photo']
+        field_classes={'photo':BoundedImageField}
     def __init__(self,*args,school,user,**kwargs):
         super().__init__(*args,**kwargs);self.school=school
         self.fields['bio'].label='Об учителе'

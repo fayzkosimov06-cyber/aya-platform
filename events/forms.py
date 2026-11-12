@@ -1,12 +1,13 @@
 from django import forms
 from .models import Event, EventVideo, EventHero
 from users.models import User
+from users.image_uploads import BoundedImageField, clean_image_batch
 
 # Виджет для множественной загрузки
 class MultipleFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
 
-class MultipleFileField(forms.ImageField):
+class MultipleFileField(BoundedImageField):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("widget", MultipleFileInput())
         super().__init__(*args, **kwargs)
@@ -14,7 +15,7 @@ class MultipleFileField(forms.ImageField):
     def clean(self, data, initial=None):
         single_file_clean = super().clean
         if isinstance(data, (list, tuple)):
-            result = [single_file_clean(d, initial) for d in data]
+            result = clean_image_batch(data, self)
         else:
             result = single_file_clean(data, initial)
         return result
@@ -22,6 +23,7 @@ class MultipleFileField(forms.ImageField):
 class EventCreateForm(forms.ModelForm):
     class Meta:
         model = Event
+        field_classes = {'cover_image': BoundedImageField}
         fields = ['title', 'cover_image', 'description', 'start_time', 'end_time', 'location', 'max_participants']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Напр.: Навруз, Экосубботник, Лекция'}),
@@ -66,6 +68,7 @@ class EventVideoForm(forms.ModelForm):
 
     class Meta:
         model = EventVideo
+        field_classes = {'poster': BoundedImageField}
         fields = ['title','video_file','poster','video_url']
         widgets = {
             'video_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'YouTube/Instagram'}),

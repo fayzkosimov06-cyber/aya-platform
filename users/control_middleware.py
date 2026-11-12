@@ -119,7 +119,7 @@ class ControlMiddleware:
    if name in {'direction_edit','school_edit'} and request.GET.get('tab')=='events' and obj:
     from events.models import Event
     existing=set(obj.events.values_list('pk',flat=True));ids={int(x) for x in request.POST.getlist('events') if x.isdigit()}
-    if any(not allowed(request.user,'events_edit',e) for e in Event.objects.filter(pk__in=ids-existing)):return HttpResponseForbidden('Нельзя привязать чужое недоступное мероприятие.')
+    if any(not allowed(request.user,'events_edit',e) for e in Event.objects.filter(pk__in=ids.symmetric_difference(existing))):return HttpResponseForbidden('Нельзя изменять связи недоступного мероприятия.')
    if name in {'school_edit','school_create_page'} and request.POST.get('direction','').isdigit():
     parent=Direction.objects.filter(pk=request.POST['direction']).first()
     if parent and (not obj or obj.direction_id!=parent.pk) and not allowed(request.user,'directions',parent):return HttpResponseForbidden('Недоступное родительское направление.')

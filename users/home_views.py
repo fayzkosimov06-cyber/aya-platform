@@ -7,6 +7,8 @@ from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from .permissions import allowed
 from .models import HomePage, HomeSlide, HomeQuote, User
+from .image_uploads import BoundedImageField, clean_image_batch
+from .request_security import positive_pk
 
 
 class StyledForm(forms.ModelForm):
@@ -25,6 +27,7 @@ class HomePageForm(StyledForm):
 class HomeSlideForm(StyledForm):
     class Meta:
         model = HomeSlide
+        field_classes = {'image': BoundedImageField}
         fields = ['image', 'caption']
 
 
@@ -34,6 +37,7 @@ class HomeQuoteForm(StyledForm):
 
     class Meta:
         model = HomeQuote
+        field_classes = {'photo': BoundedImageField}
         fields = ['author_type', 'member', 'text', 'author_name', 'author_role', 'photo', 'source_url']
         widgets = {'text': forms.Textarea(attrs={'rows': 4})}
 
@@ -67,8 +71,8 @@ def home_manage_view(request):
     if not allowed(request.user,'home'):
         return HttpResponseForbidden('Недостаточно прав.')
     page, _ = HomePage.objects.get_or_create(pk=1)
-    slide = get_object_or_404(HomeSlide, page=page, pk=request.GET['slide']) if request.GET.get('slide') else None
-    quote = get_object_or_404(HomeQuote, page=page, pk=request.GET['quote']) if request.GET.get('quote') else None
+    slide = get_object_or_404(HomeSlide, page=page, pk=positive_pk(request.GET['slide'])) if request.GET.get('slide') else None
+    quote = get_object_or_404(HomeQuote, page=page, pk=positive_pk(request.GET['quote'])) if request.GET.get('quote') else None
     settings_form = HomePageForm(instance=page)
     slide_form = HomeSlideForm(instance=slide)
     quote_form = HomeQuoteForm(instance=quote)
@@ -83,16 +87,15 @@ def home_manage_view(request):
             files=request.FILES.getlist('images')
             cleaned=[]
             if not files: upload_errors.append('Выберите фотографии.')
-            for file in files:
-                try: cleaned.append(forms.ImageField().clean(file))
-                except forms.ValidationError as exc: upload_errors.extend(exc.messages)
+            try: cleaned=clean_image_batch(files)
+            except forms.ValidationError as exc: upload_errors.extend(exc.messages)
             if not upload_errors:
                 start=(page.slides.aggregate(n=Max('order'))['n'] or 0)+1
                 for i,file in enumerate(cleaned): HomeSlide.objects.create(page=page,image=file,order=start+i)
                 messages.success(request,'Фотографии добавлены.'); return redirect('home_manage')
         elif action in ['save_slide','save_quote']:
             model,formclass=(HomeSlide,HomeSlideForm) if action=='save_slide' else (HomeQuote,HomeQuoteForm)
-            obj=get_object_or_404(model,page=page,pk=request.POST['id']) if request.POST.get('id') else None
+            obj=get_object_or_404(model,page=page,pk=positive_pk(request.POST['id'])) if request.POST.get('id') else None
             form=formclass(request.POST,request.FILES,instance=obj)
             if form.is_valid():
                 record=form.save(commit=False); record.page=page
@@ -103,7 +106,7 @@ def home_manage_view(request):
         elif action in ['delete','toggle','up','down']:
             model={'slide':HomeSlide,'quote':HomeQuote}.get(request.POST.get('kind'))
             if model is None:return HttpResponseBadRequest('Неизвестный раздел.')
-            obj=get_object_or_404(model,page=page,pk=request.POST.get('id'))
+            obj=get_object_or_404(model,page=page,pk=positive_pk(request.POST.get('id')))
             if action=='delete':obj.delete()
             elif action=='toggle':obj.is_active=not obj.is_active;obj.save(update_fields=['is_active'])
             else:

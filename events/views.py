@@ -172,7 +172,7 @@ def event_report_edit_view(request, pk):
             if report_form.is_valid():
                 report_form.save()
                 # Новые фото (хранение в MEDIA; если место ограничено — лучше перейти на внешнее хранилище)
-                for file in request.FILES.getlist('photos'):
+                for file in report_form.cleaned_data.get('photos') or []:
                     EventPhoto.objects.create(event=event, image=file)
 
                 log_event_action(request.user, f"Обновил отчёт мероприятия '{event.title}'")

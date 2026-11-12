@@ -162,7 +162,7 @@ def report(request,event):
         success=False
         if action=='save_report' and form.is_valid():
             form.save()
-            for photo in request.FILES.getlist('photos'):EventPhoto.objects.create(event=event,image=photo)
+            for photo in form.cleaned_data.get('photos') or []:EventPhoto.objects.create(event=event,image=photo)
             success=True
         elif action=='add_video' and video.is_valid():obj=video.save(commit=False);obj.event=event;obj.save();success=True
         elif action=='delete_video':

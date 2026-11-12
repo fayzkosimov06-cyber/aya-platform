@@ -9,6 +9,8 @@ from django.urls import reverse
 from urllib.parse import urlsplit
 from .permissions import allowed
 from .models import AboutContactLink, AboutExtraBlock, AboutPage, AboutStatItem, AboutValueBlock
+from .image_uploads import BoundedImageField
+from .request_security import positive_pk
 ICON_CHOICES = [
     ('fa-solid fa-star', 'Звезда'),
     ('fa-solid fa-heart', 'Сердце'),
@@ -47,6 +49,7 @@ class AboutForm(forms.ModelForm):
 class MainForm(AboutForm):
     class Meta:
         model=AboutPage
+        field_classes={'video_poster':BoundedImageField}
         fields=['title','description','mission_title','mission_text','video_file','video_poster','video_url','email','address']
         labels={'title':'Заголовок страницы','description':'Об ассоциации','mission_title':'Заголовок миссии','mission_text':'Текст миссии','video_url':'Ссылка на видео','email':'Электронная почта','address':'Адрес'}
         widgets={'description':forms.Textarea(attrs={'rows':4}),'mission_text':forms.Textarea(attrs={'rows':5})}
@@ -127,7 +130,7 @@ def about_manage_view(request):
     if kind!='main' and kind not in SECTIONS:return HttpResponseBadRequest('Неизвестный раздел.')
     model,formclass=(AboutPage,MainForm) if kind=='main' else SECTIONS[kind][:2]
     item_id=request.POST.get('id') if request.method=='POST' else request.GET.get('id')
-    obj=about if kind=='main' else get_object_or_404(model,about=about,pk=item_id) if item_id else None
+    obj=about if kind=='main' else get_object_or_404(model,about=about,pk=positive_pk(item_id)) if item_id else None
     form=formclass(request.POST if request.method=='POST' else None,request.FILES if request.method=='POST' else None,instance=obj)
     if request.method=='POST':
         action=request.POST.get('action')

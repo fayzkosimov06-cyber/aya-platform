@@ -202,7 +202,7 @@ def home_view(request):
     for direction in directions:
         direction.home_icon = next((icon for word, icon in icons if word in direction.name.lower()), 'users')
     events = Event.objects.filter(is_approved=True, is_completed=False, cancelled=False, end_time__gte=timezone.now()).order_by('start_time')
-    if not request.user.is_authenticated:
+    if not has_full_volunteer_access(request.user):
         events = events.filter(is_public_for_guests=True)
     from .about_content import public_stats, public_contacts
     stats = public_stats(about)
@@ -707,7 +707,8 @@ def assign_direction_leader_view(request, pk):
     if not is_admin_or_higher(request.user): return redirect('home')
     if request.method == 'POST':
         d = get_object_or_404(Direction, pk=pk)
-        u = get_object_or_404(User, pk=request.POST.get('leader'))
+        from .request_security import positive_pk
+        u = get_object_or_404(User, pk=positive_pk(request.POST.get('leader')))
         if not request.user.is_superuser and (u.pk==request.user.pk or get_user_power_level(u)>=get_user_power_level(request.user) or get_user_power_level(request.user)<=50):return HttpResponseForbidden('Назначение недоступно.')
         if u in d.leaders.all():
             d.leaders.remove(u)
@@ -741,7 +742,8 @@ def assign_school_leader_view(request, pk):
     if not is_admin_or_higher(request.user): return redirect('home')
     if request.method == 'POST':
         s = get_object_or_404(School, pk=pk)
-        u = get_object_or_404(User, pk=request.POST.get('leader_id'))
+        from .request_security import positive_pk
+        u = get_object_or_404(User, pk=positive_pk(request.POST.get('leader_id')))
         if not request.user.is_superuser and (u.pk==request.user.pk or get_user_power_level(u)>=get_user_power_level(request.user) or get_user_power_level(request.user)<=40):return HttpResponseForbidden('Назначение недоступно.')
         if u in s.leaders.all():
             u.school_leader_of.remove(s)

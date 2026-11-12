@@ -14,6 +14,7 @@ from .permissions import allowed, rank, setting
 from .units import people_field
 from .points import members
 from .proposals import ProposalForm
+from .image_uploads import BoundedImageField
 
 
 def all_clubs(user):
@@ -24,6 +25,7 @@ def all_clubs(user):
 class ClubForm(forms.ModelForm):
     class Meta:
         model=Club
+        field_classes={'cover':BoundedImageField,'logo':BoundedImageField}
         fields=['name','intro','description','cover','logo','active','school','direction']
 
     def __init__(self,*args,user,**kwargs):
